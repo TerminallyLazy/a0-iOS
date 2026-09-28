@@ -1,0 +1,33 @@
+{
+  "deselect_chat": false,
+  "context": "synthetic-chat",
+  "contexts": null,
+  "tasks": null,
+  "logs": [
+    {
+      "no": 1,
+      "id": "synthetic-response",
+      "type": "response",
+      "heading": "",
+      "content": "Completed synthetic response",
+      "kvps": {},
+      "timestamp": 1,
+      "agentno": 0
+    }
+  ],
+  "log_guid": "synthetic-log",
+  "log_version": 3,
+  "log_progress": "",
+  "log_progress_active": false,
+  "paused": false,
+  "notifications": [
+    {
+      "id": "synthetic-notice",
+      "no": 0,
+      "message": "Synthetic notice",
+      "read": true
+    }
+  ],
+  "notifications_guid": "synthetic-notifications",
+  "notifications_version": 2
+}

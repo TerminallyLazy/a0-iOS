@@ -1,0 +1,30 @@
+# Generated builds and local verification evidence
+.build/
+.swiftpm/
+DerivedData*/
+build/
+*.xcarchive/
+*.xcresult/
+*.ipa
+*.dSYM/
+*.log
+*.ips
+*.xcuserstate
+xcuserdata/
+.DS_Store
+# Preserve authored reports; raw test artifacts stay local.
+docs/tdd/**
+!docs/tdd/**/
+!docs/tdd/**/*.md
+.impeccable/review/**/*.png
+# Credentials, local signing settings and runtime state
+.env
+.env.*
+*.p8
+*.p12
+*.mobileprovision
+.asc/
+Config/Signing.local.xcconfig
+docs/verification/
+__pycache__/
+*.pyc

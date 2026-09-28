@@ -1,0 +1,14 @@
+{
+  "kind": "source inspection; fixtures are authored synthetic data, not captured live responses",
+  "source_head": "6a6cecff",
+  "files": {
+    "helpers/api.py": "f88f0dae9b2c4405f56893bfad9efe2c6965717d6f4ce3755ffb0e6318542b52",
+    "helpers/ui_server.py": "3b30b81025d4bbdb943aec78a91c4c13e23f025094917dfce9cbad0a7c9724dc",
+    "helpers/ws.py": "3bf22094a3a30e3871ef290f1407c6beabd102fcf8cd3ae67c5caa4bf59fddcc",
+    "helpers/state_snapshot.py": "755ad74c66de17155695f4c2bee77c528810bc94946f812e162dc82a06633efc",
+    "helpers/state_monitor.py": "b136c6faa23e4d5dabf4d785dd366b14359459ea05fe557927b3024f638dae06",
+    "api/csrf_token.py": "e42a453b54f5ac709e791625df1bb4682d4c85875d5e9e4c0341a28eb3f78a52",
+    "api/poll.py": "663728c7f388aa99badbe5e79865ef3895a6b2e98719540a819b8826c04ace3c",
+    "extensions/python/webui_ws_event/_10_state_sync.py": "7230bdffdffa2013dc86011be8eea0eebb44dabc879db4d4796b94ffbdfebf87"
+  }
+}

@@ -1,0 +1,17 @@
+# Session continuity
+
+Leaving the app pauses local polling and sockets. It does not log out the server or stop server-side Agent Zero work. The current chat route, transcript and generated reply views stay mounted in memory. Foreground return requires a fresh full snapshot before messages can be sent again. An interrupted outbound command retains the existing uncertain-delivery behavior and is never replayed.
+
+After termination, the app reads its last authenticated account and session cookie from a separate Keychain item (`local.agentzero.active-session.v1`). It is device-only, non-synchronizing and accessible only while unlocked. This is separate from optional password storage. No password, CSRF token, transcript, A2UI source or form input is written to this item. Only one account is active; the cookie is bound to the authenticated username and exact origin. Synthetic launches use separate per-test services, including demo previews.
+
+Restoration makes a protected bootstrap request without cookies to verify authentication is still required, then repeats that read with the saved session cookie and obtains fresh runtime/CSRF state. It loads profile-isolated drafts and receipts through SessionRepository. The production cold-launch route then opens the new-chat draft with the sidebar closed; this does not create a server chat or send a message. Previous conversations, their drafts and uncertain receipts remain available from the drawer, and selecting one refetches its content. This cold landing differs from same-process background/foreground, which retains the current route and mounted content. No login form or chat mutation is replayed. A rejected/expired session requires sign-in. A temporary network or locked-Keychain failure preserves the saved session and retries on the next foreground transition. Explicit Disconnect or removing the active saved server removes the session item.
+
+Generated replies therefore remain on ordinary background/foreground transitions, and are rebuilt from the server when their conversation is reopened after a process restart. Unsaved native form edits and carousel position are not durable after process termination. Offline relaunch cannot display an archived transcript because full transcripts are not stored locally. iOS may suspend or terminate sockets; this feature preserves authentication and chat continuity rather than claiming continuous background transport.
+
+The startup splash uses the original mark and wordmark with the current opening/restoring label. It covers profile/session startup only; there is no timed minimum, invented progress percentage or automatic opening of the drawer.
+
+## Verification
+
+`swift test --enable-code-coverage --filter SessionRestorationTests`: 6 passing tests. The tests cover cookie-only export, username/origin isolation before network, expired/disabled/rejected sessions, read-only restore with refreshed CSRF, explicit-disconnect cancellation before any saved-cookie request, and preserved reducer content across recovery. Initial test build was blocked by other parallel test-first additions; it is recorded as a compile-stage result, not a behavioral regression failure.
+
+The earlier restoration fixture `SessionLifecycleUITests.testGeneratedReplySurvivesBackgroundAndSessionRestoresAfterTermination` exercises the generated form through Home/activate and termination/relaunch with a synthetic authenticated server. Its executed result belongs in the overall UI verification receipt. No live account credentials or messages are inspected by these tests.

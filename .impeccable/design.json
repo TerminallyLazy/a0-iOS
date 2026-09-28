@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T22:52:43.526930+00:00",
+  "title": "Design System: Agent Zero iOS",
+  "extensions": {
+    "colorMeta": {
+      "a0-canvas-light": {
+        "role": "neutral",
+        "displayName": "Paper canvas",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "a0-canvas-dark": {
+        "role": "neutral",
+        "displayName": "Charcoal canvas",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "a0-panel-light": {
+        "role": "neutral",
+        "displayName": "Soft gray panel",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "a0-panel-dark": {
+        "role": "neutral",
+        "displayName": "Deep charcoal panel",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "a0-tint-light": {
+        "role": "primary",
+        "displayName": "Muted blue-gray action",
+        "tonalRamp": [
+          "oklch(15% 0.028 246)",
+          "oklch(26% 0.028 246)",
+          "oklch(38% 0.028 246)",
+          "oklch(49% 0.028 246)",
+          "oklch(61% 0.028 246)",
+          "oklch(72% 0.028 246)",
+          "oklch(84% 0.028 246)",
+          "oklch(95% 0.028 246)"
+        ]
+      },
+      "a0-tint-dark": {
+        "role": "primary",
+        "displayName": "Pale neutral action",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "a0-supporting-light": {
+        "role": "neutral",
+        "displayName": "Opaque supporting ink",
+        "tonalRamp": [
+          "oklch(15% 0.008 286)",
+          "oklch(26% 0.008 286)",
+          "oklch(38% 0.008 286)",
+          "oklch(49% 0.008 286)",
+          "oklch(61% 0.008 286)",
+          "oklch(72% 0.008 286)",
+          "oklch(84% 0.008 286)",
+          "oklch(95% 0.008 286)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "title": {
+        "displayName": "Native semantic titles",
+        "purpose": "SwiftUI title2, title3 and headline with Dynamic Type; generated forecast temperature uses medium largeTitle and monospaced digits."
+      },
+      "body": {
+        "displayName": "Native body",
+        "purpose": "Default semantic body prose and message input."
+      },
+      "label": {
+        "displayName": "Native metadata",
+        "purpose": "Subheadline and caption roles for author, disclosure and status."
+      },
+      "code": {
+        "displayName": "Monospaced content",
+        "purpose": "SwiftUI monospaced callout for code and structured field values; monospaced caption for Raw event."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "latest-return",
+        "value": "SwiftUI.easeOut(duration: 0.2)",
+        "purpose": "Explicit return to latest; no animation when Reduce Motion is enabled."
+      },
+      {
+        "name": "drawer-transition",
+        "value": "SwiftUI.easeOut(duration: 0.22)",
+        "purpose": "Leading drawer open/close; no sliding animation when Reduce Motion is enabled."
+      }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Latest",
+      "kind": "button",
+      "refersTo": "latest-light",
+      "description": "Native 36-point circular icon within a 44-point hit region; portable light preview.",
+      "html": "<button class=\"ds-latest\" aria-label=\"Jump to latest reply\"><span><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M12 4v16m-6-6 6 6 6-6\"/></svg></span></button>",
+      "css": ".ds-latest{width:44px;height:44px;border:0;padding:4px;background:transparent;color:#fafafa}.ds-latest span{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#384653}.ds-latest:hover{filter:brightness(1.1)}.ds-latest:active{opacity:.8}.ds-latest:focus-visible{outline:2px solid #384653;outline-offset:2px;border-radius:50%}"
+    },
+    {
+      "name": "Conversation tools",
+      "kind": "custom",
+      "description": "Compact 320-point native Tools popover with Pause/Resume, Nudge and navigable History/Context results; remaining functions hand off to confirmed WebUI.",
+      "html": "<section class=\"ds-tools\"><h3>Tools</h3><button>Pause agent</button><button>Nudge agent</button><h4>Inspect conversation</h4><button>History</button><button>Context</button><button>Open full WebUI</button></section>",
+      "css": ".ds-tools{font:16px -apple-system,BlinkMacSystemFont,sans-serif;width:320px;padding:16px;background:#fafafa;color:#212121}.ds-tools h4{font-size:13px;color:rgb(34% 34% 36%)}.ds-tools button{display:block;text-align:left;min-height:44px;width:100%;font:inherit;color:#384653;background:#f0f0f0;border:0;padding:8px 12px}.ds-tools button:hover{background:#e8e8e8}.ds-tools button:focus-visible{outline:2px solid #384653;outline-offset:2px}"
+    },
+    {
+      "name": "Message composer",
+      "kind": "input",
+      "refersTo": "composer-light",
+      "description": "Framed composer with inline microphone dictation, removable local attachments, compact connection dot inside the input card’s upper-right corner and explicit Send. A motion-aware ring shows agent work while Queue or Steer routes follow-ups. Routine saved-state text remains hidden; storage failure stays visible.",
+      "html": "<section class=\"ds-composer\"><textarea aria-label=\"Message\" placeholder=\"Message Agent Zero\" rows=\"2\"></textarea><div class=\"ds-composer-controls\"><button aria-label=\"Chat tools\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg></button><span></span><button aria-label=\"Voice\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M3 10v4m4-7v10m5-14v18m5-14v10m4-7v4\"/></svg></button><button class=\"ds-send\" aria-label=\"Send\"><i><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M12 20V4m-6 6 6-6 6 6\"/></svg></i></button></div></section>",
+      "css": ".ds-composer{font:16px -apple-system,BlinkMacSystemFont,sans-serif;background:#f0f0f0;color:#212121;border:1px solid rgba(56,70,83,.2);border-radius:16px;width:300px}.ds-composer:focus-within{border-color:rgba(56,70,83,.5)}.ds-composer textarea{font:inherit;background:transparent;color:inherit;padding:14px 14px 4px;border:0;width:calc(100% - 28px);resize:vertical}.ds-composer textarea::placeholder{color:rgb(34% 34% 36%)}.ds-composer-controls{display:flex;gap:4px;padding:0 6px 4px}.ds-composer-controls>span{flex:1}.ds-composer button{display:grid;place-items:center;width:44px;height:44px;border:0;background:transparent;color:#384653;padding:4px}.ds-send i{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#384653;color:#fafafa}.ds-composer button:hover{opacity:.8}.ds-composer :focus-visible{outline:2px solid #384653;outline-offset:2px}"
+    },
+    {
+      "name": "Inline voice",
+      "kind": "custom",
+      "description": "Dictation enters the existing draft. Explicit microphone/Stop, persisted Continuous listening options and review before Send; no transcript-adoption sheet.",
+      "html": "<section class=\"ds-voice\"><label>Message<textarea>Existing draft and dictated words.</textarea></label><p>Listening \u00b7 on device</p><button aria-label=\"Stop voice\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"10\" height=\"10\" fill=\"currentColor\"/></svg></button><details><summary>Voice options</summary><label><input type=\"checkbox\"/> Continuous listening</label><button>Read reply</button><button>Polish draft on device</button></details></section>",
+      "css": ".ds-voice{font:16px -apple-system,BlinkMacSystemFont,sans-serif;max-width:320px;padding:14px;background:#f0f0f0;color:#212121;border-radius:16px}.ds-voice textarea{display:block;font:inherit;width:100%;background:transparent;border:0;resize:vertical}.ds-voice p{font-size:12px;color:rgb(34% 34% 36%)}.ds-voice button,.ds-voice summary{min-height:44px;font:inherit;color:#384653;background:transparent;border:0;cursor:pointer}.ds-voice details label{display:block}.ds-voice button:hover,.ds-voice summary:hover{opacity:.8}.ds-voice :focus-visible{outline:2px solid #384653;outline-offset:2px}"
+    },
+    {
+      "name": "Agent activity",
+      "kind": "custom",
+      "refersTo": "message-panel-light",
+      "description": "Compact recorded-step previews with per-agent labels; expanded rows follow a decorative timeline. History is not execution state.",
+      "html": "<details class=\"ds-activity\"><summary><strong>Agent activity</strong><span>3 steps \u00b7 Show details</span></summary><section><strong>Search web</strong><p>A0 \u00b7 Tool call</p><details><summary>Details</summary><p>Query: native interface patterns</p></details></section><section><strong>Run code</strong><p>A0 \u00b7 Tool call</p><details><summary>Raw event</summary><pre>{ \"tool_name\": \"code_execution_tool\" }</pre></details></section></details>",
+      "css": ".ds-activity {font: 16px -apple-system, BlinkMacSystemFont, sans-serif;background:#f0f0f0;color:#212121;padding:8px 16px;border-radius:16px;max-width:320px}.ds-activity summary{min-height:44px;cursor:pointer}.ds-activity strong{font-size:15px}.ds-activity span{display:block;font-size:12px;color:rgb(34% 34% 36%);margin-top:4px}.ds-activity summary:hover{color:#384653}.ds-activity summary:focus-visible { outline: 2px solid #384653; outline-offset: 3px; }.ds-activity section{border-left:1px solid rgba(87,87,92,.25);margin:12px 0 0 4px;padding-left:12px}.ds-activity p{color:rgb(34% 34% 36%);font-size:15px}.ds-activity pre{overflow:auto;font-size:12px}"
+    },
+    {
+      "name": "Workspace drawer",
+      "kind": "nav",
+      "description": "Leading overlay drawer bounded to min(400, viewport minus 44 points), with close/search header, project-filtered conversations and fixed Settings. Backdrop/escape dismiss, focus returns to opener.",
+      "html": "<nav class=\"ds-workspace\"><strong>Agent Zero</strong><button class=\"ds-chat\" aria-label=\"Close sidebar\">Close sidebar</button><input aria-label=\"Find a conversation\" placeholder=\"Find a conversation\"/><button class=\"ds-chat\">New conversation</button><button class=\"ds-chat\">Projects</button><button class=\"ds-chat\">All projects</button><button class=\"ds-chat\" aria-current=\"page\">Project planning <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m5 12 4 4L19 6\"/></svg></button><button class=\"ds-chat\">Settings</button></nav>",
+      "css": ".ds-chat {font: 16px -apple-system, BlinkMacSystemFont, sans-serif;display:flex;justify-content:space-between;gap:12px;align-items:center;min-height:44px;width:280px;text-align:left;background:#fff;color:#212121;border:0;padding:8px 12px}.ds-chat span{color:#777}.ds-chat:hover{background:#f0f0f0}.ds-chat:active{background:#e8e8e8}.ds-chat:focus-visible { outline: 2px solid #384653; outline-offset: 3px; }.ds-workspace{font:16px -apple-system,BlinkMacSystemFont,sans-serif;width:min(400px,calc(100vw - 44px));background:#fafafa;padding:16px}.ds-workspace input{font:inherit;width:calc(100% - 24px);padding:12px;border:0;border-radius:10px;background:#f0f0f0;margin:12px 0}.ds-workspace input:focus-visible{outline:2px solid #384653}.ds-chat[aria-current]{font-weight:600}"
+    },
+    {
+      "name": "Context meter",
+      "kind": "custom",
+      "description": "Semantic-size ring and adaptive accounting popover; accessibility rows stack labels over intact numeric groups. Server-only counts and explicit missing/stale states.",
+      "html": "<section class=\"ds-context\"><button aria-label=\"Context window: 25 percent used\">25%</button><h3>Context window</h3><p>32K / 128K tokens \u00b7 25% used</p><progress value=\"25\" max=\"100\"></progress><p>Server-reported category values appear here.</p></section>",
+      "css": ".ds-context{font:15px -apple-system,BlinkMacSystemFont,sans-serif;max-width:320px;padding:16px;color:#212121;background:#fafafa;font-variant-numeric:tabular-nums}.ds-context button{min-width:44px;min-height:44px;border:2px solid #212121;border-radius:50%;background:transparent;font-size:12px;color:#212121}.ds-context h3{font-size:17px}.ds-context progress{width:100%;accent-color:#212121}.ds-context button:hover{background:#f0f0f0}.ds-context button:focus-visible{outline:2px solid #384653;outline-offset:2px}"
+    },
+    {
+      "name": "Model presets",
+      "kind": "custom",
+      "description": "Portable native-picker preview; choice applies to the current chat, while Edit presets opens shared-server definitions. Provider credentials remain WebUI-owned.",
+      "html": "<section class=\"ds-presets\"><header><strong>Model presets</strong></header><p>Using inherited preset: Default</p><button class=\"ds-preset\" aria-pressed=\"true\"><strong>Default</strong><span>Main \u00b7 example-main</span><span>Utility \u00b7 example-utility</span><span>Embed \u00b7 example-embedding</span></button><footer><button>Edit presets</button></footer></section>",
+      "css": ".ds-presets{font:15px -apple-system,BlinkMacSystemFont,sans-serif;max-width:360px;background:#fafafa;color:#212121}.ds-presets header,.ds-presets p,.ds-presets footer{padding:12px 16px}.ds-presets p{font-size:12px;color:rgb(34% 34% 36%)}.ds-presets button{font:inherit;min-height:44px;border:0;background:transparent;color:#384653;text-align:left}.ds-preset{display:grid;gap:8px;width:100%;padding:14px 16px}.ds-preset span{font-size:12px;color:rgb(34% 34% 36%)}.ds-presets footer{border-top:1px solid #d4d4d4}.ds-presets button:hover{background:#f0f0f0}.ds-presets button:focus-visible{outline:2px solid #384653;outline-offset:2px}"
+    },
+    {
+      "name": "Generated reply surface",
+      "kind": "custom",
+      "description": "Portable illustration of native generated content: forecast, image carousel, Swift Charts, adaptive dashboard and labeled basic forms share the existing panel. Actual rendering is SwiftUI, not this HTML.",
+      "html": "<section class=\"ds-generated\"><p class=\"ds-generated-caption\">Interactive reply</p><h3>Forecast</h3><p>Indianapolis \u00b7 Sample update</p><strong class=\"ds-generated-temperature\">72\u00b0F</strong><p>Partly cloudy</p><p class=\"ds-generated-caption\">Source attribution accompanies supplied data.</p><label class=\"ds-generated-label\">Your response<input placeholder=\"Enter a response\"/></label><details><summary>View interface data</summary><pre>Validated native component data</pre></details></section>",
+      "css": ".ds-generated{font:16px -apple-system,BlinkMacSystemFont,sans-serif;max-width:360px;background:#f0f0f0;color:#212121;border-radius:16px;padding:12px}.ds-generated h3{font-size:17px;margin:12px 0}.ds-generated-caption{font-size:12px;color:rgb(34% 34% 36%)}.ds-generated-temperature{font-size:34px;font-weight:500;font-variant-numeric:tabular-nums}.ds-generated-label{display:grid;gap:6px;padding:8px;font-size:15px;font-weight:500}.ds-generated input{font:inherit;padding:12px;min-height:20px;background:#fafafa;color:#212121;border:0;border-radius:10px}.ds-generated input::placeholder{color:rgb(34% 34% 36%)}.ds-generated details{font-size:12px;margin-top:12px}.ds-generated summary{cursor:pointer;min-height:24px}.ds-generated summary:hover{text-decoration:underline}.ds-generated :focus-visible{outline:2px solid #384653;outline-offset:3px}"
+    },
+    {
+      "name": "Generated action review",
+      "kind": "custom",
+      "description": "Portable preview of the native review sheet. Cancel and a pinned bottom Add to draft preserve user control; adding does not send.",
+      "html": "<section class=\"ds-review\"><header><button>Cancel</button><strong>Review response</strong></header><p>Review the values before adding this response to your draft. Send it when you\u2019re ready.</p><dl><dt>Response</dt><dd>Example selection</dd></dl><footer><button class=\"ds-review-add\">Add to draft</button></footer></section>",
+      "css": ".ds-review{font:16px -apple-system,BlinkMacSystemFont,sans-serif;max-width:360px;background:#fafafa;color:#212121}.ds-review header{display:flex;align-items:center;gap:16px}.ds-review button{font:inherit;min-height:44px;border:0;background:transparent;color:#384653}.ds-review p{font-size:15px;color:rgb(34% 34% 36%);padding:12px}.ds-review dl{padding:12px}.ds-review dt{font-size:12px;color:rgb(34% 34% 36%)}.ds-review dd{margin:6px 0}.ds-review footer{position:sticky;bottom:0;padding:16px;background:#f0f0f0}.ds-review .ds-review-add{width:100%;background:#384653;color:#fafafa;border-radius:12px;padding:12px}.ds-review button:hover{filter:brightness(1.12)}.ds-review button:active{opacity:.8}.ds-review button:focus-visible{outline:2px solid #384653;outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Keep conversation reading stable while Agent Zero works.",
+    "overview": "Agent Zero's existing identity anchors a native iPhone and iPad companion. The original wordmark and A mark establish recognition; adaptive neutral surfaces and system text styles keep attention on conversations and agent activity.\n\nThe interface uses native navigation, restrained tonal layering and progressive disclosure. Replies occupy the open canvas, while user messages, delivery receipts and activity use panels. Expanding details preserves the reader's position; Latest explicitly returns to incoming replies.",
+    "keyCharacteristics": [
+      "Original Agent Zero vector identity and adaptive neutral palette.",
+      "Native Dynamic Type, SF Symbols and safe-area controls.",
+      "Open reply canvas with collapsible activity and long messages.",
+      "Stable reading position with an explicit Latest action."
+    ],
+    "rules": [
+      {
+        "name": "The Adaptive Pair Rule",
+        "body": "Use the matching appearance of A0Canvas, A0Panel and A0Tint together. Latest explicitly pairs its tint background with an A0Canvas foreground.",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic Type Rule",
+        "body": "Use native text styles for interface and message hierarchy; reserve the monospaced design for code and structured details.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tonal Surface Rule",
+        "body": "Separate conversation content with spacing and panel tone; this implementation does not add custom drop shadows.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Reviewed Action Rule",
+        "body": "A generated action opens Review response with its name and labeled values. Cancel dismisses it. The bottom safe-area Add to draft action stays reachable and uses the same contrasting tint/canvas pair as Latest. Adding a response preserves explicit user control of Send; a generated action never sends automatically.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do reuse the original Agent Zero wordmark and A mark as template assets.",
+      "Do keep actions reachable above the keyboard and place the minimum hit area inside each custom button label.",
+      "Do pause following when the reader scrolls into history or expands content; offer Latest to resume.",
+      "Do preserve native text scaling, semantic labels and Reduce Motion behavior.",
+      "Do validate external links and confirm the destination in message headings, previews and expanded content.",
+      "Do translate icon metadata into native symbols and readable labels, while keeping structured and raw tool details available on demand.",
+      "Do preserve drafts when dismissing the keyboard or changing servers, and honor local reading preferences immediately.",
+      "Do keep generated input labels persistent, source attribution visible and chart values inspectable.",
+      "Do review generated actions before adding them to a draft; leave Send as an explicit user action.",
+      "Do distinguish server-reported working state from recorded agent history.",
+      "Do require explicit voice activation, preserve existing draft text and leave review before Send; apply cleanup suggestions only after confirmation.",
+      "Do expose native server controls honestly and hand remaining WebUI features to a confirmed browser destination.",
+      "Do pair project colors with names and preserve explicit confirmation for server-side deletion.",
+      "Do distinguish server context estimates from provider usage and unavailable values.",
+      "Do distinguish current-chat model overrides from shared preset edits and inherited defaults.",
+      "Do keep startup progress tied to real work and preserve earlier drafts when landing on a new conversation."
+    ],
+    "donts": [
+      "Don't use color alone to communicate connection or delivery state.",
+      "Don't replace readable agent responses with an always-collapsed activity panel.",
+      "Don't execute HTML or fetch images embedded in ordinary Markdown; generated carousel media must use the dedicated validated loader.",
+      "Don't imply full WebUI parity or successful live voice/control acceptance from native component availability."
+    ]
+  }
+}

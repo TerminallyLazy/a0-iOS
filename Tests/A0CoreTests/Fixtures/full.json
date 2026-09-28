@@ -1,0 +1,49 @@
+{
+  "deselect_chat": false,
+  "context": "synthetic-chat",
+  "contexts": [
+    {
+      "id": "synthetic-chat",
+      "name": "Synthetic fixture",
+      "running": false
+    }
+  ],
+  "tasks": [],
+  "logs": [
+    {
+      "no": 0,
+      "id": "synthetic-user",
+      "type": "user",
+      "heading": "",
+      "content": "Synthetic request",
+      "kvps": {},
+      "timestamp": 0,
+      "agentno": 0
+    },
+    {
+      "no": 1,
+      "id": "synthetic-response",
+      "type": "response",
+      "heading": "",
+      "content": "Working",
+      "kvps": {},
+      "timestamp": 1,
+      "agentno": 0
+    }
+  ],
+  "log_guid": "synthetic-log",
+  "log_version": 2,
+  "log_progress": "Working",
+  "log_progress_active": true,
+  "paused": false,
+  "notifications": [
+    {
+      "id": "synthetic-notice",
+      "no": 0,
+      "message": "Synthetic notice",
+      "read": false
+    }
+  ],
+  "notifications_guid": "synthetic-notifications",
+  "notifications_version": 1
+}
