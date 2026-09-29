@@ -118,3 +118,8 @@ Cleanup removed **2.11 GiB** of regenerated SwiftPM and project-owned Xcode Deri
 ## Build 4 preparation — model catalogs and activity
 
 Build 4 packages implementation `3990d74`: WebUI provider catalogs, provider-specific model suggestions/search/custom IDs, and the refined expandable agent activity timeline. The implementation passed 203 package tests and focused iPhone/iPad UI checks recorded in `docs/tdd/model-catalog/README.md`. Jev remains a synthetic experiment, not production routing. This release preparation changes version metadata and test notes only. Archive, upload and distribution are verified separately below.
+
+
+On September 28, 2026, release source `49d066d` produced the signed **0.1.0 (4)** archive. `scripts/verify-release.py` passed, and upload through the existing Xcode signing account reported `Uploaded package is processing`, `Upload succeeded` and `EXPORT SUCCEEDED`. App Store Connect independently showed build 4 as **Processing**.
+
+Cleanup removed **2.15 GiB** of regenerated project-owned SwiftPM and Xcode DerivedData caches after upload completed. Signed build-2, build-3 and build-4 archives/dSYMs, selected screenshots, Photos exports, local signing configuration and the owner `.env` were preserved. The build-4 archive passed verification again after cleanup. Local receipts: `build/AgentZero-0.1.0-4.xcarchive`, `testflight-archive-4.log`, `testflight-upload-4.log`, `build-4-upload-receipt.json` and `cleanup-build-4-receipt.json`.
