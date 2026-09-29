@@ -1,4 +1,6 @@
-Agent Zero 0.1.0 (2)
+Agent Zero 0.1.0 (3)
+
+New in build 3: a dedicated red Stop button beside Send. While the agent is working, queue a follow-up, leave an unsent draft, then tap Stop. Verify this chat and its subagents stop, queued follow-ups are cleared, local voice stops, and the unsent draft and attachments remain. If cancellation cannot be confirmed, inspect the WebUI; the app must not report success or automatically retry. Requires a server with the /api/stop endpoint. Other chats and detached external programs are not stopped.
 
 Connect to your own authenticated HTTPS Agent Zero server. Check sign-in, session restoration after reopening, opening older chats and creating a new chat.
 
