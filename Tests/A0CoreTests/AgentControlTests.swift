@@ -48,8 +48,8 @@ import Testing
 
 @Test func stopClearsQueueBeforeCancellingAndValidatesAcknowledgement() async throws {
     let transport = ScriptTransport(loginResponses() + [
-        HTTPResponse(data:Data(#"{"ok":true,"remaining":0}"#.utf8),status:200),
-        HTTPResponse(data:Data(#"{"context":"chat","stopped":true}"#.utf8),status:200)
+        HTTPResponse(data:Data(#"{"ok":true,"remaining":0}"#.utf8),status:200,headers:["Content-Type":"application/json"]),
+        HTTPResponse(data:Data(#"{"context":"chat","stopped":true}"#.utf8),status:200,headers:["Content-Type":"application/json"])
     ])
     let client = APIClient(origin:try ServerOrigin("https://server.test"),transport:transport)
     try await client.connect(username:"fixture",password:"fixture")
@@ -68,7 +68,7 @@ import Testing
 @Test func stopStillCancelsWhenQueueClearFailsWithoutRetrying() async throws {
     let transport = ScriptTransport(loginResponses() + [
         HTTPResponse(data:Data(),status:503),
-        HTTPResponse(data:Data(#"{"context":"chat","stopped":true}"#.utf8),status:200)
+        HTTPResponse(data:Data(#"{"context":"chat","stopped":true}"#.utf8),status:200,headers:["Content-Type":"application/json"])
     ])
     let client = APIClient(origin:try ServerOrigin("https://server.test"),transport:transport)
     try await client.connect(username:"fixture",password:"fixture")

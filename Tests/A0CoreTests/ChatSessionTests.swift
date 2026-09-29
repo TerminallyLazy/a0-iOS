@@ -213,3 +213,14 @@ func busyOrQueuedChatEnqueues(flags: (Bool,Bool)) async throws {
     model.select("other-chat")
     #expect(model.visibleDeliveries.isEmpty)
 }
+
+@MainActor @Test func stoppedQueueUpdatesOnlyMatchingReceiptsAndKeepsDraft() async throws {
+    let model = ChatSession(api:ChatDouble())
+    model.select("chat-a"); model.draft = "Queued A"; await model.send(isBusy:true)
+    model.select("chat-b"); model.draft = "Queued B"; await model.send(isBusy:true)
+    model.draft = "Unsent"
+    model.recordClearedQueue(context:"chat-a")
+    #expect(model.deliveries[0].status == .cancelled)
+    #expect(model.deliveries[1].status == .queued)
+    #expect(model.draft == "Unsent")
+}
