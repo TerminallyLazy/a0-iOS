@@ -10,9 +10,15 @@ A native companion for your own Agent Zero server. Continue conversations, follo
 
 ## Get the app
 
-> **Public beta: coming soon.** The first build, **0.1.0 (2)**, has finished processing in TestFlight. There is no public invitation yet; availability depends on Apple beta review. The verified install link will appear here when the beta opens.
+> **Public beta: awaiting Apple review.** Build **0.1.0 (2)** is submitted and marked **Waiting for Review**. The invitation link is ready, but Apple does not allow testers to join until the group has an approved build.
 
-[Install Apple TestFlight](https://apps.apple.com/app/testflight/id899247664) to get ready. Installing TestFlight alone does not add Agent Zero Mobile—you will also need its invitation link once available.
+### [Open the TestFlight invitation](https://testflight.apple.com/join/xqAFS5er)
+
+1. Install [Apple TestFlight](https://apps.apple.com/app/testflight/id899247664) on your iPhone or iPad.
+2. Open the invitation above. Once Apple approves the beta, accept it and tap **Install**.
+3. Open **Agent Zero** and connect to your authenticated HTTPS server.
+
+While review is pending, the invitation may show Apple's general TestFlight page instead of an install button. No Xcode or cable is needed for the TestFlight route once approved.
 
 **Want to try it today?** [Build and run with Xcode](docs/INSTALL.md#build-from-source) on your Mac, or read the [installation guide](docs/INSTALL.md) for the complete setup. An App Store-signed IPA cannot be installed directly from a GitHub download.
 
