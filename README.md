@@ -1,32 +1,56 @@
-# a0-iOS — Agent Zero for iPhone and iPad
+<p align="center">
+  <img src="App/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="112" alt="Agent Zero Mobile app icon">
+</p>
 
-Native iPhone/iPad foundation for the approved plan in [docs/PLAN.md](docs/PLAN.md).
+# Agent Zero Mobile
 
-The foundation includes session/CSRF authentication, Socket.IO state with foreground polling fallback, and a diagnostic probe. The first Milestone 1 slice adds chat creation, text sending, busy-chat queue routing, per-chat drafts, protected actor-backed storage, and explicit delivery states. Uncertain mutations are never automatically replayed. Server acceptance does not mean agent execution completed.
+**Your Agent Zero, on iPhone and iPad.**
 
-## Repository and TestFlight
+A native companion for your own Agent Zero server. Continue conversations, follow agent activity, dictate a message, and send photos or files from a mobile interface built for reading and working on the go.
 
-The app bundle is `com.terminallylazy.a0-ios`; display name **Agent Zero**. Release preparation, local signing setup and beta test notes are in [docs/TESTFLIGHT.md](docs/TESTFLIGHT.md). Source, fixtures and authored reports are versioned; build products, raw XCTest bundles, recordings and local logs remain excluded. Historical report links to those artifacts refer to the originating development Mac.
+## Get the app
 
-## Run
+> **Public beta: coming soon.** The first build, **0.1.0 (2)**, has finished processing in TestFlight. There is no public invitation yet; availability depends on Apple beta review. The verified install link will appear here when the beta opens.
 
-Open `AgentZeroSpike.xcodeproj`, select the `AgentZeroSpike` scheme, and run on an iOS 17+ simulator. Xcode 27 / Swift 6.4 were used for verification. The included project is generated from `project.yml` with XcodeGen; ordinary Xcode use does not require regenerating it.
+[Install Apple TestFlight](https://apps.apple.com/app/testflight/id899247664) to get ready. Installing TestFlight alone does not add Agent Zero Mobile—you will also need its invitation link once available.
 
-For HTTPS servers, enter the origin and credentials directly in the app, then tap **Connect securely** in the bottom action area. The button stays above the keyboard; the password keyboard also offers Go. Drafts, the selected chat, and unresolved delivery receipts are now saved on this device, isolated by origin and username. A valid saved session restores the same server/account after relaunch and opens the new-chat draft with the sidebar closed; older chat drafts and unresolved receipts remain available. Expired authentication requires sign-in. Interrupted sends restore as uncertain and never auto-replay. Saved servers restore connection details without connecting automatically. Password saving is off by default; opt in to save a verified password in device-local, when-unlocked Keychain storage. The active session cookie is saved separately in device-only, when-unlocked Keychain storage. Backgrounding pauses transport while retaining the chat; foreground return refreshes current state before sending. See [session continuity](docs/SESSION-RESTORATION.md).
+**Want to try it today?** [Build and run with Xcode](docs/INSTALL.md#build-from-source) on your Mac, or read the [installation guide](docs/INSTALL.md) for the complete setup. An App Store-signed IPA cannot be installed directly from a GitHub download.
 
-Use the QR toolbar button to scan your server’s tunnel QR or enter its HTTPS address, review the destination, then fill the sign-in form. QR import does not connect, look up passwords, or save a profile. Camera permission is requested only when you tap Open camera. Denied or unavailable cameras retain manual address entry.
+## Made for your conversations
 
-For the user-designated development server, enter `http://localhost:49805` in the simulator and enable **Local development (loopback only)**. This option is compiled only in Debug. Localhost on a physical iPhone refers to that phone, so this address is not a physical-device connection path. Release origin validation always requires HTTPS.
+- **Readable replies:** native Markdown, code copying, collapsible long messages and grouped tool activity. New replies follow automatically until you scroll up.
+- **A useful composer:** on-device dictation, locally staged photos/files, and Queue or Steer for follow-up messages while your agent works.
+- **See what happened:** browser screenshot cards with larger contained previews, agent activity, connection details and server-reported context usage.
+- **Your workspace:** searchable chats, projects and model presets, with a WebUI handoff for broader server administration.
+- **Pick up where you left off:** protected drafts and saved sessions, optional Keychain password storage, and explicit delivery states for interrupted sends.
+- **Native on both screens:** iPhone and iPad layouts, light/dark appearance and Dynamic Type.
 
-The app can show **Explore synthetic preview** without any connection, including synthetic creation and sending. The preview is labeled and is not runtime acceptance. `--synthetic-http-preview` is a Debug-only UI-test fixture that exercises the HTTP client without network traffic.
+Some features depend on the connected server and model. Rich generated replies require the documented response format; see [supported features and limits](docs/GENERATIVE-UI.md).
+
+## Connect your Agent Zero
+
+You need **iOS or iPadOS 17 or later** and an **Agent Zero server with login enabled**, reachable from your device over **HTTPS**. The app connects to your server; it does not host an agent or include a model subscription.
+
+1. Open your server's HTTPS address on the phone to confirm it is reachable. A secure tunnel can expose a server running on your computer.
+2. In the app, enter that server origin, or scan its URL QR code and review the address.
+3. Enter your Agent Zero credentials and tap **Connect securely**. Open a chat or start a new one.
+
+Use the HTTPS origin only, such as `https://your-agent.example.com`, without a path. `localhost` on an iPhone points to the phone itself. The [installation guide](docs/INSTALL.md#connect-to-your-server) includes troubleshooting. You can also choose **Explore synthetic preview** to look around without a server; its messages and actions are local demonstrations.
+
+## Privacy and project details
+
+Drafts and staged attachments stay on your device until you send them. Dictation uses on-device recognition where supported, and sending always requires an explicit action. Your selected server processes submitted content according to its configuration. The app's **Settings → Privacy & storage** explains local retention. See the [bundled third-party notices](App/ThirdPartyNotices.txt) and [acceptance and known limits](docs/ACCEPTANCE.md).
+
+## Development and verification
+
+Open `AgentZeroSpike.xcodeproj` in **Xcode 27** and select the **AgentZeroSpike** scheme. The project and scheme retain their development names; the app displays as **Agent Zero** and its distribution name is **Agent Zero Mobile**. Xcode resolves the pinned Swift packages automatically. XcodeGen is only needed when regenerating the included project from `project.yml`.
 
 ```sh
 swift test
-swift run a0-transport-probe http://localhost:49805
 swift build -c release
 ```
 
-The Debug probe prints only status and counts. It verifies CSRF bootstrap, HTTP snapshot decoding, `/ws` acknowledgement, and an applied full state push; it never prints cookies, tokens, or conversation bodies. It supports loopback targets only and is disabled in Release builds. A probe request uses UTC for snapshot timezone, matching the browser API's existing localization behavior; it is a state request, not a stateless health request.
+The permanent bundle ID is `com.terminallylazy.a0-ios`. [TestFlight preparation](docs/TESTFLIGHT.md) covers signing and release operations; [the implementation plan](docs/PLAN.md) and the engineering notes below describe the protocol and verification history. Authored source, fixtures and reports are versioned. Raw test bundles, build products, recordings, signing material and local logs are excluded; historical artifact paths refer to the originating development Mac.
 
 ## Dependencies
 

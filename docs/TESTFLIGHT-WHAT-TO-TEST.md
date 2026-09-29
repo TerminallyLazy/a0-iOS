@@ -1,4 +1,4 @@
-Agent Zero 0.1.0 (1)
+Agent Zero 0.1.0 (2)
 
 Connect to your own authenticated HTTPS Agent Zero server. Check sign-in, session restoration after reopening, opening older chats and creating a new chat.
 

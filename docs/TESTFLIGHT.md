@@ -2,12 +2,12 @@
 
 ## App identity
 
-- GitHub: private `TerminallyLazy/a0-iOS`.
+- GitHub: public `TerminallyLazy/a0-iOS`.
 - App Store Connect name: **Agent Zero Mobile** (the original requested name was unavailable).
 - Home Screen display name: **Agent Zero**.
 - App Store Connect Apple ID: `6817147730`; SKU: `a0-ios`; primary language: English (U.S.).
 - Permanent bundle ID: `com.terminallylazy.a0-ios`.
-- Initial beta version/build: **0.1.0 (1)**.
+- Current beta version/build: **0.1.0 (2)**.
 - Minimum deployment: iOS 17, iPhone and iPad.
 - Existing Xcode project/scheme names remain `AgentZeroSpike` for build/test continuity; these are not the displayed app name or bundle ID.
 
@@ -30,9 +30,9 @@ To prepare an App Store-signed IPA locally after archiving:
 
 ```sh
 xcodebuild -exportArchive \
-  -archivePath build/AgentZero-0.1.0-1.xcarchive \
+  -archivePath build/AgentZero-0.1.0-2.xcarchive \
   -exportOptionsPlist Config/ExportOptions-TestFlight.plist \
-  -exportPath build/TestFlight-0.1.0-1 \
+  -exportPath build/TestFlight-0.1.0-2 \
   -allowProvisioningUpdates
 ```
 
@@ -73,3 +73,17 @@ Created the iOS app through the owner-authorized Chrome session. Apple rejected 
 TestFlight now has an **Internal Testers** group with automatic distribution disabled. The confirmed state is **0 testers, 0 builds**. No build was uploaded, no testers were invited and no review was submitted. The site-created App Store version remains its default 1.0 draft; the prepared TestFlight binary remains 0.1.0 (1). These are separate tracks.
 
 Browser proof screenshots remain local under ignored `build/asc-record/`. The new app record removes the registration prerequisite for uploading the prepared archive. Xcode account signing worked during preparation; the API uploader still needs a valid configured key as documented above.
+
+
+## Build 2 upload and public source — September 28, 2026
+
+The owner authorized making the source repository public; GitHub confirms PUBLIC. The README and [installation guide](INSTALL.md) provide TestFlight status and an immediate Xcode source-build route without claiming an App Store IPA is directly installable.
+
+Apple rejected the first upload because the app had no supported orientation declaration for iPad multitasking. `project.yml` now explicitly declares all four orientations, and `scripts/verify-release.py` checks them. Xcode regenerated the project and produced a verified signed **0.1.0 (2)** archive. Upload through the existing Xcode account completed with `Uploaded package is processing`, `Upload succeeded`, and `EXPORT SUCCEEDED`. App Store Connect subsequently shows upload **Complete** and build **Ready to Submit**. This proves Apple processing, not beta-review approval or device installation.
+
+Current archive: `build/AgentZero-0.1.0-2.xcarchive`. Upload logs and Photos exports remain local under ignored `build/`. Public TestFlight invitations remain unavailable until the external beta is configured and approved. Historical build-1 receipts above describe preparation at that time.
+
+
+The processed build's Agent Zero icon was visually verified in App Store Connect's build picker. English (U.S.) What to Test notes were saved. An empty **Public Beta** external group was created; adding its first build requires beta description, feedback email, review contact and sign-in access. These owner-specific fields are not invented. No beta review has been submitted and no public invitation is active.
+
+Three original 1179 × 2556 PNG screenshots were exported from the owner's September 28 Photos captures: chat, model presets and sidebar. The Settings image was excluded because it exposes the owner's server address. The originals fit Apple's 6.3-inch screenshot slot. Larger iPhone and iPad screenshots remain separate App Store submission requirements; they are not fabricated by stretching the originals.

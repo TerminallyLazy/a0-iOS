@@ -18,6 +18,7 @@ for info_key, build_key in [('CFBundleShortVersionString', 'MARKETING_VERSION'),
     expected = re.search(r'^    ' + build_key + r': \"([^\"]+)\"', project, re.MULTILINE).group(1)
     assert info[info_key] == expected, f'{info_key} does not match project.yml'
 assert info['ITSAppUsesNonExemptEncryption'] is False
+assert set(info['UISupportedInterfaceOrientations']) == {'UIInterfaceOrientationPortrait', 'UIInterfaceOrientationPortraitUpsideDown', 'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'}
 privacy = plistlib.loads((app / 'PrivacyInfo.xcprivacy').read_bytes())
 assert privacy['NSPrivacyTracking'] is False
 reasons = {x['NSPrivacyAccessedAPIType']: x['NSPrivacyAccessedAPITypeReasons'] for x in privacy['NSPrivacyAccessedAPITypes']}

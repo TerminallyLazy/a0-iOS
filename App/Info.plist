@@ -26,5 +26,12 @@
 	<string>Dictate messages on this device. Audio is not uploaded; text is sent only when you tap Send.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Transcribe speech on this device to an editable draft. Recognition is unavailable when on-device speech is unsupported.</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
 </dict>
 </plist>

@@ -46,7 +46,7 @@ Native companion for an existing Agent Zero server. The approved design is in do
 - Separate archives by origin and username; retain them across disconnect, clear only the user-selected draft, and preserve unresolved delivery receipts.
 - Synthetic fixture success is not live server or physical-device acceptance.
 - Dependency installation, signing/distribution, commits and pushes require user authorization.
-- The permanent app identity is com.terminallylazy.a0-ios, displayed as Agent Zero. project.yml owns marketing/build versions and generated Info.plist substitutions. Keep privacy manifests and bundled third-party notices current. scripts/prepare-testflight.sh only archives locally; uploading and tester distribution are separate actions. Never commit signing identities, API keys, archives, raw test bundles or distribution logs. See docs/TESTFLIGHT.md.
+- The permanent app identity is com.terminallylazy.a0-ios, displayed as Agent Zero. project.yml owns marketing/build versions and generated Info.plist substitutions. Declare all four supported orientations for iPad multitasking. Keep privacy manifests and bundled third-party notices current. scripts/prepare-testflight.sh only archives locally; uploading and tester distribution are separate actions. Never commit signing identities, API keys, archives, raw test bundles or distribution logs. See docs/TESTFLIGHT.md.
 
 ## Work Guidance
 Keep milestone slices bounded. No server modifications or live-user-session mutations.
