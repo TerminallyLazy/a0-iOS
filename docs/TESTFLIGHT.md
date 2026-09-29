@@ -7,7 +7,7 @@
 - Home Screen display name: **Agent Zero**.
 - App Store Connect Apple ID: `6817147730`; SKU: `a0-ios`; primary language: English (U.S.).
 - Permanent bundle ID: `com.terminallylazy.a0-ios`.
-- Current beta version/build: **0.1.0 (3)**.
+- Current source release version/build: **0.1.0 (4)**; see the upload receipt below for distribution status.
 - Minimum deployment: iOS 17, iPhone and iPad.
 - Existing Xcode project/scheme names remain `AgentZeroSpike` for build/test continuity; these are not the displayed app name or bundle ID.
 
@@ -113,3 +113,8 @@ The signed archive passed `scripts/verify-release.py`; upload completed with `Up
 Apple disabled assignment to **Public Beta** because build 2 from version 0.1.0 is still **Waiting for Review**. Its UI permits only one build of this version in Beta App Review until approval. Build 3 is uploaded and internally distributed, but has not been submitted for external beta review. The existing public link and build-2 submission were preserved.
 
 Cleanup removed **2.11 GiB** of regenerated SwiftPM and project-owned Xcode DerivedData caches. Retained both signed release archives and dSYMs, upload receipts, screenshots and local signing configuration. The build-3 archive passed verification again after cleanup. Local evidence remains under ignored `build/`: `AgentZero-0.1.0-3.xcarchive`, `testflight-upload-3.log`, `cleanup-build-3-receipt.json`, and `asc-release/build-3-internal-testflight.png`. Device installation and real-server Stop acceptance are separate from this distribution receipt.
+
+
+## Build 4 preparation — model catalogs and activity
+
+Build 4 packages implementation `3990d74`: WebUI provider catalogs, provider-specific model suggestions/search/custom IDs, and the refined expandable agent activity timeline. The implementation passed 203 package tests and focused iPhone/iPad UI checks recorded in `docs/tdd/model-catalog/README.md`. Jev remains a synthetic experiment, not production routing. This release preparation changes version metadata and test notes only. Archive, upload and distribution are verified separately below.

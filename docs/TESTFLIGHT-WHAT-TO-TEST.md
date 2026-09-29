@@ -1,6 +1,10 @@
-Agent Zero 0.1.0 (3)
+Agent Zero 0.1.0 (4)
 
-New in build 3: a dedicated red Stop button beside Send. While the agent is working, queue a follow-up, leave an unsent draft, then tap Stop. Verify this chat and its subagents stop, queued follow-ups are cleared, local voice stops, and the unsent draft and attachments remain. If cancellation cannot be confirmed, inspect the WebUI; the app must not report success or automatically retry. Requires a server with the /api/stop endpoint. Other chats and detached external programs are not stopped.
+New in build 4: model preset providers now match the WebUI catalogs. Change Main, Utility, Vision and Embed providers, search their suggested models, enter a custom model ID, and verify your staged edits survive failed discovery/retry. Provider credentials remain managed in WebUI. Saving preset definitions affects other chats/projects using them.
+
+Agent activity now shows one concise latest-step preview and an expandable timeline with agent labels. Check long tool output, raw details, browser screenshots, large text and rotation.
+
+Also included: a dedicated red Stop button beside Send. While the agent is working, queue a follow-up, leave an unsent draft, then tap Stop. Verify this chat and its subagents stop, queued follow-ups are cleared, local voice stops, and the unsent draft and attachments remain. If cancellation cannot be confirmed, inspect the WebUI; the app must not report success or automatically retry. Requires a server with the /api/stop endpoint. Other chats and detached external programs are not stopped.
 
 Connect to your own authenticated HTTPS Agent Zero server. Check sign-in, session restoration after reopening, opening older chats and creating a new chat.
 
