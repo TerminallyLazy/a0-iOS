@@ -45,3 +45,34 @@ import Testing
     await #expect(throws:ClientError.requiresLogin) { try await client.perform(.pause(true),context:"chat") }
     #expect(await transport.requests.count == 4)
 }
+
+@Test func stopClearsQueueBeforeCancellingAndValidatesAcknowledgement() async throws {
+    let transport = ScriptTransport(loginResponses() + [
+        HTTPResponse(data:Data(#"{"ok":true,"remaining":0}"#.utf8),status:200),
+        HTTPResponse(data:Data(#"{"context":"chat","stopped":true}"#.utf8),status:200)
+    ])
+    let client = APIClient(origin:try ServerOrigin("https://server.test"),transport:transport)
+    try await client.connect(username:"fixture",password:"fixture")
+    _ = try await client.perform(.stop,context:"chat")
+    let requests = await transport.requests
+    #expect(requests.suffix(2).compactMap { $0.url?.path } == ["/api/message_queue_remove", "/api/stop"])
+    for request in requests.suffix(2) {
+        #expect(request.value(forHTTPHeaderField:"X-CSRF-Token") == "synthetic-csrf")
+        #expect(try JSONDecoder().decode([String:JSONValue].self,from:request.httpBody!) == ["context":.string("chat")])
+    }
+    #expect(throws:ClientError.incompatiblePayload) { try AgentControl.stop.result(Data(#"{"context":"other","stopped":true}"#.utf8),context:"chat") }
+    #expect(throws:ClientError.incompatiblePayload) { try AgentControl.stop.result(Data(#"{"context":"chat"}"#.utf8),context:"chat") }
+    #expect(try AgentControl.stop.result(Data(#"{"context":"chat","stopped":false}"#.utf8),context:"chat").tokens == nil)
+}
+
+@Test func stopStillCancelsWhenQueueClearFailsWithoutRetrying() async throws {
+    let transport = ScriptTransport(loginResponses() + [
+        HTTPResponse(data:Data(),status:503),
+        HTTPResponse(data:Data(#"{"context":"chat","stopped":true}"#.utf8),status:200)
+    ])
+    let client = APIClient(origin:try ServerOrigin("https://server.test"),transport:transport)
+    try await client.connect(username:"fixture",password:"fixture")
+    await #expect(throws:ClientError.httpStatus(503)) { try await client.perform(.stop,context:"chat") }
+    #expect(await transport.requests.count == 5)
+    #expect(await transport.requests.last?.url?.path == "/api/stop")
+}

@@ -23,6 +23,18 @@ import XCTest
         XCTAssertTrue(modes.waitForExistence(timeout: 5))
         XCTAssertTrue(modes.buttons["Steer"].isSelected)
     }
+    func testStopFromComposerPreservesDraftAndStopsWorkingState() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-http-preview", "--synthetic-chat-selection", "--synthetic-agent-work", "--persistence-test-id", UUID().uuidString]
+        app.launch(); openChat(app)
+        let draft = app.descendants(matching:.any)["messageDraft"].firstMatch
+        draft.tap(); draft.typeText("Keep this unsent draft")
+        let stop = app.buttons["stopAgent"]
+        XCTAssertTrue(stop.waitForExistence(timeout:5)); stop.tap()
+        XCTAssertTrue(app.staticTexts["Agent stopped. Queued follow-ups cleared."].waitForExistence(timeout:8))
+        XCTAssertEqual(draft.value as? String,"Keep this unsent draft")
+        XCTAssertEqual(XCTWaiter.wait(for:[XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == %@","Ready"),object:app.buttons["sendMessage"])],timeout:8),.completed)
+    }
     private func openChat(_ app: XCUIApplication) {
         XCTAssertTrue(app.buttons["chat-alpha"].waitForExistence(timeout: 10))
         app.buttons["chat-alpha"].tap(); app.waitForConversation()
