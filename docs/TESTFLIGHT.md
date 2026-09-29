@@ -7,7 +7,7 @@
 - Home Screen display name: **Agent Zero**.
 - App Store Connect Apple ID: `6817147730`; SKU: `a0-ios`; primary language: English (U.S.).
 - Permanent bundle ID: `com.terminallylazy.a0-ios`.
-- Current beta version/build: **0.1.0 (2)**.
+- Current beta version/build: **0.1.0 (3)**.
 - Minimum deployment: iOS 17, iPhone and iPad.
 - Existing Xcode project/scheme names remain `AgentZeroSpike` for build/test continuity; these are not the displayed app name or bundle ID.
 
@@ -103,3 +103,13 @@ Rechecked the live TestFlight iOS build list: **0.1.0 (2)** upload **Complete**,
 GitHub has no open pull requests or additional local branches to merge. Release work is committed directly on `main`; the remote ref is verified after pushing. The public prerelease `v0.1.0-beta.2` provides GitHub's source archives, an installation guide and the public TestFlight invitation. It does not offer an App Store-signed IPA as a direct-install download. Personal Xcode signing is the pre-approval installation route; public TestFlight awaits Beta App Review.
 
 Cleanup removed 302 verified disposable targets, about **4.09 GiB** of allocated storage: SwiftPM build cache, this project's identified Xcode DerivedData, raw XCTest result bundles/logs, and the superseded build-1 archive/export. Preserved all tracked source and authored reports, the signed build-2 archive and dSYMs, selected Photos exports, release upload receipts, proof screenshots and local signing configuration. Historical raw-test and build-1 paths above are no longer expected to exist after cleanup. The retained build-2 archive passed the release verification script again.
+
+## Build 3 — composer Stop
+
+On September 28, 2026, source commit `797c69f` was archived as **0.1.0 (3)** using Xcode 27.0 and the existing signing account. This build includes the composer Stop implementation in `eac4510`: scoped task-tree cancellation, queue clearing, local voice stop, draft preservation and explicit unknown-outcome handling. The implementation passed 198 package tests and three focused simulator checks before the version-only release preparation.
+
+The signed archive passed `scripts/verify-release.py`; upload completed with `Uploaded package is processing`, `Upload succeeded` and `EXPORT SUCCEEDED`. App Store Connect then reported **Complete**. English (U.S.) Stop-focused What to Test notes were saved, and build 3 was assigned to the existing **Internal Testers** group (one tester), where its status is **Testing**. No new testers or account access were added.
+
+Apple disabled assignment to **Public Beta** because build 2 from version 0.1.0 is still **Waiting for Review**. Its UI permits only one build of this version in Beta App Review until approval. Build 3 is uploaded and internally distributed, but has not been submitted for external beta review. The existing public link and build-2 submission were preserved.
+
+Cleanup removed **2.11 GiB** of regenerated SwiftPM and project-owned Xcode DerivedData caches. Retained both signed release archives and dSYMs, upload receipts, screenshots and local signing configuration. The build-3 archive passed verification again after cleanup. Local evidence remains under ignored `build/`: `AgentZero-0.1.0-3.xcarchive`, `testflight-upload-3.log`, `cleanup-build-3-receipt.json`, and `asc-release/build-3-internal-testflight.png`. Device installation and real-server Stop acceptance are separate from this distribution receipt.
