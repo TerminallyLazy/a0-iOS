@@ -94,3 +94,12 @@ Three original 1179 × 2556 PNG screenshots were exported from the owner's Septe
 On the next owner-authorized continuation, App Store Connect showed **0.1.0 (2) — Waiting for Review**, assigned to **Public Beta**. The review information had been completed and the build submitted between checks; no credentials were read or copied into this repository.
 
 Created the public invitation, open to anyone, without an additional tester limit: https://testflight.apple.com/join/xqAFS5er. App Store Connect explicitly states that testers cannot join until the group has an approved build. The public URL currently shows Apple's general TestFlight page. README and INSTALL expose the link with this pending-review status and the source-build fallback. No approval, tester installation or App Store release is claimed. Local proof: `build/asc-release/public-link-pending.png`.
+
+
+## Release verification and cleanup
+
+Rechecked the live TestFlight iOS build list: **0.1.0 (2)** upload **Complete**, assigned to **Public Beta**, **Waiting for Review**. The same build is now attached and saved under the App Store 1.0 draft, where its Agent Zero icon appears under Included Assets. The app-record header still displayed a placeholder; this is distinct from the verified bundled icon. No duplicate upload or rebuild was needed because app sources, project configuration and package locks are unchanged since the verified build-2 source commit `0b47222`.
+
+GitHub has no open pull requests or additional local branches to merge. Release work is committed directly on `main`; the remote ref is verified after pushing. The public prerelease `v0.1.0-beta.2` provides GitHub's source archives, an installation guide and the public TestFlight invitation. It does not offer an App Store-signed IPA as a direct-install download. Personal Xcode signing is the pre-approval installation route; public TestFlight awaits Beta App Review.
+
+Cleanup removed 302 verified disposable targets, about **4.09 GiB** of allocated storage: SwiftPM build cache, this project's identified Xcode DerivedData, raw XCTest result bundles/logs, and the superseded build-1 archive/export. Preserved all tracked source and authored reports, the signed build-2 archive and dSYMs, selected Photos exports, release upload receipts, proof screenshots and local signing configuration. Historical raw-test and build-1 paths above are no longer expected to exist after cleanup. The retained build-2 archive passed the release verification script again.

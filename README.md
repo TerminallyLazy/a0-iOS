@@ -20,6 +20,8 @@ A native companion for your own Agent Zero server. Continue conversations, follo
 
 While review is pending, the invitation may show Apple's general TestFlight page instead of an install button. No Xcode or cable is needed for the TestFlight route once approved.
 
+**GitHub release:** [Download source and view installation options](https://github.com/TerminallyLazy/a0-iOS/releases/tag/v0.1.0-beta.2).
+
 **Want to try it today?** [Build and run with Xcode](docs/INSTALL.md#build-from-source) on your Mac, or read the [installation guide](docs/INSTALL.md) for the complete setup. An App Store-signed IPA cannot be installed directly from a GitHub download.
 
 ## Made for your conversations
