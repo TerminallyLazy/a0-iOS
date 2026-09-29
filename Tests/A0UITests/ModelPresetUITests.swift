@@ -32,6 +32,63 @@ import XCTest
         XCTAssertTrue(app.buttons["selectPreset-Research"].waitForExistence(timeout:5))
         XCTAssertFalse(app.buttons["selectPreset-Focused"].exists)
     }
+    func testProviderCatalogChangesModelSuggestionsAndAcceptsCustomID() {
+        let app = openDefaultEditor()
+        let provider = app.descendants(matching:.any)["preset-chat-provider"].firstMatch
+        XCTAssertTrue(provider.waitForExistence(timeout:5)); provider.tap()
+        let another = app.buttons["Another Provider"]
+        XCTAssertTrue(another.waitForExistence(timeout:3)); another.tap()
+        let model = app.descendants(matching:.any)["preset-chat-model"].firstMatch
+        XCTAssertTrue(model.waitForExistence(timeout:3))
+        XCTAssertTrue(model.label.contains("main-model"),"Changing a provider preserves the explicit model ID until the user chooses another.")
+        model.tap()
+        XCTAssertTrue(app.buttons["modelOption-another-fast"].waitForExistence(timeout:5))
+        XCTAssertFalse(app.buttons["modelOption-main-model"].exists)
+        let search = app.searchFields.firstMatch
+        search.tap(); search.typeText("reasoning")
+        XCTAssertTrue(app.buttons["modelOption-another-reasoning"].exists)
+        XCTAssertFalse(app.buttons["modelOption-another-fast"].exists)
+        capture(app,"Provider-specific searchable models")
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let wide = XCTNSPredicateExpectation(predicate:NSPredicate { _,_ in app.frame.width > app.frame.height },object:nil)
+        XCTAssertEqual(XCTWaiter.wait(for:[wide],timeout:5),.completed)
+        capture(app,"Provider-specific searchable models landscape")
+        XCUIDevice.shared.orientation = .portrait
+        let tall = XCTNSPredicateExpectation(predicate:NSPredicate { _,_ in app.frame.height > app.frame.width },object:nil)
+        XCTAssertEqual(XCTWaiter.wait(for:[tall],timeout:5),.completed)
+        app.buttons["modelOption-another-reasoning"].tap()
+        XCTAssertTrue(model.waitForExistence(timeout:3)); XCTAssertTrue(model.label.contains("another-reasoning"))
+        model.tap()
+        let custom = app.textFields["customModelID"]
+        app.buttons["customModelShortcut"].tap()
+        XCTAssertTrue(custom.waitForExistence(timeout:3)); custom.tap()
+        custom.typeText(String(repeating:XCUIKeyboardKey.delete.rawValue,count:"another-reasoning".count)+"private/model-id")
+        reveal(app.buttons["applyCustomModelID"],in:app.collectionViews["modelNameList"])
+        app.buttons["applyCustomModelID"].tap()
+        XCTAssertTrue(model.waitForExistence(timeout:3)); XCTAssertTrue(model.label.contains("private/model-id"))
+    }
+    func testModelSearchFailureCanRetryWithoutChangingSelection() {
+        let app = openDefaultEditor(extraArguments:["--synthetic-model-search-retry"])
+        let model = app.descendants(matching:.any)["preset-chat-model"].firstMatch
+        model.tap()
+        XCTAssertTrue(app.staticTexts["modelSearchFailure"].waitForExistence(timeout:5))
+        app.buttons["retryModels"].tap()
+        XCTAssertTrue(app.buttons["modelOption-utility-model"].waitForExistence(timeout:5))
+        app.buttons["modelOption-utility-model"].tap()
+        XCTAssertTrue(model.waitForExistence(timeout:3)); XCTAssertTrue(model.label.contains("utility-model"))
+    }
+    private func openDefaultEditor(extraArguments:[String] = []) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-http-preview","--synthetic-chat-selection","--persistence-test-id",UUID().uuidString]+extraArguments
+        app.launch()
+        XCTAssertTrue(app.buttons["chat-alpha"].waitForExistence(timeout:8)); app.buttons["chat-alpha"].tap(); app.waitForConversation()
+        app.buttons["modelPresetPicker"].tap()
+        XCTAssertTrue(app.buttons["editModelPresets"].waitForExistence(timeout:5)); app.buttons["editModelPresets"].tap()
+        XCTAssertTrue(app.buttons["editPreset-Default"].waitForExistence(timeout:5)); app.buttons["editPreset-Default"].tap()
+        reveal(app.descendants(matching:.any)["preset-chat-model"].firstMatch,in:app.collectionViews["modelPresetFields"])
+        XCTAssertTrue(app.descendants(matching:.any)["preset-chat-model"].firstMatch.waitForExistence(timeout:5))
+        return app
+    }
     private func reveal(_ element:XCUIElement,in container:XCUIElement) {
         for _ in 0..<16 {
             if element.exists && element.isHittable && element.frame.midY < container.frame.maxY - 12 && element.frame.midY > container.frame.minY + 8 { return }
@@ -39,6 +96,6 @@ import XCTest
         }
     }
     private func capture(_ app:XCUIApplication,_ name:String) {
-        let shot = XCTAttachment(screenshot:app.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot)
+        let shot = XCTAttachment(screenshot:XCUIScreen.main.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot)
     }
 }

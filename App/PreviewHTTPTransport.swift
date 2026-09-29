@@ -18,6 +18,7 @@ actor PreviewHTTPTransport: HTTPTransport {
     ]
     private var presetOverrides: [String:String] = [:]
     private var globalPreset = "Default"
+    private var modelSearchRequests = 0
     private var projectDocuments: [String: [String: Any]] = [
         "research": ["name":"research", "title":"Research", "description":"Sources and discoveries", "color":"#06d6a0", "instructions":"Compare primary sources.", "mcp_servers":"", "variables":"", "secrets":"", "include_agents_md":true, "instruction_files_count":2, "knowledge_files_count":3, "plugin_fixture":["preserve":true]],
         "workshop": ["name":"workshop", "title":"Workshop", "description":"Build and experiment", "color":"#8338ec", "instructions":"", "mcp_servers":"", "variables":"", "secrets":""]
@@ -57,6 +58,18 @@ actor PreviewHTTPTransport: HTTPTransport {
         case "/api/plugins/_context_window/context_window":
             data = ["tokens":37500,"context_window":200000,"usage":["messages":2200,"system_tools":8100,"skills":680,"mcp_tools":24500,"system_prompt":1782,"extras":238],"provider_usage":["input_tokens":31700,"cached_tokens":29164,"output_tokens":1200]]
         case "/api/ctx_window_get": data = ["content":"Synthetic active context", "tokens":12]
+        case "/api/plugins/_model_config/model_config_get":
+            data = ["chat_providers":[["value":"fixture","label":"Fixture Provider"],["value":"another","label":"Another Provider"]],
+                    "embedding_providers":[["value":"fixture","label":"Fixture Embeddings"],["value":"embedding-only","label":"Embedding Only"]]]
+        case "/api/plugins/_model_config/model_search":
+            modelSearchRequests += 1
+            if ProcessInfo.processInfo.arguments.contains("--synthetic-model-search-retry"),modelSearchRequests == 1 {
+                return HTTPResponse(data:Data(),status:503)
+            }
+            let provider = payload["provider"] as? String ?? ""
+            let embedding = payload["model_type"] as? String == "embedding"
+            let models = embedding ? ["embedding-model","embedding-large"] : provider == "another" ? ["another-fast","another-reasoning"] + (0..<320).map { "another-zz-\($0)" } : ["main-model","utility-model","focused-model"]
+            data = ["provider":provider,"models":models,"source":"fixture","error":""]
         case "/api/plugins/_model_config/model_presets":
             switch payload["action"] as? String {
             case "save":

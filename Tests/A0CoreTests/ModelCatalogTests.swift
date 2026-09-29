@@ -36,4 +36,27 @@ import Testing
         let request = try #require(await transport.requests.last)
         #expect(try JSONDecoder().decode([String:JSONValue].self,from:request.httpBody!)["model_type"] == .string("embedding"))
     }
+    @Test func rejectsMalformedOrUnboundedCatalogs() throws {
+        for raw in [
+            #"{"chat_providers":[{"value":"x","label":"X"},{"value":"x","label":"Again"}],"embedding_providers":[]}"#,
+            #"{"chat_providers":[{"value":"","label":"X"}],"embedding_providers":[]}"#
+        ] {
+            #expect(throws:ClientError.incompatiblePayload) { try ModelProviderCatalog.decode(Data(raw.utf8)) }
+        }
+        #expect(throws:ClientError.incompatiblePayload) { try ModelProviderCatalog.decode(Data(repeating:32,count:2_097_153)) }
+        #expect(throws:ClientError.incompatiblePayload) { try ModelSearchResult.decode(Data(#"{"provider":"x","models":[""]}"#.utf8),provider:"x") }
+        let many = try JSONEncoder().encode(["provider":JSONValue.string("x"),"models":.array(Array(repeating:.string("x"),count:20_001))])
+        #expect(throws:ClientError.incompatiblePayload) { try ModelSearchResult.decode(many,provider:"x") }
+    }
+    @Test func catalogAuthenticationFailuresInvalidateSession() async throws {
+        for status in [401,403,302] {
+            let transport = ScriptTransport(loginResponses()+[HTTPResponse(data:Data(),status:status,headers:["Location":"/login"])])
+            let client = APIClient(origin:try ServerOrigin("https://server.test"),transport:transport)
+            try await client.connect(username:"fixture",password:"fixture")
+            await #expect(throws: status == 403 ? ClientError.csrfRejected : ClientError.requiresLogin) { try await client.modelProviderCatalog() }
+            await #expect(throws:ClientError.requiresLogin) { try await client.searchModels(provider:"x",slot:.chat,apiBase:"") }
+            #expect(await transport.requests.count == loginResponses().count + 1)
+        }
+    }
+
 }

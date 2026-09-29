@@ -52,8 +52,13 @@ import XCTest
         capture(app,"Grouped agent activity")
         group.tap()
         XCTAssertTrue(app.buttons["expandMessage-1"].waitForExistence(timeout:5))
+        XCTAssertFalse(app.buttons["copyMessage-1"].exists, "Routine timeline rows keep secondary actions hidden")
         app.buttons["expandMessage-1"].tap()
         XCTAssertTrue(app.staticTexts["Synthetic tool result"].waitForExistence(timeout:5))
+        XCTAssertTrue(app.buttons["copyMessage-1"].exists)
+        app.buttons["collapseMessage-1"].tap()
+        XCTAssertFalse(app.buttons["copyMessage-1"].exists)
+        XCTAssertTrue(app.staticTexts["Here is the answer."].exists)
         group.tap()
         XCTAssertFalse(app.buttons["collapseMessage-1"].exists)
     }
@@ -107,14 +112,19 @@ import XCTest
         XCTAssertTrue(app.staticTexts["A0: Responding"].waitForExistence(timeout:8))
         XCTAssertFalse(app.staticTexts.matching(NSPredicate(format:"label CONTAINS %@", "icon://")).firstMatch.exists)
         XCTAssertTrue(app.staticTexts["Search web"].exists)
+        XCTAssertEqual(app.staticTexts.matching(identifier:"Search web").count, 1, "Collapsed activity shows only its latest meaningful step")
+        XCTAssertTrue(app.staticTexts["Agent 0"].exists)
         capture(app,"Tool summary")
+        captureLandscape(app,"Tool summary landscape")
         app.buttons["activityGroup-0"].tap()
         XCTAssertTrue(app.buttons["expandMessage-0"].waitForExistence(timeout:3))
+        XCTAssertFalse(app.buttons["rawEvent-0"].exists)
         app.buttons["expandMessage-0"].tap()
         XCTAssertFalse(app.staticTexts.matching(NSPredicate(format:"label BEGINSWITH %@", "{\"tool_name\"")).firstMatch.exists)
         app.buttons["Details"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["Query"].waitForExistence(timeout:3))
         capture(app,"Tool details")
+        captureLandscape(app,"Tool details landscape")
     }
     func testReadingSettingsApplyAndChangingServerKeepsDraft() {
         let app = XCUIApplication()
@@ -174,8 +184,17 @@ import XCTest
         XCTAssertFalse(app.buttons["activityGroup-0"].exists)
         XCTAssertTrue(app.staticTexts["A0: Responding"].exists)
     }
+    private func captureLandscape(_ app:XCUIApplication,_ name:String) {
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let wide = XCTNSPredicateExpectation(predicate:NSPredicate { _,_ in app.frame.width > app.frame.height },object:nil)
+        XCTAssertEqual(XCTWaiter.wait(for:[wide],timeout:5),.completed)
+        capture(app,name)
+        XCUIDevice.shared.orientation = .portrait
+        let tall = XCTNSPredicateExpectation(predicate:NSPredicate { _,_ in app.frame.height > app.frame.width },object:nil)
+        XCTAssertEqual(XCTWaiter.wait(for:[tall],timeout:5),.completed)
+    }
     private func capture(_ app: XCUIApplication,_ name: String) {
-        let shot = XCTAttachment(screenshot:app.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot)
+        let shot = XCTAttachment(screenshot:XCUIScreen.main.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot)
     }
     func testRichMessageCanExpandCollapseAndCopy() {
         let app = XCUIApplication()

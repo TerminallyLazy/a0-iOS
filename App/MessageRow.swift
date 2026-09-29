@@ -128,7 +128,7 @@ struct ActivityGroupView: View {
     let onExpand: () -> Void
     @State private var expanded = false
     private var agents: [AgentActivitySummary] { AgentActivitySummary.make(group.entries) }
-    private var preview: [LogEntry] { Array(group.entries.filter { $0.type != "util" }.suffix(2)) }
+    private var preview: LogEntry? { group.entries.last(where: { $0.type != "util" }) ?? group.entries.last }
     var body: some View {
         VStack(alignment:.leading,spacing:12) {
             Button {
@@ -139,31 +139,25 @@ struct ActivityGroupView: View {
                     Image(systemName:"point.3.connected.trianglepath.dotted").foregroundStyle(Color.a0Supporting)
                     Text("Agent activity").font(.subheadline.weight(.semibold))
                     Spacer(minLength:4)
-                    Text("\(group.entries.count)").font(.caption.monospacedDigit()).foregroundStyle(Color.a0Supporting)
+                    Text("\(group.entries.count) steps").font(.caption.monospacedDigit()).foregroundStyle(Color.a0Supporting)
                     Image(systemName:expanded ? "chevron.up" : "chevron.down").font(.caption.weight(.semibold))
                 }.frame(minHeight:44).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("activityGroup-\(group.id)")
                 .accessibilityValue("\(group.entries.count) recorded steps, \(expanded ? "expanded" : "collapsed")")
-            if !expanded {
-                let steps = preview.isEmpty ? Array(group.entries.suffix(1)) : preview
-                ForEach(steps,id:\.no) { entry in
-                    let step = ActivityPresentation(entry)
-                    HStack(alignment:.top,spacing:12) {
-                        Image(systemName:step.symbol).font(.system(size:18)).foregroundStyle(Color.a0Supporting).frame(width:28, height:24)
-                        VStack(alignment:.leading,spacing:4) {
-                            Text(step.title).font(.subheadline.weight(.medium))
-                            if let agent = step.agentLabel { Text(agent).font(.caption).foregroundStyle(Color.a0Supporting) }
-                            if step.summary != "Expand to inspect this step" {
-                                Text(step.summary).font(.caption).foregroundStyle(Color.a0Supporting).lineLimit(2)
-                            }
-                        }.frame(maxWidth:.infinity,alignment:.leading)
-                    }.padding(.bottom,4)
-                }
-                if agents.count > 1 {
-                    Label(agents.map { "A\($0.agentNumber)" }.joined(separator:" · "),systemImage:"person.2")
-                        .font(.caption).foregroundStyle(Color.a0Supporting)
-                        .accessibilityLabel("Recorded agents: " + agents.map { "Agent \($0.agentNumber)" }.joined(separator:", "))
-                }
+            if !expanded, let entry = preview {
+                let step = ActivityPresentation(entry)
+                VStack(alignment:.leading,spacing:6) {
+                    Text("Latest recorded step").font(.caption).foregroundStyle(Color.a0Supporting)
+                    ActivityStepHeading(presentation:step)
+                    if step.summary != "Expand to inspect this step" {
+                        Text(step.summary).font(.caption).foregroundStyle(Color.a0Supporting).lineLimit(2)
+                    }
+                    if agents.count > 1 {
+                        Label(agents.map { "A\($0.agentNumber)" }.joined(separator:" · "),systemImage:"person.2")
+                            .font(.caption).foregroundStyle(Color.a0Supporting)
+                            .accessibilityLabel("Recorded agents: " + agents.map { "Agent \($0.agentNumber)" }.joined(separator:", "))
+                    }
+                }.padding(.bottom,8)
             }
             if !expanded, let browserMedia {
                 let captures = group.entries.compactMap { entry in BrowserScreenshot.extract(entry,context:browserMedia.context).map { (id:String(entry.no) + "|" + $0.id,screenshot:$0) } }
@@ -177,18 +171,140 @@ struct ActivityGroupView: View {
                 }
             }
             if expanded {
-                ForEach(group.entries,id:\.no) { entry in
-                    HStack(alignment:.top,spacing:12) {
-                        VStack(spacing:0) {
-                            Circle().fill(Color.a0Supporting).frame(width:5,height:5).padding(.top,20)
-                            Rectangle().fill(Color.a0Supporting.opacity(0.25)).frame(width:1)
-                        }.frame(width:8).accessibilityHidden(true)
-                        MessageRow(entry:entry,browserMedia:browserMedia,onExpand:onExpand,embedded:true).padding(.bottom,12)
+                VStack(spacing:0) {
+                    ForEach(group.entries,id:\.no) { entry in
+                        ActivityTimelineRow(entry:entry,browserMedia:browserMedia,
+                                            continues:entry.no != group.entries.last?.no,onExpand:onExpand)
                     }
                 }
             }
         }.padding(.horizontal,16).padding(.vertical,8)
             .background(Color("A0Panel"),in:RoundedRectangle(cornerRadius:16))
+    }
+}
+
+/// A compact entry keeps tool arguments out of the reading path until requested.
+private struct ActivityTimelineRow: View {
+    let entry: LogEntry
+    var browserMedia: BrowserMediaScope?
+    var continues = false
+    var onExpand: () -> Void = {}
+    @ScaledMetric(relativeTo:.subheadline) private var iconWidth:CGFloat = 26
+    @ScaledMetric(relativeTo:.subheadline) private var iconHeight:CGFloat = 44
+    @State private var expanded = false
+    @State private var copied = false
+    @State private var pendingLink: URL?
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        let step = ActivityPresentation(entry)
+        HStack(alignment:.top,spacing:10) {
+            Image(systemName:step.symbol)
+                .font(.subheadline).foregroundStyle(Color.a0Supporting)
+                .frame(width:iconWidth,height:iconHeight).accessibilityHidden(true)
+            VStack(alignment:.leading,spacing:0) {
+                Button {
+                    if !expanded { onExpand() }
+                    expanded.toggle()
+                } label: {
+                    HStack(alignment:.top,spacing:8) {
+                        VStack(alignment:.leading,spacing:5) {
+                            ActivityStepHeading(presentation:step,showsSymbol:false)
+                            if !expanded, step.summary != "Expand to inspect this step" {
+                                Text(step.summary).font(.caption).foregroundStyle(Color.a0Supporting).lineLimit(1)
+                            }
+                        }.frame(maxWidth:.infinity,alignment:.leading)
+                        Image(systemName:expanded ? "chevron.up" : "chevron.down")
+                            .font(.caption2.weight(.semibold)).foregroundStyle(Color.a0Supporting).padding(.top,3)
+                    }.padding(.vertical,12).frame(minHeight:44).contentShape(Rectangle())
+                }.buttonStyle(.plain)
+                    .accessibilityIdentifier("\(expanded ? "collapseMessage" : "expandMessage")-\(entry.no)")
+                    .accessibilityValue(expanded ? "Expanded" : "Collapsed")
+                    .accessibilityHint(expanded ? "Hide step details" : "Show step details")
+                if let browserMedia, let screenshot = BrowserScreenshot.extract(entry,context:browserMedia.context) {
+                    BrowserScreenshotView(screenshot:screenshot,scope:browserMedia,onOpen:onExpand).padding(.bottom,12)
+                }
+                if expanded {
+                    VStack(alignment:.leading,spacing:12) {
+                        if !step.subtitle.isEmpty && (step.agentLabel == nil || !step.subtitle.contains(" · ")) {
+                            InlineMarkdown(source:step.subtitle).font(.caption).foregroundStyle(Color.a0Supporting)
+                        }
+                        if !step.isStructuredContent { MarkdownView(source:entry.content ?? "") }
+                        if !step.fields.isEmpty {
+                            DisclosureGroup {
+                                VStack(alignment:.leading,spacing:12) {
+                                    ForEach(step.fields.keys.sorted(),id:\.self) { key in
+                                        let heading = LogHeading(key)
+                                        VStack(alignment:.leading,spacing:4) {
+                                            Label(heading.text.isEmpty ? "Detail" : heading.text.replacingOccurrences(of:"_",with:" ").capitalized,
+                                                  systemImage:heading.symbol ?? "text.alignleft")
+                                                .font(.caption.weight(.semibold)).foregroundStyle(Color.a0Supporting)
+                                            Text(step.fields[key]?.displayText ?? "")
+                                                .font(.system(.callout,design:.monospaced)).textSelection(.enabled)
+                                        }.frame(maxWidth:.infinity,alignment:.leading)
+                                    }
+                                }.padding(.vertical,8)
+                            } label: { Text("Details").frame(minHeight:44).contentShape(Rectangle()) }.font(.subheadline)
+                        }
+                        if step.isStructuredContent {
+                            DisclosureGroup {
+                                ScrollView(.horizontal) {
+                                    Text(verbatim:entry.content ?? "").font(.system(.caption,design:.monospaced)).textSelection(.enabled)
+                                }
+                            } label: { Text("Raw event").frame(minHeight:44).contentShape(Rectangle()) }.font(.subheadline).accessibilityIdentifier("rawEvent-\(entry.no)")
+                        }
+                        Button {
+                            UIPasteboard.general.string = entry.content ?? ""; copied = true
+                        } label: {
+                            Label(copied ? "Copied" : "Copy step",systemImage:copied ? "checkmark" : "doc.on.doc")
+                                .font(.caption).frame(minHeight:44)
+                        }.foregroundStyle(Color.a0Supporting).accessibilityIdentifier("copyMessage-\(entry.no)")
+                    }.padding(.bottom,12)
+                }
+            }
+        }
+        .background(alignment:.topLeading) {
+            if continues {
+                Rectangle().fill(Color.a0Supporting.opacity(0.2)).frame(width:1)
+                    .padding(.top,iconHeight - 6).padding(.leading,iconWidth / 2).accessibilityHidden(true)
+            }
+        }
+        .environment(\.openURL,OpenURLAction { url in
+            guard let safe = MessagePresentation.externalURL(url.absoluteString) else { return .discarded }
+            pendingLink = safe; return .handled
+        })
+        .alert("Open external link?",isPresented:Binding(get:{ pendingLink != nil },set:{ if !$0 { pendingLink = nil } })) {
+            Button("Open in browser") { if let url = pendingLink { openURL(url) }; pendingLink = nil }
+            Button("Cancel",role:.cancel) { pendingLink = nil }
+        } message: { Text(pendingLink?.host ?? "") }
+    }
+}
+
+private struct ActivityStepHeading: View {
+    let presentation: ActivityPresentation
+    var showsSymbol = true
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        HStack(alignment:.firstTextBaseline,spacing:8) {
+            if showsSymbol {
+                Image(systemName:presentation.symbol).foregroundStyle(Color.a0Supporting).accessibilityHidden(true)
+            }
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment:.leading,spacing:4) { title; agent }
+            } else {
+                ViewThatFits(in:.horizontal) {
+                    HStack(alignment:.firstTextBaseline,spacing:8) { title; agent }
+                    VStack(alignment:.leading,spacing:4) { title; agent }
+                }
+            }
+        }
+    }
+    private var title: some View { Text(presentation.title).font(.subheadline.weight(.medium)) }
+    @ViewBuilder private var agent: some View {
+        if let label = presentation.agentLabel {
+            Text(label).font(.caption).foregroundStyle(Color.a0Supporting)
+        }
     }
 }
 
@@ -211,12 +327,16 @@ struct AgentActivitySheet: View {
                             let step = ActivityPresentation(agent.latest)
                             DisclosureGroup(isExpanded:Binding(get:{ selectedAgent == agent.agentNumber },set:{ selectedAgent = $0 ? agent.agentNumber : nil })) {
                                 ForEach(logs.filter { ActivityPresentation.agentNumber(for:$0) == agent.agentNumber },id:\.no) { entry in
-                                    MessageRow(entry:entry,browserMedia:browserMedia,embedded:true).padding(.vertical,8)
+                                    if MessagePresentation.isActivity(entry.type) {
+                                        ActivityTimelineRow(entry:entry,browserMedia:browserMedia)
+                                    } else {
+                                        MessageRow(entry:entry,browserMedia:browserMedia,embedded:true).padding(.vertical,8)
+                                    }
                                     Divider()
                                 }
                             } label: {
                                 HStack(alignment:.top,spacing:12) {
-                                    Image(systemName:agent.agentNumber == 0 ? "person.crop.circle" : "person.crop.circle").foregroundStyle(Color.a0Supporting)
+                                    Image(systemName:agent.agentNumber == 0 ? "person.crop.circle" : "person.2").foregroundStyle(Color.a0Supporting)
                                     VStack(alignment:.leading,spacing:5) {
                                         Text(agent.agentNumber == 0 ? "Agent Zero" : "Agent \(agent.agentNumber)").font(.headline)
                                         Label(step.title,systemImage:step.symbol).font(.subheadline)

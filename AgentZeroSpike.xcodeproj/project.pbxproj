@@ -18,6 +18,7 @@
 		313EC56F5590EBA9FD496415 /* GeneratedReplyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742B68126089A57449DA15EA /* GeneratedReplyView.swift */; };
 		351CCF714D1B1679EF498820 /* ComposerMediaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5050405858249708B8911888 /* ComposerMediaUITests.swift */; };
 		39AE7F349A88BF29A2010254 /* BrowserScreenshotUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 289648C762E3CB8363C2580B /* BrowserScreenshotUITests.swift */; };
+		3B65EC115B486CBFB5EE2ED7 /* ModelNamePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90B6911B75FE2F89A7F371B7 /* ModelNamePicker.swift */; };
 		40DE6CF3D296D268F7A903C5 /* QRCodeScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF5A020E44ABA1290753CB2 /* QRCodeScanner.swift */; };
 		425C0FF718A7CCC81765DF38 /* A0GenerativeUI in Frameworks */ = {isa = PBXBuildFile; productRef = D8FBD81D10585A0370050C5E /* A0GenerativeUI */; };
 		42DFD2F72E791B5348304F09 /* PreviewRealtimeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77C5DA3B951583B94B3AC0AD /* PreviewRealtimeClient.swift */; };
@@ -134,6 +135,7 @@
 		8B32781853D12E9EB2B69DE8 /* LaunchSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchSplashView.swift; sourceTree = "<group>"; };
 		8E990717369D329D55D03F76 /* ConversationDrawer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationDrawer.swift; sourceTree = "<group>"; };
 		907D505991E5ACDCA912C697 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		90B6911B75FE2F89A7F371B7 /* ModelNamePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelNamePicker.swift; sourceTree = "<group>"; };
 		919DA4BCC7DF8FC468B83E7A /* QRImportUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRImportUITests.swift; sourceTree = "<group>"; };
 		92E24FFD80863FAB60FCE2F4 /* BrowserScreenshotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserScreenshotView.swift; sourceTree = "<group>"; };
 		9B639B827D677F1DA970FEB3 /* ControlReceipts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlReceipts.swift; sourceTree = "<group>"; };
@@ -229,6 +231,7 @@
 				8B32781853D12E9EB2B69DE8 /* LaunchSplashView.swift */,
 				70D18329C86C269CF39733C9 /* MarkdownView.swift */,
 				704691DB459DD374BC6E1A17 /* MessageRow.swift */,
+				90B6911B75FE2F89A7F371B7 /* ModelNamePicker.swift */,
 				496E7D1B45C7273562D24C62 /* ModelPresetEditor.swift */,
 				FB8F8C77A1672A8224DAEC52 /* ModelPresetPicker.swift */,
 				01A827EB5EA8BD4B863682DD /* ModelPresetWorkspace.swift */,
@@ -493,6 +496,7 @@
 				C0AF02F7AC2004B0B8C887A4 /* LaunchSplashView.swift in Sources */,
 				07A9C7776BE729391BB38678 /* MarkdownView.swift in Sources */,
 				B0C547F682CEB01BA138B75E /* MessageRow.swift in Sources */,
+				3B65EC115B486CBFB5EE2ED7 /* ModelNamePicker.swift in Sources */,
 				5C9F9109F54710718C287AD4 /* ModelPresetEditor.swift in Sources */,
 				DD9FEA51D249F4591C1CC66C /* ModelPresetPicker.swift in Sources */,
 				A51EA3DBA859AF774F8288FC /* ModelPresetWorkspace.swift in Sources */,

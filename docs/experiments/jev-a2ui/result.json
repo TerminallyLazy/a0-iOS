@@ -1,0 +1,85 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "explanation": {
+      "choice": "Markdown",
+      "confidence": 1,
+      "probabilities": {
+        "Chart": 0,
+        "Dashboard": 0,
+        "Forecast": 0,
+        "ImageCarousel": 0,
+        "Markdown": 1
+      },
+      "type": "choice"
+    },
+    "forecast": {
+      "choice": "Forecast",
+      "confidence": 1,
+      "probabilities": {
+        "Chart": 0,
+        "Dashboard": 0,
+        "Forecast": 1,
+        "ImageCarousel": 0,
+        "Markdown": 0
+      },
+      "type": "choice"
+    },
+    "images": {
+      "choice": "ImageCarousel",
+      "confidence": 1,
+      "probabilities": {
+        "Chart": 0,
+        "Dashboard": 0,
+        "Forecast": 0,
+        "ImageCarousel": 1,
+        "Markdown": 0
+      },
+      "type": "choice"
+    },
+    "missing_evidence": {
+      "choice": "Markdown",
+      "confidence": 1,
+      "probabilities": {
+        "Chart": 0,
+        "Dashboard": 0,
+        "Forecast": 0,
+        "ImageCarousel": 0,
+        "Markdown": 1
+      },
+      "type": "choice"
+    },
+    "overview": {
+      "choice": "Dashboard",
+      "confidence": 0.94,
+      "probabilities": {
+        "Chart": 0.01,
+        "Dashboard": 0.96,
+        "Forecast": 0.01,
+        "ImageCarousel": 0,
+        "Markdown": 0.02
+      },
+      "type": "choice"
+    },
+    "trend": {
+      "choice": "Chart",
+      "confidence": 1,
+      "probabilities": {
+        "Chart": 1,
+        "Dashboard": 0,
+        "Forecast": 0,
+        "ImageCarousel": 0,
+        "Markdown": 0
+      },
+      "type": "choice"
+    }
+  },
+  "usage": {
+    "input_tokens": 1726,
+    "output_tokens": 323
+  },
+  "elapsedSeconds": 0.48,
+  "testedAt": "2026-09-28",
+  "cliRevision": "d5d2280c01a33b08888958bbeb866ae7ca50f883",
+  "scope": "One synthetic six-question evaluation. No production routing or live chat data."
+}

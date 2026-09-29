@@ -12,6 +12,10 @@ struct ModelPresetEditor:View {
     let workspace:ModelPresetWorkspace
     private let baseline:[ModelPresetDocument]
     @State private var drafts:[PresetDraft]
+    @State private var catalog:ModelProviderCatalog?
+    @State private var catalogLoading = false
+    @State private var catalogFailed = false
+    @State private var catalogReload = 0
     @State private var deletion:UUID?
     @State private var confirmsDelete = false
     @State private var confirmsReset = false
@@ -32,7 +36,7 @@ struct ModelPresetEditor:View {
                 Section("Presets") {
                     ForEach($drafts) { $draft in
                         NavigationLink {
-                            ModelPresetFields(document:$draft.document,isDefault:draft.originalName == "Default")
+                            ModelPresetFields(document:$draft.document,isDefault:draft.originalName == "Default",model:model,catalog:catalog,catalogLoading:catalogLoading,catalogFailed:catalogFailed,reloadCatalog:{ catalogReload += 1 })
                         } label: {
                             ModelPresetSummary(preset:draft.document,defaultPreset:drafts.first(where:{$0.document.name == "Default"})?.document)
                                 .padding(.vertical,8)
@@ -75,9 +79,23 @@ struct ModelPresetEditor:View {
             .confirmationDialog("Open provider settings in your browser?",isPresented:$confirmsWeb,titleVisibility:.visible) {
                 Button("Open WebUI") { if let url = URL(string:model.origin),url.scheme == "https" { openURL(url) } }
             } message: { Text("\(model.origin)\nOpen Settings → Models to manage provider keys and connections.") }
-            .onChange(of:scenePhase) { _,phase in if phase == .background { drafts = []; dismiss() } }
-            .onChange(of:model.connectionGeneration) { _,_ in drafts = []; dismiss() }
-            .onChange(of:model.chat?.selectedContext) { _,_ in drafts = []; dismiss() }
+            .onChange(of:scenePhase) { _,phase in if phase == .background { drafts = []; catalog = nil; dismiss() } }
+            .onChange(of:model.connectionGeneration) { _,_ in drafts = []; catalog = nil; dismiss() }
+            .onChange(of:model.chat?.selectedContext) { _,_ in drafts = []; catalog = nil; dismiss() }
+        }
+        .task(id:catalogReload) { await loadCatalog() }
+    }
+    private func loadCatalog() async {
+        let generation = model.connectionGeneration, context = model.chat?.selectedContext
+        guard let client = model.controlClient,model.canSubmit else { catalogFailed = true; return }
+        catalogLoading = true; catalogFailed = false
+        do {
+            let result = try await client.modelProviderCatalog()
+            guard !Task.isCancelled,generation == model.connectionGeneration,context == model.chat?.selectedContext,scenePhase != .background else { return }
+            catalog = result; catalogLoading = false
+        } catch {
+            guard !Task.isCancelled,generation == model.connectionGeneration,context == model.chat?.selectedContext,scenePhase != .background else { return }
+            catalogLoading = false; catalogFailed = true
         }
     }
     private var validNames:Bool {
@@ -115,6 +133,11 @@ struct ModelPresetEditor:View {
 private struct ModelPresetFields:View {
     @Binding var document:ModelPresetDocument
     let isDefault:Bool
+    let model:SpikeModel
+    let catalog:ModelProviderCatalog?
+    let catalogLoading:Bool
+    let catalogFailed:Bool
+    let reloadCatalog:() -> Void
     @FocusState private var focused:Bool
     var body:some View {
         Form {
@@ -122,11 +145,19 @@ private struct ModelPresetFields:View {
                 TextField("Preset name",text:$document.name).disabled(isDefault).focused($focused).accessibilityIdentifier("modelPresetName")
                 if isDefault { Text("Default supplies the inherited Main, Utility and Embed settings.").font(.footnote).foregroundStyle(Color.a0Supporting) }
             }
-            ModelSlotFields(document:$document,slot:.chat,title:"Main",isDefault:isDefault)
-            ModelSlotFields(document:$document,slot:.vision,title:"Separate Vision",isDefault:false)
-            ModelSlotFields(document:$document,slot:.utility,title:"Utility",isDefault:isDefault)
-            ModelSlotFields(document:$document,slot:.embedding,title:"Embed",isDefault:isDefault)
+            if catalogLoading { ProgressView("Loading providers…") }
+            if catalogFailed {
+                Section {
+                    Text("Providers could not be loaded from Agent Zero. Your existing selections are unchanged.").font(.callout).foregroundStyle(Color.a0Supporting)
+                    Button("Retry providers",systemImage:"arrow.clockwise",action:reloadCatalog)
+                }
+            }
+            ModelSlotFields(document:$document,slot:.chat,title:"Main",isDefault:isDefault,model:model,catalog:catalog)
+            ModelSlotFields(document:$document,slot:.vision,title:"Separate Vision",isDefault:false,model:model,catalog:catalog)
+            ModelSlotFields(document:$document,slot:.utility,title:"Utility",isDefault:isDefault,model:model,catalog:catalog)
+            ModelSlotFields(document:$document,slot:.embedding,title:"Embed",isDefault:isDefault,model:model,catalog:catalog)
         }
+        .accessibilityIdentifier("modelPresetFields")
         .navigationTitle(document.name).navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.interactively)
         .toolbar { ToolbarItemGroup(placement:.keyboard) { Spacer(); Button("Hide keyboard",systemImage:"keyboard.chevron.compact.down") { focused = false; UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),to:nil,from:nil,for:nil) }.labelStyle(.iconOnly) } }
@@ -138,6 +169,8 @@ private struct ModelSlotFields:View {
     let slot:ModelSlot
     let title:String
     let isDefault:Bool
+    let model:SpikeModel
+    let catalog:ModelProviderCatalog?
     @State private var parameters = false
     private var key:String { String(describing:slot) }
     private var values:[String:JSONValue] { document.slot(slot) }
@@ -147,8 +180,21 @@ private struct ModelSlotFields:View {
                 Toggle(slot == .vision ? "Use separate Vision model" : "Customize \(title) model",isOn:enabled)
             }
             if isDefault || !values.isEmpty {
-                LabeledContent("Provider") { TextField("Provider ID",text:provider).multilineTextAlignment(.trailing).textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("preset-\(key)-provider") }
-                LabeledContent("Model") { TextField("Model ID",text:text("name")).multilineTextAlignment(.trailing).textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("preset-\(key)-model") }
+                Picker("Provider",selection:provider) {
+                    Text("Choose provider").tag("")
+                    if !provider.wrappedValue.isEmpty,!providers.contains(where: { $0.id == provider.wrappedValue }) {
+                        Text(provider.wrappedValue).tag(provider.wrappedValue)
+                    }
+                    ForEach(providers) { item in Text(item.label).tag(item.id) }
+                }.pickerStyle(.navigationLink).disabled(catalog == nil).accessibilityIdentifier("preset-\(key)-provider")
+                NavigationLink {
+                    ModelNamePicker(model:model,slot:slot,provider:searchProvider,apiBase:searchAPIBase,selection:text("name"))
+                } label: {
+                    LabeledContent("Model") {
+                        Text(values["name"]?.string.flatMap { $0.isEmpty ? nil : $0 } ?? "Choose model")
+                            .foregroundStyle(Color.a0Supporting).multilineTextAlignment(.trailing).lineLimit(2)
+                    }
+                }.accessibilityIdentifier("preset-\(key)-model")
                 if slot == .chat { Toggle("Supports vision",isOn:flag("vision")) }
                 if slot == .vision { Toggle("Override Main’s native vision",isOn:flag("override_main")) }
                 if slot == .chat || slot == .utility { number("Context window",key:"ctx_length",fallback:128000) }
@@ -176,6 +222,15 @@ private struct ModelSlotFields:View {
             if slot == .vision && !values.isEmpty { Text("Main’s native vision takes precedence unless override is enabled. Vision call limits live in this preset.") }
         }
         .sheet(isPresented:$parameters) { ModelParametersEditor(values:Binding(get:{ values["kwargs"] ?? .object([:]) },set:{ set("kwargs",$0) })) }
+    }
+    private var providers:[ModelProvider] { catalog?.providers(for:slot) ?? [] }
+    private var searchProvider:String {
+        let own = values["provider"]?.string ?? ""
+        return slot == .utility && own.isEmpty ? document.slot(.chat)["provider"]?.string ?? "" : own
+    }
+    private var searchAPIBase:String {
+        let own = values["api_base"]?.string ?? ""
+        return slot == .utility && own.isEmpty ? document.slot(.chat)["api_base"]?.string ?? "" : own
     }
     private var enabled:Binding<Bool> {
         Binding(get:{ !values.isEmpty },set:{ value in

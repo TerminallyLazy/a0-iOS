@@ -51,6 +51,7 @@ struct ConversationView: View {
                             ForEach(TranscriptGroup.make(model.state.logs)) { group in
                                 if groupActivity && group.isActivity && group.entries.count > 1 {
                                     ActivityGroupView(group:group,browserMedia:BrowserMediaScope(model:model)) { follow.beginReading() }
+                                        .id("\(model.state.logGUID ?? "pending")-activity-\(group.id)")
                                 } else {
                                     ForEach(group.entries,id:\.no) { entry in
                                         MessageRow(entry:entry,browserMedia:BrowserMediaScope(model:model),onExpand:{ follow.beginReading() },onGeneratedDraft:{ text in

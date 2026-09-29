@@ -1,0 +1,99 @@
+{
+  "state": {
+    "purpose": "Synthetic native A2UI presentation evaluation. No real user, weather, images or conversation data.",
+    "cases": {
+      "forecast": {
+        "request": "Show the three-day forecast for Example City.",
+        "availableData": "Verified weather observations and three daily high/low records, units, update time and public source URL are present."
+      },
+      "images": {
+        "request": "Show a carousel of street-art images.",
+        "availableData": "Five direct public HTTPS raster image URLs, descriptive captions and original source page URLs are present."
+      },
+      "trend": {
+        "request": "Graph the monthly counts.",
+        "availableData": "Twelve labeled numeric observations and units are present."
+      },
+      "overview": {
+        "request": "Give me an overview of weather and the monthly trend together.",
+        "availableData": "A verified forecast candidate and a separate verified numeric chart candidate are present."
+      },
+      "explanation": {
+        "request": "Explain why the sky looks blue.",
+        "availableData": "Explanatory prose only; no measurements or image URLs."
+      },
+      "missing_evidence": {
+        "request": "Show the forecast and some images.",
+        "availableData": "No retrieved weather measurements, no direct image URLs, and no source links. Only the user request is available."
+      }
+    }
+  },
+  "questions": {
+    "forecast": {
+      "type": "choice",
+      "instructions": "For case forecast, choose the most useful presentation from complete candidates supported by availableData. Never invent missing values or sources. A rich-looking request alone does not make data available.",
+      "criteria": {
+        "Forecast": "A weather request with existing verified weather data, units, update time and source.",
+        "ImageCarousel": "An image browsing request with existing direct public HTTPS image URLs, captions and original source pages.",
+        "Chart": "A numeric comparison or trend with existing labeled values and units.",
+        "Dashboard": "An explicit combined overview with at least two independently valid rich component candidates.",
+        "Markdown": "Prose is sufficient, evidence is missing, or no complete valid rich candidate is available."
+      }
+    },
+    "images": {
+      "type": "choice",
+      "instructions": "For case images, choose the most useful presentation from complete candidates supported by availableData. Never invent missing values or sources. A rich-looking request alone does not make data available.",
+      "criteria": {
+        "Forecast": "A weather request with existing verified weather data, units, update time and source.",
+        "ImageCarousel": "An image browsing request with existing direct public HTTPS image URLs, captions and original source pages.",
+        "Chart": "A numeric comparison or trend with existing labeled values and units.",
+        "Dashboard": "An explicit combined overview with at least two independently valid rich component candidates.",
+        "Markdown": "Prose is sufficient, evidence is missing, or no complete valid rich candidate is available."
+      }
+    },
+    "trend": {
+      "type": "choice",
+      "instructions": "For case trend, choose the most useful presentation from complete candidates supported by availableData. Never invent missing values or sources. A rich-looking request alone does not make data available.",
+      "criteria": {
+        "Forecast": "A weather request with existing verified weather data, units, update time and source.",
+        "ImageCarousel": "An image browsing request with existing direct public HTTPS image URLs, captions and original source pages.",
+        "Chart": "A numeric comparison or trend with existing labeled values and units.",
+        "Dashboard": "An explicit combined overview with at least two independently valid rich component candidates.",
+        "Markdown": "Prose is sufficient, evidence is missing, or no complete valid rich candidate is available."
+      }
+    },
+    "overview": {
+      "type": "choice",
+      "instructions": "For case overview, choose the most useful presentation from complete candidates supported by availableData. Never invent missing values or sources. A rich-looking request alone does not make data available.",
+      "criteria": {
+        "Forecast": "A weather request with existing verified weather data, units, update time and source.",
+        "ImageCarousel": "An image browsing request with existing direct public HTTPS image URLs, captions and original source pages.",
+        "Chart": "A numeric comparison or trend with existing labeled values and units.",
+        "Dashboard": "An explicit combined overview with at least two independently valid rich component candidates.",
+        "Markdown": "Prose is sufficient, evidence is missing, or no complete valid rich candidate is available."
+      }
+    },
+    "explanation": {
+      "type": "choice",
+      "instructions": "For case explanation, choose the most useful presentation from complete candidates supported by availableData. Never invent missing values or sources. A rich-looking request alone does not make data available.",
+      "criteria": {
+        "Forecast": "A weather request with existing verified weather data, units, update time and source.",
+        "ImageCarousel": "An image browsing request with existing direct public HTTPS image URLs, captions and original source pages.",
+        "Chart": "A numeric comparison or trend with existing labeled values and units.",
+        "Dashboard": "An explicit combined overview with at least two independently valid rich component candidates.",
+        "Markdown": "Prose is sufficient, evidence is missing, or no complete valid rich candidate is available."
+      }
+    },
+    "missing_evidence": {
+      "type": "choice",
+      "instructions": "For case missing_evidence, choose the most useful presentation from complete candidates supported by availableData. Never invent missing values or sources. A rich-looking request alone does not make data available.",
+      "criteria": {
+        "Forecast": "A weather request with existing verified weather data, units, update time and source.",
+        "ImageCarousel": "An image browsing request with existing direct public HTTPS image URLs, captions and original source pages.",
+        "Chart": "A numeric comparison or trend with existing labeled values and units.",
+        "Dashboard": "An explicit combined overview with at least two independently valid rich component candidates.",
+        "Markdown": "Prose is sufficient, evidence is missing, or no complete valid rich candidate is available."
+      }
+    }
+  }
+}

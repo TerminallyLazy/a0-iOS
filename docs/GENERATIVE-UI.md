@@ -23,3 +23,7 @@ Generic remote media, custom server-defined components, themes, functions, expre
 Sources/A0GenerativeUI owns recognition, bounded validation, SDK surface state, action envelopes and producer instructions. App/GeneratedReplyView.swift owns the native surface, review, keyboard dismissal and setup page. The conversation owns draft insertion and lifetime. GenerativeChatAPI decorates the existing API only at an explicit Send; immediate and queued paths have the same capability suffix. New custom layouts and image transport do not modify the Agent Zero backend. No SDK source is vendored or edited. Upstream licensing remains in the package checkout (MIT repository license and Apache-2.0 notices in relevant source files).
 
 See `docs/tdd/generative-ui/` for recorded resolution failure, red tests, focused green tests and device/simulator results. Synthetic rendering and transport checks do not prove a live model emitted a compliant payload.
+
+## Optional Jev selection research
+
+A live synthetic [Jev experiment](experiments/jev-a2ui/README.md) evaluated choosing among the existing native presentation types, including a missing-evidence Markdown fallback. It is research only: production chat routing and backend settings are unchanged. The documented integration keeps credentials and candidate selection server-side, then passes the result through the existing native validation and reviewed-action boundary.
