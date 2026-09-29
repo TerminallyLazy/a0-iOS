@@ -39,11 +39,40 @@ import A0Realtime
         !connecting && !profileBusy && !origin.isEmpty
             && (localDevelopment || (!username.isEmpty && !password.isEmpty))
     }
-    var canSubmit: Bool { demo || (connected && !syncInterrupted && !state.needsFullSync) }
+    var canSubmit: Bool { !stoppingAgent && (demo || (connected && !syncInterrupted && !state.needsFullSync)) }
     var agentIsRunning: Bool {
         guard let contextID = chat?.selectedContext else { return false }
         let context = state.contexts.first { $0["id"]?.string == contextID }
         return context?["running"] == .bool(true) || (state.context == contextID && state.progressActive)
+    }
+    var stoppingAgent = false
+    var stopNotice: String?
+    func stopAgent() async {
+        guard !stoppingAgent, canSubmit, !demo, let client,
+              let context = chat?.selectedContext,
+              let profile = try? ProfileIdentity(origin:ServerOrigin(origin),username:username) else { return }
+        let generation = connectionGeneration
+        let session = chat
+        stoppingAgent = true; stopNotice = nil
+        defer { stoppingAgent = false }
+        var receipt: ControlJournal.Receipt?
+        do {
+            let intent = ControlJournal.Receipt(title:AgentControl.stop.title,context:context,profile:profile)
+            try await ControlReceipts.journal.begin(intent); receipt = intent
+            guard generation == connectionGeneration, context == chat?.selectedContext, connected, !syncInterrupted, !state.needsFullSync else {
+                try await ControlReceipts.journal.resolve(intent); return
+            }
+            let result = try await client.perform(.stop,context:context)
+            session?.recordClearedQueue(context:context)
+            try await ControlReceipts.journal.resolve(intent)
+            guard generation == connectionGeneration, context == chat?.selectedContext else { return }
+            stopNotice = result.text
+        } catch {
+            guard generation == connectionGeneration, context == chat?.selectedContext else { return }
+            stopNotice = receipt == nil
+                ? "Stop was not sent. Check saved actions in Chat tools and try again."
+                : "Stop outcome unconfirmed. Check the agent and queue in the WebUI before repeating."
+        }
     }
     var chat: ChatSession?
     private var chatsByProfile: [ProfileIdentity: ChatSession] = [:]

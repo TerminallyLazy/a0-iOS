@@ -224,3 +224,14 @@ func busyOrQueuedChatEnqueues(flags: (Bool,Bool)) async throws {
     #expect(model.deliveries[1].status == .queued)
     #expect(model.draft == "Unsent")
 }
+
+@MainActor @Test func staleSnapshotDoesNotResurrectCancelledQueueReceipt() async throws {
+    let model = ChatSession(api:ChatDouble())
+    model.select("synthetic-chat"); model.draft = "Wait in queue"; await model.send(isBusy:true)
+    let id = try #require(model.deliveries.first?.id)
+    model.recordClearedQueue(context:"synthetic-chat")
+    var json = try #require(JSONSerialization.jsonObject(with:fixture("full")) as? [String:Any])
+    json["contexts"] = [["id":"synthetic-chat","message_queue":[["id":id]]]]
+    model.reconcile(try JSONDecoder().decode(Snapshot.self,from:JSONSerialization.data(withJSONObject:json)))
+    #expect(model.deliveries.first?.status == .cancelled)
+}

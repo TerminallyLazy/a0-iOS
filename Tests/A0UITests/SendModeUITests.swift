@@ -33,7 +33,20 @@ import XCTest
         XCTAssertTrue(stop.waitForExistence(timeout:5)); stop.tap()
         XCTAssertTrue(app.staticTexts["Agent stopped. Queued follow-ups cleared."].waitForExistence(timeout:8))
         XCTAssertEqual(draft.value as? String,"Keep this unsent draft")
+        let screenshot = XCTAttachment(screenshot:app.screenshot())
+        screenshot.name = "Composer Stop preserves draft"; screenshot.lifetime = .keepAlways; add(screenshot)
         XCTAssertEqual(XCTWaiter.wait(for:[XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == %@","Ready"),object:app.buttons["sendMessage"])],timeout:8),.completed)
+    }
+    func testStopFailureIsVisibleAndDoesNotSilentlyReplay() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-http-preview", "--synthetic-chat-selection", "--synthetic-agent-work", "--synthetic-stop-failure", "--persistence-test-id", UUID().uuidString]
+        app.launch(); openChat(app)
+        XCTAssertEqual(XCTWaiter.wait(for:[XCTNSPredicateExpectation(predicate:NSPredicate(format:"enabled == true"),object:app.buttons["stopAgent"])],timeout:8),.completed)
+        app.buttons["stopAgent"].tap()
+        XCTAssertTrue(app.staticTexts["Stop outcome unconfirmed. Check the agent and queue in the WebUI before repeating."].waitForExistence(timeout:8), app.debugDescription)
+        XCTAssertEqual(XCTWaiter.wait(for:[XCTNSPredicateExpectation(predicate:NSPredicate(format:"enabled == true"),object:app.buttons["stopAgent"])],timeout:8),.completed)
+        app.buttons["stopAgent"].tap()
+        XCTAssertTrue(app.staticTexts["Stop was not sent. Check saved actions in Chat tools and try again."].waitForExistence(timeout:8), app.debugDescription)
     }
     private func openChat(_ app: XCUIApplication) {
         XCTAssertTrue(app.buttons["chat-alpha"].waitForExistence(timeout: 10))

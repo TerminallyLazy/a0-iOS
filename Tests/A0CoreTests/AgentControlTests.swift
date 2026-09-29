@@ -76,3 +76,23 @@ import Testing
     #expect(await transport.requests.count == 5)
     #expect(await transport.requests.last?.url?.path == "/api/stop")
 }
+
+@Test(arguments:[401,403,404,503])
+func stopFailureNeverRetriesOrReportsSuccess(status:Int) async throws {
+    let transport = ScriptTransport(loginResponses() + [
+        HTTPResponse(data:Data(#"{"ok":true,"remaining":0}"#.utf8),status:200,headers:["Content-Type":"application/json"]),
+        HTTPResponse(data:Data(),status:status)
+    ])
+    let client = APIClient(origin:try ServerOrigin("https://server.test"),transport:transport)
+    try await client.connect(username:"fixture",password:"fixture")
+    await #expect(throws:(any Error).self) { try await client.perform(.stop,context:"chat") }
+    #expect(await transport.requests.count == 5)
+}
+
+@Test func stopDoesNotBypassExpiredAuthenticationDuringQueueClear() async throws {
+    let transport = ScriptTransport(loginResponses() + [HTTPResponse(data:Data(),status:401)])
+    let client = APIClient(origin:try ServerOrigin("https://server.test"),transport:transport)
+    try await client.connect(username:"fixture",password:"fixture")
+    await #expect(throws:ClientError.requiresLogin) { try await client.perform(.stop,context:"chat") }
+    #expect(await transport.requests.count == 4)
+}

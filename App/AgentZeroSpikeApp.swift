@@ -153,6 +153,7 @@ func deliveryLabel(_ status: Delivery.Status) -> String {
     case .sending: "Sending"
     case .accepted: "Accepted by server"
     case .queued: "Queued on server"
+    case .cancelled: "Removed from queue"
     case .uncertain: "Outcome unknown"
     case .failed: "Not sent — edit and try again"
     }

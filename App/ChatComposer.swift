@@ -25,6 +25,10 @@ struct ChatComposer: View {
         VStack(alignment: .leading, spacing: 8) {
             storageStatus
             AttachmentTray(chat:chat)
+            if let notice = contextModel?.stopNotice {
+                Text(notice).font(.caption).foregroundStyle(Color.a0Supporting)
+                    .accessibilityIdentifier("stopNotice")
+            }
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .top, spacing: 0) {
                     TextField("Message Agent Zero", text: $chat.draft, prompt: Text("Message Agent Zero").foregroundStyle(Color.a0Supporting), axis: .vertical)
@@ -53,6 +57,25 @@ struct ChatComposer: View {
                             .frame(width: 44, height: 44)
                     }.accessibilityIdentifier("chatTools")
                     Spacer(minLength: 0)
+                    if let model = contextModel, chat.selectedContext != nil {
+                        Button {
+                            stopVoice(); composerFocused = false
+                            Task { await model.stopAgent() }
+                        } label: {
+                            Group {
+                                if model.stoppingAgent { ProgressView().tint(.red) }
+                                else { Image(systemName:"stop.fill").font(.system(size:15,weight:.semibold)) }
+                            }
+                            .frame(width:34,height:34)
+                            .background(Color.red.opacity(0.12),in:Circle())
+                            .frame(width:44,height:44)
+                        }
+                        .foregroundStyle(.red)
+                        .disabled(!connectionReady || model.demo || model.stoppingAgent || chat.deliveries.contains { $0.status == .sending || $0.status == .creating })
+                        .accessibilityLabel("Stop agent and clear queue")
+                        .accessibilityHint("Stops this chat and its subagents, clears queued follow-ups, and keeps your draft.")
+                        .accessibilityIdentifier("stopAgent")
+                    }
                     VoiceControls(controller: voice, draft: $chat.draft, continuous: $continuousVoice, reply: latestReply, toggleListening: toggleVoice)
                         .id(currentVoiceScope)
                     Button { stopVoice(); composerFocused = false; Task { await send() } } label: {
@@ -88,7 +111,7 @@ struct ChatComposer: View {
         .onChange(of: chat.draft) { _, text in
             if let insertion = voiceInsertion, text != insertion.lastApplied { stopVoice() }
         }
-        .onChange(of: currentVoiceScope) { _, _ in stopVoice(); hasUsedVoice = false; voice = VoiceController() }
+        .onChange(of: currentVoiceScope) { _, _ in stopVoice(); hasUsedVoice = false; voice = VoiceController(); contextModel?.stopNotice = nil }
         .onChange(of: scenePhase) { _, phase in if phase == .background { stopVoice() } }
         .onDisappear { stopVoice() }
         .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)) { _ in

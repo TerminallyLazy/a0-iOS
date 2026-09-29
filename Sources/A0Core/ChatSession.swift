@@ -12,7 +12,7 @@ extension ChatAPI {
 
 public struct Delivery: Identifiable, Sendable, Codable, Equatable {
     public enum Status: String, Sendable, Codable {
-        case creating, sending, accepted, queued, uncertain, failed
+        case creating, sending, accepted, queued, uncertain, failed, cancelled
     }
     public let id: String
     public let context: String
@@ -203,6 +203,13 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
             if dispatched { persist() }
         }
     }
+    /// Called only after the server acknowledges queue clearing and cancellation.
+    public func recordClearedQueue(context: String) {
+        for index in deliveries.indices where deliveries[index].context == context && deliveries[index].status == .queued {
+            deliveries[index].status = .cancelled
+        }
+        persist()
+    }
     public func reconcile(_ snapshot: Snapshot) {
         let previous = deliveries
         defer { if deliveries != previous { persist() } }
@@ -223,7 +230,7 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
                    if case .object(let entry) = item { return entry["id"]?.string == delivery.id }
                    return false
                }) {
-                if !deliveries[index].confirmed { deliveries[index].status = .queued }
+                if !deliveries[index].confirmed && deliveries[index].status != .cancelled { deliveries[index].status = .queued }
                 deliveries[index].received = true
                 clearSubmittedDraft(index)
             }

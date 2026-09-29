@@ -7,6 +7,7 @@ import A0GenerativeUI
 /// Deterministic UI test server; no network, credentials, or model execution.
 actor PreviewHTTPTransport: HTTPTransport {
     private var loggedIn = false
+    private var stoppedContexts = Set<String>()
     private var contexts: [String] = []
     private var polls = 0
     private var pollFailures = 0
@@ -44,6 +45,12 @@ actor PreviewHTTPTransport: HTTPTransport {
         case "/login":
             loggedIn = true
             return HTTPResponse(data: Data(), status: 302, headers: ["Location": "/"])
+        case "/api/message_queue_remove": data = ["ok":true,"remaining":0]
+        case "/api/stop":
+            if ProcessInfo.processInfo.arguments.contains("--synthetic-stop-failure") { return HTTPResponse(data:Data(),status:503) }
+            let context = payload["context"] as? String ?? ""
+            stoppedContexts.insert(context)
+            data = ["context":context,"stopped":true]
         case "/api/pause": data = ["pause":payload["paused"] as? Bool ?? false]
         case "/api/nudge": data = ["ctxid":payload["ctxid"] as? String ?? ""]
         case "/api/history_get": data = ["history":"Synthetic conversation history", "tokens":42]
@@ -177,7 +184,7 @@ actor PreviewHTTPTransport: HTTPTransport {
                         return row
                     }, "tasks": [],
                     "logs": entries, "log_guid": conversationFixture ? "fixture-log-" + context : "fixture-log", "log_version": recoveryFixture ? 1 : entries.count,
-                    "log_progress": args.contains("--synthetic-agent-work") ? "icon://psychology A1: Reviewing sources" : "", "log_progress_active": args.contains("--synthetic-agent-work"), "paused": false,
+                    "log_progress": args.contains("--synthetic-agent-work") && !stoppedContexts.contains(context) ? "icon://psychology A1: Reviewing sources" : "", "log_progress_active": args.contains("--synthetic-agent-work") && !stoppedContexts.contains(context), "paused": false,
                     "notifications": [], "notifications_guid": "fixture-notices", "notifications_version": recoveryFixture ? 1 : 0]
         default: throw ClientError.unexpectedResponse
         }

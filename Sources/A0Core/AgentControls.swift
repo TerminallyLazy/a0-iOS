@@ -1,14 +1,15 @@
 import Foundation
 
 public enum AgentControl: Sendable {
-    case pause(Bool), nudge, history, context
-    public var mutates:Bool { switch self { case .pause,.nudge:true; default:false } }
+    case pause(Bool), nudge, history, context, stop
+    public var mutates:Bool { switch self { case .pause,.nudge,.stop:true; default:false } }
     public var title:String {
-        switch self { case .pause(let value): value ? "Pause agent" : "Resume agent"; case .nudge:"Nudge agent"; case .history:"History"; case .context:"Context" }
+        switch self { case .stop:"Stop agent and clear queue"; case .pause(let value): value ? "Pause agent" : "Resume agent"; case .nudge:"Nudge agent"; case .history:"History"; case .context:"Context" }
     }
     func request(context:String) throws -> (path:String,payload:[String:JSONValue]) {
         guard !context.isEmpty else { throw ClientError.incompatiblePayload }
         switch self {
+        case .stop: return ("/api/stop",["context":.string(context)])
         case .pause(let value): return ("/api/pause",["context":.string(context),"paused":.bool(value)])
         case .nudge:return ("/api/nudge",["ctxid":.string(context)])
         case .history:return ("/api/history_get",["context":.string(context)])
@@ -19,6 +20,9 @@ public enum AgentControl: Sendable {
         guard data.count <= 2_097_152,
               let value = try? JSONDecoder().decode([String:JSONValue].self,from:data) else { throw ClientError.incompatiblePayload }
         switch self {
+        case .stop:
+            guard value["context"]?.string == context, case .bool = value["stopped"] else { throw ClientError.incompatiblePayload }
+            return AgentControlResult(text:"Agent stopped. Queued follow-ups cleared.",tokens:nil)
         case .pause(let paused):
             guard value["pause"] == .bool(paused) else { throw ClientError.incompatiblePayload }
             return AgentControlResult(text:paused ? "Agent paused." : "Agent resumed.",tokens:nil)
@@ -38,10 +42,27 @@ extension APIClient {
     public func perform(_ control:AgentControl,context:String) async throws -> AgentControlResult {
         _ = try socketSession()
         let operation = try control.request(context:context)
-        let response = try await request(operation.path,method:"POST",body:JSONEncoder().encode(operation.payload))
+        var queueError: (any Error)?
+        if case .stop = control {
+            // Clear first so a delayed queue worker cannot restart the cancelled chat.
+            // A failed clear must never prevent the cancellation attempt or be retried.
+            do {
+                let cleared = try await controlRequest("/api/message_queue_remove", payload:operation.payload)
+                guard let value = try? JSONDecoder().decode([String:JSONValue].self,from:cleared.data),
+                      value["ok"] == .bool(true), value["remaining"] == .number(0) else { throw ClientError.incompatiblePayload }
+            } catch { queueError = error }
+        }
+        let response = try await controlRequest(operation.path,payload:operation.payload)
+        let result = try control.result(response.data,context:context)
+        if let queueError { throw queueError }
+        return result
+    }
+    private func controlRequest(_ path:String,payload:[String:JSONValue]) async throws -> HTTPResponse {
+        _ = try socketSession()
+        let response = try await request(path,method:"POST",body:JSONEncoder().encode(payload))
         if isLoginRedirect(response) || response.status == 401 { disconnect(); throw ClientError.requiresLogin }
         if response.status == 403 { disconnect(); throw ClientError.csrfRejected }
         try validate(response)
-        return try control.result(response.data,context:context)
+        return response
     }
 }
