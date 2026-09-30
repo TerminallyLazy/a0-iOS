@@ -8,6 +8,7 @@ private struct PresetDraft:Identifiable {
 }
 
 struct ModelPresetEditor:View {
+    @Environment(\.a0Theme) private var theme
     let model:SpikeModel
     let workspace:ModelPresetWorkspace
     private let baseline:[ModelPresetDocument]
@@ -29,9 +30,9 @@ struct ModelPresetEditor:View {
     }
     var body:some View {
         NavigationStack {
-            List {
+            ThemeList {
                 Section {
-                    Text("Preset definitions are shared across Agent Zero. Saving changes affects every chat and project that uses these presets.").font(.callout).foregroundStyle(Color.a0Supporting)
+                    Text("Preset definitions are shared across Agent Zero. Saving changes affects every chat and project that uses these presets.").font(.callout).foregroundStyle(theme.muted)
                 }
                 Section("Presets") {
                     ForEach($drafts) { $draft in
@@ -51,7 +52,7 @@ struct ModelPresetEditor:View {
                 }
                 Section {
                     Button("Manage provider credentials in WebUI",systemImage:"key") { confirmsWeb = true }
-                    Text("API keys and OAuth connections stay in Agent Zero’s provider settings. They are never stored in preset definitions.").font(.footnote).foregroundStyle(Color.a0Supporting)
+                    Text("API keys and OAuth connections stay in Agent Zero’s provider settings. They are never stored in preset definitions.").font(.footnote).foregroundStyle(theme.muted)
                     Button("Reset presets to bundled defaults…",systemImage:"arrow.counterclockwise") { confirmsReset = true }.disabled(!workspace.canMutate)
                 }
                 if !validNames { Text("Each preset needs a unique name. Default must keep its name.").foregroundStyle(.red).font(.callout) }
@@ -65,9 +66,9 @@ struct ModelPresetEditor:View {
             .safeAreaInset(edge:.bottom) {
                 Button { save() } label: {
                     HStack { if workspace.busy { ProgressView() }; Text("Save shared presets").fontWeight(.semibold) }.frame(maxWidth:.infinity,minHeight:46)
-                }.buttonStyle(.borderedProminent).tint(Color("A0Tint")).foregroundStyle(Color("A0Canvas"))
+                }.buttonStyle(.borderedProminent).tint(theme.tint).foregroundStyle(theme.onTint)
                     .disabled(!validNames || !workspace.canMutate || !model.canSubmit).accessibilityIdentifier("saveModelPresets")
-                    .padding(.horizontal,20).padding(.vertical,10).background(Color("A0Canvas"))
+                    .padding(.horizontal,20).padding(.vertical,10).background { ThemeBackdrop() }
             }
             .interactiveDismissDisabled(workspace.busy)
             .confirmationDialog("Remove this preset?",isPresented:$confirmsDelete,titleVisibility:.visible) {
@@ -131,6 +132,7 @@ struct ModelPresetEditor:View {
 }
 
 private struct ModelPresetFields:View {
+    @Environment(\.a0Theme) private var theme
     @Binding var document:ModelPresetDocument
     let isDefault:Bool
     let model:SpikeModel
@@ -140,15 +142,15 @@ private struct ModelPresetFields:View {
     let reloadCatalog:() -> Void
     @FocusState private var focused:Bool
     var body:some View {
-        Form {
+        ThemeForm {
             Section("Name") {
                 TextField("Preset name",text:$document.name).disabled(isDefault).focused($focused).accessibilityIdentifier("modelPresetName")
-                if isDefault { Text("Default supplies the inherited Main, Utility and Embed settings.").font(.footnote).foregroundStyle(Color.a0Supporting) }
+                if isDefault { Text("Default supplies the inherited Main, Utility and Embed settings.").font(.footnote).foregroundStyle(theme.muted) }
             }
             if catalogLoading { ProgressView("Loading providers…") }
             if catalogFailed {
                 Section {
-                    Text("Providers could not be loaded from Agent Zero. Your existing selections are unchanged.").font(.callout).foregroundStyle(Color.a0Supporting)
+                    Text("Providers could not be loaded from Agent Zero. Your existing selections are unchanged.").font(.callout).foregroundStyle(theme.muted)
                     Button("Retry providers",systemImage:"arrow.clockwise",action:reloadCatalog)
                 }
             }
@@ -165,6 +167,7 @@ private struct ModelPresetFields:View {
 }
 
 private struct ModelSlotFields:View {
+    @Environment(\.a0Theme) private var theme
     @Binding var document:ModelPresetDocument
     let slot:ModelSlot
     let title:String
@@ -192,7 +195,7 @@ private struct ModelSlotFields:View {
                 } label: {
                     LabeledContent("Model") {
                         Text(values["name"]?.string.flatMap { $0.isEmpty ? nil : $0 } ?? "Choose model")
-                            .foregroundStyle(Color.a0Supporting).multilineTextAlignment(.trailing).lineLimit(2)
+                            .foregroundStyle(theme.muted).multilineTextAlignment(.trailing).lineLimit(2)
                     }
                 }.accessibilityIdentifier("preset-\(key)-model")
                 if slot == .chat { Toggle("Supports vision",isOn:flag("vision")) }
@@ -212,11 +215,11 @@ private struct ModelSlotFields:View {
                     number("Requests per minute",key:"rl_requests",fallback:0)
                     number("Input tokens per minute",key:"rl_input",fallback:0)
                     if slot != .embedding { number("Output tokens per minute",key:"rl_output",fallback:0) }
-                    Text("Zero rate limits mean unlimited.").font(.footnote).foregroundStyle(Color.a0Supporting)
+                    Text("Zero rate limits mean unlimited.").font(.footnote).foregroundStyle(theme.muted)
                     Button("Additional parameters (JSON)",systemImage:"curlybraces") { parameters = true }
                 }
             } else {
-                Text(slot == .vision ? "This preset has no separate Vision model. Vision is never inherited from Default." : "Uses Default’s \(title) settings.").font(.footnote).foregroundStyle(Color.a0Supporting)
+                Text(slot == .vision ? "This preset has no separate Vision model. Vision is never inherited from Default." : "Uses Default’s \(title) settings.").font(.footnote).foregroundStyle(theme.muted)
             }
         } header: { Text(title) } footer: {
             if slot == .vision && !values.isEmpty { Text("Main’s native vision takes precedence unless override is enabled. Vision call limits live in this preset.") }
@@ -256,14 +259,15 @@ private struct ModelSlotFields:View {
 }
 
 private struct ModelParametersEditor:View {
+    @Environment(\.a0Theme) private var theme
     @Binding var values:JSONValue
     @State private var text = ""
     @State private var notice:String?
     @Environment(\.dismiss) private var dismiss
     var body:some View {
         NavigationStack {
-            Form {
-                Text("Provider-specific parameters as a JSON object. Keep API keys in provider settings.").font(.callout).foregroundStyle(Color.a0Supporting)
+            ThemeForm {
+                Text("Provider-specific parameters as a JSON object. Keep API keys in provider settings.").font(.callout).foregroundStyle(theme.muted)
                 TextEditor(text:$text).font(.system(.body,design:.monospaced)).frame(minHeight:240).privacySensitive().accessibilityLabel("Model parameters JSON")
                 if let notice { Text(notice).foregroundStyle(.red) }
             }.navigationTitle("Additional parameters").navigationBarTitleDisplayMode(.inline)

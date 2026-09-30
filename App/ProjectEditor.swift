@@ -2,6 +2,7 @@ import SwiftUI
 import A0Core
 
 struct ProjectEditor:View {
+    @Environment(\.a0Theme) private var theme
     let model:SpikeModel
     let workspace:ProjectWorkspace
     @State var document:ProjectDocument
@@ -20,7 +21,7 @@ struct ProjectEditor:View {
     private var title:String { isNew ? (clone ? "Clone repository" : "New project") : "Edit project" }
     var body:some View {
         NavigationStack {
-            Form {
+            ThemeForm {
                 Section("Identity") {
                     TextField("Title",text:$document.title).focused($editingText).accessibilityIdentifier("projectTitle")
                     TextField("Folder name",text:$document.name).textInputAutocapitalization(.never).autocorrectionDisabled().disabled(!isNew).focused($editingText).accessibilityIdentifier("projectName")
@@ -69,17 +70,17 @@ struct ProjectEditor:View {
                 }
                 if !isNew {
                     DisclosureGroup("Variables") {
-                        Text("Project environment variables, one KEY=value per line.").font(.footnote).foregroundStyle(Color.a0Supporting)
+                        Text("Project environment variables, one KEY=value per line.").font(.footnote).foregroundStyle(theme.muted)
                         TextEditor(text:$document.variables).font(.system(.body,design:.monospaced)).frame(minHeight:140).focused($editingText).privacySensitive().accessibilityLabel("Project variables")
                     }
                     DisclosureGroup("MCP servers") {
-                        Text("Project MCP configuration as JSON. Existing settings remain unchanged until you save.").font(.footnote).foregroundStyle(Color.a0Supporting)
+                        Text("Project MCP configuration as JSON. Existing settings remain unchanged until you save.").font(.footnote).foregroundStyle(theme.muted)
                         TextEditor(text:$document.mcpServers).font(.system(.body,design:.monospaced)).frame(minHeight:180).focused($editingText).privacySensitive().accessibilityLabel("Project MCP configuration")
                     }
                     DisclosureGroup("Secrets") {
                         Toggle("Edit project secrets",isOn:$editsSecrets).onChange(of:editsSecrets) { _,value in secretsDraft = value ? document.secrets : "" }
                         if editsSecrets {
-                            Text("Existing values stay masked. Use KEY=value lines to replace values. These edits are sent to Agent Zero only when you save.").font(.footnote).foregroundStyle(Color.a0Supporting)
+                            Text("Existing values stay masked. Use KEY=value lines to replace values. These edits are sent to Agent Zero only when you save.").font(.footnote).foregroundStyle(theme.muted)
                             TextEditor(text:$secretsDraft).font(.system(.body,design:.monospaced)).frame(minHeight:120).focused($editingText).privacySensitive().accessibilityLabel("Project secrets")
                         }
                     }
@@ -95,9 +96,9 @@ struct ProjectEditor:View {
             .safeAreaInset(edge:.bottom) {
                 Button { save() } label: {
                     HStack { if workspace.busy { ProgressView() }; Text(isNew ? (clone ? "Clone repository" : "Create project") : "Save changes").fontWeight(.semibold) }.frame(maxWidth:.infinity,minHeight:46)
-                }.buttonStyle(.borderedProminent).tint(Color("A0Tint")).foregroundStyle(Color("A0Canvas"))
+                }.buttonStyle(.borderedProminent).tint(theme.tint).foregroundStyle(theme.onTint)
                     .disabled(!valid || !workspace.canMutate || !model.canSubmit).accessibilityIdentifier("saveProject")
-                    .padding(.horizontal,20).padding(.vertical,10).background(Color("A0Canvas"))
+                    .padding(.horizontal,20).padding(.vertical,10).background { ThemeBackdrop() }
             }
             .interactiveDismissDisabled(workspace.busy)
             .onAppear { if initialMCP == nil { initialMCP = document.mcpServers } }

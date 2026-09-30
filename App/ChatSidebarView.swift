@@ -3,6 +3,7 @@ import A0Core
 
 /// Compact navigation drawer; selection belongs to the app's stable route.
 struct ChatSidebarView: View {
+    @Environment(\.a0Theme) private var theme
     let model:SpikeModel
     let onSelect:(String)->Void
     let onNewChat:()->Void
@@ -11,6 +12,8 @@ struct ChatSidebarView: View {
     @State private var search = ""
     @State private var settings = false
     @State private var projects = false
+    @State private var plugins = false
+    @State private var workspace = false
     @State private var projectFilter:String?
     private var chats:[SpikeModel.ChatSummary] { model.chatSummaries.filter { (search.isEmpty || $0.name.localizedCaseInsensitiveContains(search)) && (projectFilter == nil || $0.project?.name == projectFilter) } }
     var body: some View {
@@ -27,16 +30,18 @@ struct ChatSidebarView: View {
                         if value.translation.width < -70 && abs(value.translation.width) > abs(value.translation.height) * 2 { onClose() }
                     })
                 HStack(spacing:10) {
-                    Image(systemName:"magnifyingglass").foregroundStyle(Color.a0Supporting)
+                    Image(systemName:"magnifyingglass").foregroundStyle(theme.muted)
                     TextField("Find a conversation",text:$search).textInputAutocapitalization(.never).autocorrectionDisabled()
                         .accessibilityIdentifier("sidebarSearch")
-                }.padding(12).background(Color("A0Panel"),in:RoundedRectangle(cornerRadius:12)).padding(.horizontal,16).padding(.vertical,8)
+                }.padding(12).background(theme.panel,in:RoundedRectangle(cornerRadius:12)).padding(.horizontal,16).padding(.vertical,8)
             List {
                 Section {
                     Button { onNewChat() } label: { Label("New conversation",systemImage:"square.and.pencil").font(.headline).frame(minHeight:44) }.accessibilityIdentifier("sidebarNewChat")
                 }.listRowBackground(Color.clear)
                 Section {
                     Button("Projects",systemImage:"folder") { projects = true }.accessibilityIdentifier("sidebarProjects")
+                    Button("Plugins",systemImage:"puzzlepiece.extension") { plugins = true }.accessibilityIdentifier("sidebarPlugins")
+                    Button("Workspace",systemImage:"sidebar.right") { workspace = true }.disabled(!model.canSubmit || model.demo).accessibilityIdentifier("sidebarWorkspace")
                     ProjectChatFilter(chats:model.chatSummaries,selection:$projectFilter)
                 }
                 Section("Conversations") {
@@ -45,18 +50,18 @@ struct ChatSidebarView: View {
                             HStack(spacing:12) {
                                 ProjectChatLabel(project:item.project)
                                 VStack(alignment:.leading,spacing:3) {
-                                    Text(item.name).foregroundStyle(.primary).lineLimit(2)
-                                    if let project = item.project { Text(project.displayTitle).font(.caption).foregroundStyle(Color.a0Supporting) }
+                                    Text(item.name).foregroundStyle(theme.text).lineLimit(2)
+                                    if let project = item.project { Text(project.displayTitle).font(.caption).foregroundStyle(theme.muted) }
                                 }
                                 Spacer(minLength:8)
-                                if running(item.id) { Image(systemName:"waveform").foregroundStyle(Color.a0Supporting).accessibilityLabel("Working") }
+                                if running(item.id) { Image(systemName:"waveform").foregroundStyle(theme.muted).accessibilityLabel("Working") }
                                 if item.id == model.chat?.selectedContext { Image(systemName:"checkmark").font(.caption.weight(.semibold)).accessibilityLabel("Selected") }
                             }.frame(minHeight:44)
                         }.accessibilityIdentifier("sidebar-chat-"+item.id)
-                            .listRowBackground(item.id == model.chat?.selectedContext ? Color("A0Panel") : Color.clear)
+                            .listRowBackground(item.id == model.chat?.selectedContext ? theme.panel : Color.clear)
                     }
                     if chats.isEmpty {
-                        Text(search.isEmpty && projectFilter == nil ? "Your conversations will appear here." : "No matching conversations").foregroundStyle(Color.a0Supporting)
+                        Text(search.isEmpty && projectFilter == nil ? "Your conversations will appear here." : "No matching conversations").foregroundStyle(theme.muted)
                     }
                 }
                 if !model.state.tasks.isEmpty {
@@ -67,16 +72,18 @@ struct ChatSidebarView: View {
                     }
                 }
 
-            }.scrollContentBackground(.hidden).background(Color("A0Canvas"))
+            }.scrollContentBackground(.hidden).background { ThemeBackdrop() }
                 .listStyle(.plain)
                 .scrollDismissesKeyboard(.interactively)
             Divider()
             Button { settings = true } label: { Label("Settings",systemImage:"gearshape").frame(maxWidth:.infinity,alignment:.leading).frame(minHeight:44) }
                 .padding(.horizontal,20).padding(.vertical,8)
-            }.background(Color("A0Canvas"))
+            }.background { ThemeBackdrop() }
                 .toolbar(.hidden,for:.navigationBar)
                 .task { closeFocused = true }
                 .sheet(isPresented:$settings) { SettingsView(model:model) }
+                .fullScreenCover(isPresented:$workspace) { PluginWebScreen(model:model,route:.workspace(contextID:model.chat?.selectedContext)) }
+                .sheet(isPresented:$plugins) { PluginsView(model:model) }
                 .sheet(isPresented:$projects) { ProjectsView(model:model,onOpenChat:{ id in projects = false; onSelect(id) }) }
         }
     }

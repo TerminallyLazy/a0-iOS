@@ -7,6 +7,11 @@ import A0GenerativeUI
 /// Deterministic UI test server; no network, credentials, or model execution.
 actor PreviewHTTPTransport: HTTPTransport {
     private var loggedIn = false
+    private var pluginEnabled = true
+    private var pluginRemoved = false
+    private var pluginUpdated = false
+    private var hubInstalled = false
+    private var pluginOverride = true
     private var stoppedContexts = Set<String>()
     private var contexts: [String] = []
     private var polls = 0
@@ -29,6 +34,29 @@ actor PreviewHTTPTransport: HTTPTransport {
         let payload = (try? JSONSerialization.jsonObject(with: request.httpBody ?? Data())) as? [String: Any] ?? [:]
         let data: [String: Any]
         switch request.url?.path {
+        case "/plugins/_fixture_core/webui/thumbnail.png", "/plugins/fixture-plugin/webui/thumbnail.png", "/plugins/hub-fixture/webui/thumbnail.png":
+            return HTTPResponse(data:await Self.screenshotFixture(),status:200,headers:["Content-Type":"image/png"])
+        case "/api/plugins_list":
+            var rows:[[String:Any]] = [["name":"_fixture_core","display_name":"Core Fixture","thumbnail_url":"/plugins/_fixture_core/webui/thumbnail.png","always_enabled":true,"is_custom":false,"toggle_state":"enabled"]]
+            if !pluginRemoved { rows.append(["name":"fixture-plugin","display_name":"Fixture Plugin","thumbnail_url":"/plugins/fixture-plugin/webui/thumbnail.png","description":"Synthetic plugin for lifecycle verification.","is_custom":true,"has_main_screen":true,"has_config_screen":true,"per_project_config":true,"per_agent_config":true,"toggle_state":pluginEnabled ? "enabled":"disabled","version":"1.0","current_commit":pluginUpdated ? "new":"old","current_commit_timestamp":"2026-09-29T00:00:00Z"]) }
+            if hubInstalled { rows.append(["name":"hub-fixture","display_name":"Hub Fixture","thumbnail_url":"/plugins/hub-fixture/webui/thumbnail.png","description":"Installed from the synthetic Hub.","is_custom":true,"toggle_state":"enabled"]) }
+            data = ["ok":true,"plugins":rows]
+        case "/api/plugins":
+            let action = payload["action"] as? String ?? ""
+            if action == "get_toggle_status" {
+                data = ["ok":true,"status":pluginEnabled ? "enabled":"disabled","loaded_project_name":"","loaded_agent_profile":"","loaded_path":pluginOverride ? "usr/plugins/fixture-plugin/.toggle-1":""]
+            } else {
+                if ProcessInfo.processInfo.arguments.contains("--synthetic-plugin-uncertain") { throw ClientError.disconnected }
+                if action == "toggle_plugin" { pluginEnabled = payload["enabled"] as? Bool ?? false }
+                if action == "delete_plugin" { if payload["plugin_name"] as? String == "hub-fixture" { hubInstalled = false } else { pluginRemoved = true } }
+                if action == "delete_config" { pluginOverride = false }
+                data = ["ok":true]
+            }
+        case "/api/agents": data = ["ok":true,"data":[["key":"analyst","label":"Analyst"]]]
+        case "/api/plugins/_plugin_installer/plugin_install":
+            if payload["action"] as? String == "fetch_index" {
+                data = ["success":true,"index":["plugins":["fixture-plugin":["title":"Fixture Plugin","thumbnail":"/plugins/fixture-plugin/webui/thumbnail.png","github":"https://github.com/example/fixture","commit":"new","updated":"2026-09-30T00:00:00Z"],"hub-fixture":["title":"Hub Fixture","thumbnail":"/plugins/hub-fixture/webui/thumbnail.png","description":"A synthetic Hub entry.","author":"Fixture","github":"https://github.com/example/fixture","tags":["Utilities"]],"suspended-fixture":["title":"Suspended Fixture","thumbnail":"/plugins/hub-fixture/webui/thumbnail.png","github":"https://github.com/example/suspended","suspended":"Under review"]]],"installed_plugins":hubInstalled ? ["hub-fixture"]:[]]
+            } else { if payload["action"] as? String == "update_plugin" { pluginUpdated = true } else { hubInstalled = true }; data = ["success":true] }
         case "/api/image_get":
             guard loggedIn, ProcessInfo.processInfo.arguments.contains("--synthetic-browser-screenshot") else { return HTTPResponse(data:Data(),status:401) }
             return HTTPResponse(data:await Self.screenshotFixture(),status:200,headers:["Content-Type":"image/png"])
@@ -102,6 +130,7 @@ actor PreviewHTTPTransport: HTTPTransport {
             let context = payload["context_id"] as? String ?? ""
             var result: Any = NSNull()
             switch payload["action"] as? String {
+            case "list_options": result = [["key":"research","label":"Research"]]
             case "list": result = projectDocuments.keys.sorted().compactMap { projectDocuments[$0] }
             case "load": result = projectDocuments[name] ?? [:]
             case "create", "clone", "update":
@@ -190,9 +219,19 @@ actor PreviewHTTPTransport: HTTPTransport {
                 entries = (0..<20).map { ["no":$0,"type":"response","content":"History item \($0)\n\n" + String(repeating:"A readable conversation entry. ",count:10)] }
                 if polls >= 5 { entries.append(["no":20,"type":"response","content":"Newest update"]) }
             }
+            if args.contains("--synthetic-app-store") {
+                contexts = ["chat-alpha", "chat-beta"]
+                if !context.isEmpty {
+                    entries = [
+                        ["no":0,"type":"user","content":"Help me plan a focused afternoon with time to recharge."],
+                        ["no":1,"type":"response","heading":"icon://chat A0: Responding","content":"## Your afternoon, simplified\n\n**1:00 · Focus**\nOne task. Fifty minutes. Notifications off.\n\n**2:00 · Recharge**\nTake a walk and step away from your screen.\n\n**2:30 · Wrap up**\nReview progress and choose tomorrow’s first step."]
+                    ]
+                }
+            }
             data = ["context": context, "deselect_chat": false,
                     "contexts": contexts.map { id -> [String:Any] in
                         var row: [String:Any] = ["id": id, "name": conversationFixture ? id : "HTTP fixture chat", "running": false]
+                        if args.contains("--synthetic-app-store") { row["name"] = id == "chat-alpha" ? "Your afternoon":"Ideas for the weekend" }
                         if args.contains("--synthetic-projects"),let name = contextProjects[id],let project = projectDocuments[name] { row["project"] = project }
                         return row
                     }, "tasks": [],

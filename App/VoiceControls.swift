@@ -3,6 +3,7 @@ import A0Core
 
 /// Inline recording action plus persistent preferences; transcript lives in Message.
 struct VoiceControls: View {
+    @Environment(\.a0Theme) private var theme
     let controller: VoiceController
     @Binding var draft: String
     @Binding var continuous: Bool
@@ -21,9 +22,9 @@ struct VoiceControls: View {
             Button(action: toggleListening) {
                 Label(active ? "Stop voice" : "Dictate message", systemImage: active ? "stop.fill" : "mic")
                     .labelStyle(.iconOnly).font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(active ? Color("A0Canvas") : Color.primary)
+                    .foregroundStyle(active ? theme.canvas : Color.primary)
                     .frame(width: 36, height: 36)
-                    .background(active ? Color("A0Tint") : Color.clear, in: Circle())
+                    .background(active ? theme.tint : Color.clear, in: Circle())
                     .frame(width: 44, height: 44)
             }.accessibilityIdentifier("voiceControls")
                 .accessibilityValue(active ? "Active" : "Stopped")
@@ -58,7 +59,7 @@ struct VoiceControls: View {
                         Text("Suggested edit").font(.headline)
                         Text(suggestion.proposed).textSelection(.enabled)
                         Text("Review the wording before replacing your draft. Nothing is sent.")
-                            .font(.caption).foregroundStyle(Color.a0Supporting)
+                            .font(.caption).foregroundStyle(theme.muted)
                     }.padding(20)
                 }
                 .navigationTitle("Review suggestion").navigationBarTitleDisplayMode(.inline)
@@ -67,7 +68,7 @@ struct VoiceControls: View {
                     Button("Use suggestion") {
                         guard draft == suggestion.original else { return }
                         draft = suggestion.proposed; review = nil
-                    }.buttonStyle(.borderedProminent).foregroundStyle(Color("A0Canvas"))
+                    }.buttonStyle(.borderedProminent).foregroundStyle(theme.onTint)
                         .disabled(draft != suggestion.original).padding().frame(maxWidth: .infinity).background(.bar)
                 }
             }

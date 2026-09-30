@@ -23,6 +23,7 @@ struct GeneratedCatalog: CustomComponentCatalog {
     }
 }
 private struct NativeGeneratedInput: View {
+    @Environment(\.a0Theme) private var theme
     let node:ComponentNode
     let surface:SurfaceModel
     var body: some View {
@@ -31,27 +32,28 @@ private struct NativeGeneratedInput: View {
             let label = dc.resolve(p.label).isEmpty ? "Response" : dc.resolve(p.label)
             let binding = dc.stringBinding(for:p.value)
             VStack(alignment:.leading,spacing:6) {
-                Text(label).font(.subheadline.weight(.medium)).foregroundStyle(.primary)
+                Text(label).font(.subheadline.weight(.medium)).foregroundStyle(theme.text)
                 if p.variant == .obscured {
                     SecureField(label,text:binding).textFieldStyle(.roundedBorder).accessibilityLabel(label)
                 } else {
-                    TextField(label,text:binding,prompt:Text("Enter a response").foregroundStyle(Color.a0Supporting),axis:p.variant == .longText ? .vertical : .horizontal)
+                    TextField(label,text:binding,prompt:Text("Enter a response").foregroundStyle(theme.muted),axis:p.variant == .longText ? .vertical : .horizontal)
                         .lineLimit(1...6).keyboardType(p.variant == .number ? .decimalPad : .default)
                         .textFieldStyle(.plain).padding(12).frame(minHeight:44)
-                        .background(Color("A0Canvas"),in:RoundedRectangle(cornerRadius:10)).accessibilityLabel(label)
+                        .background(theme.canvas,in:RoundedRectangle(cornerRadius:10)).accessibilityLabel(label)
                 }
             }.padding(8)
         }
     }
 }
 private struct ForecastView: View {
+    @Environment(\.a0Theme) private var theme
     let value:ForecastContent
     @Environment(\.dynamicTypeSize) private var typeSize
     var body: some View {
         VStack(alignment:.leading,spacing:18) {
             VStack(alignment:.leading,spacing:4) {
                 Text(value.location).font(.headline)
-                Text(value.updatedAt).font(.caption).foregroundStyle(Color.a0Supporting)
+                Text(value.updatedAt).font(.caption).foregroundStyle(theme.muted)
             }
             HStack(alignment:.center,spacing:18) {
                 Image(systemName:symbol(value.icon)).font(.largeTitle).symbolRenderingMode(.hierarchical).accessibilityHidden(true)
@@ -68,7 +70,7 @@ private struct ForecastView: View {
                                 Text(day.label).font(.subheadline.weight(.medium))
                                 Image(systemName:symbol(day.icon)).font(.title3).accessibilityHidden(true)
                                 Text("\(day.high,format:.number.precision(.fractionLength(0)))° / \(day.low,format:.number.precision(.fractionLength(0)))°").font(.subheadline).monospacedDigit()
-                                Text(day.condition).font(.caption).foregroundStyle(Color.a0Supporting)
+                                Text(day.condition).font(.caption).foregroundStyle(theme.muted)
                             }.frame(minWidth:80).accessibilityElement(children:.combine)
                         }
                     }.padding(.vertical,4)
@@ -82,11 +84,12 @@ private struct ForecastView: View {
     }
 }
 private struct GeneratedChart: View {
+    @Environment(\.a0Theme) private var theme
     let value:A0GenerativeUI.ChartContent
     var body: some View {
         VStack(alignment:.leading,spacing:12) {
             Text(value.title).font(.headline)
-            Text(value.yLabel).font(.caption).foregroundStyle(Color.a0Supporting)
+            Text(value.yLabel).font(.caption).foregroundStyle(theme.muted)
             Chart(Array(value.points.enumerated()),id:\.offset) { _,point in
                 if value.kind == "bar" {
                     BarMark(x:.value("Label",point.label),y:.value(value.yLabel,point.value))
@@ -112,6 +115,7 @@ private struct GeneratedChart: View {
     }
 }
 private struct GeneratedCarousel: View {
+    @Environment(\.a0Theme) private var theme
     let value:CarouselContent
     @State private var selection = 0
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -120,7 +124,7 @@ private struct GeneratedCarousel: View {
             HStack(alignment:.firstTextBaseline) {
                 Text(value.title).font(.headline)
                 Spacer()
-                Text("\(selection + 1) of \(value.images.count)").font(.caption).foregroundStyle(Color.a0Supporting)
+                Text("\(selection + 1) of \(value.images.count)").font(.caption).foregroundStyle(theme.muted)
             }
             TabView(selection:$selection) {
                 ForEach(Array(value.images.enumerated()),id:\.offset) { index,item in
@@ -142,6 +146,7 @@ private struct GeneratedCarousel: View {
     }
 }
 private struct GeneratedDashboard: View {
+    @Environment(\.a0Theme) private var theme
     let node:ComponentNode
     let surface:SurfaceModel
     @Environment(\.dynamicTypeSize) private var typeSize

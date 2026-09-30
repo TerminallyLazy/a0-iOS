@@ -3,6 +3,7 @@ import A0Core
 
 /// Read-only server accounting. Missing categories remain unavailable, never estimated.
 struct ContextUsageButton:View {
+    @Environment(\.a0Theme) private var theme
     let model:SpikeModel
     @Environment(\.dynamicTypeSize) private var typeSize
     @ScaledMetric(relativeTo:.caption2) private var ringSize:CGFloat = 32
@@ -15,7 +16,7 @@ struct ContextUsageButton:View {
     var body:some View {
         Button { presented = true } label: {
             ZStack {
-                Circle().stroke(Color.a0Supporting.opacity(0.3),lineWidth:2)
+                Circle().stroke(theme.muted.opacity(0.3),lineWidth:2)
                 if let fraction = usage?.meterFraction {
                     Circle().trim(from:0,to:fraction).stroke(Color.primary,style:StrokeStyle(lineWidth:2,lineCap:.round)).rotationEffect(.degrees(-90))
                 }
@@ -39,7 +40,7 @@ struct ContextUsageButton:View {
                             ForEach(usage.buckets) { bucket in
                                 row(bucket.label,tokens:bucket.tokens,fraction:bucket.fraction)
                             }
-                        } else { Text("This server has not reported a category breakdown yet.").font(.footnote).foregroundStyle(Color.a0Supporting) }
+                        } else { Text("This server has not reported a category breakdown yet.").font(.footnote).foregroundStyle(theme.muted) }
                         if let remaining = usage.remainingTokens { row("Free space",tokens:remaining,fraction:usage.remainingFraction) }
                         if usage.providerUsage.hasData {
                             Divider()
@@ -50,9 +51,9 @@ struct ContextUsageButton:View {
                         }
                     } else {
                         if loading { ProgressView("Reading context…") }
-                        else { Text("Context usage is not available from this server yet.").foregroundStyle(Color.a0Supporting) }
+                        else { Text("Context usage is not available from this server yet.").foregroundStyle(theme.muted) }
                     }
-                    if unavailable,usage != nil { Text("Could not refresh. Showing the last server report.").font(.caption).foregroundStyle(Color.a0Supporting) }
+                    if unavailable,usage != nil { Text("Could not refresh. Showing the last server report.").font(.caption).foregroundStyle(theme.muted) }
                 }.font(.subheadline).padding(16)
             }.accessibilityIdentifier("contextUsageScroll").frame(idealWidth:typeSize.isAccessibilitySize ? 420 : 320,maxWidth:typeSize.isAccessibilitySize ? 420 : 320).frame(maxHeight:560).fixedSize(horizontal:false,vertical:true)
                 .presentationCompactAdaptation(.popover)
@@ -77,7 +78,7 @@ struct ContextUsageButton:View {
             VStack(alignment:.leading,spacing:4) {
                 Text(label).fixedSize(horizontal:false,vertical:true)
                 HStack {
-                    Text(compact(tokens)).foregroundStyle(Color.a0Supporting).fixedSize()
+                    Text(compact(tokens)).foregroundStyle(theme.muted).fixedSize()
                     Spacer()
                     if let fraction { Text(fraction,format:.percent.precision(.fractionLength(1))).fixedSize() }
                 }.font(.caption).monospacedDigit()
@@ -85,7 +86,7 @@ struct ContextUsageButton:View {
         } else {
             HStack {
                 Text(label); Spacer(minLength:8)
-                Text(compact(tokens)).foregroundStyle(Color.a0Supporting).fixedSize()
+                Text(compact(tokens)).foregroundStyle(theme.muted).fixedSize()
                 if let fraction { Text(fraction,format:.percent.precision(.fractionLength(1))).fixedSize().frame(minWidth:46,alignment:.trailing) }
             }.monospacedDigit()
         }

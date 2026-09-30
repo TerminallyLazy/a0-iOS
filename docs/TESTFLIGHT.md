@@ -7,7 +7,7 @@
 - Home Screen display name: **Agent Zero**.
 - App Store Connect Apple ID: `6817147730`; SKU: `a0-ios`; primary language: English (U.S.).
 - Permanent bundle ID: `com.terminallylazy.a0-ios`.
-- Current source release version/build: **0.1.0 (4)**; see the upload receipt below for distribution status.
+- Current source release version/build: **0.1.0 (5)**; see the upload receipt below for distribution status.
 - Minimum deployment: iOS 17, iPhone and iPad.
 - Existing Xcode project/scheme names remain `AgentZeroSpike` for build/test continuity; these are not the displayed app name or bundle ID.
 
@@ -123,3 +123,10 @@ Build 4 packages implementation `3990d74`: WebUI provider catalogs, provider-spe
 On September 28, 2026, release source `49d066d` produced the signed **0.1.0 (4)** archive. `scripts/verify-release.py` passed, and upload through the existing Xcode signing account reported `Uploaded package is processing`, `Upload succeeded` and `EXPORT SUCCEEDED`. App Store Connect independently showed build 4 as **Processing**.
 
 Cleanup removed **2.15 GiB** of regenerated project-owned SwiftPM and Xcode DerivedData caches after upload completed. Signed build-2, build-3 and build-4 archives/dSYMs, selected screenshots, Photos exports, local signing configuration and the owner `.env` were preserved. The build-4 archive passed verification again after cleanup. Local receipts: `build/AgentZero-0.1.0-4.xcarchive`, `testflight-archive-4.log`, `testflight-upload-4.log`, `build-4-upload-receipt.json` and `cleanup-build-4-receipt.json`.
+
+
+## Build 5 preparation — plugins, Workspace and themes
+
+Build 5 packages native Custom/Built-in/Plugin Hub management, thumbnails and journaled lifecycle commands; isolated embedded plugin settings/main screens; the draggable A0 Workspace tab and registered tool tiles; panel-only plugin support; and native Selectable Theme matching with themed controls and sheet safe areas. DEBUG-only screenshot fixtures and synthetic verification evidence are included in source, not activated in production.
+
+Release preflight on September 30 passed 208 package tests and six WebUI adapter tests. Focused iPhone/iPad UI and direct iPhone installation receipts are recorded in ACCEPTANCE.md. App Store Connect was checked live before choosing build 5: build 4 is Testing for Internal Testers and Public Beta, with no build 5 present. The plugin API-key configuration is absent; use its archive/export/upload workflow with the existing Xcode account and the authenticated App Store Connect browser for notes and group verification. Publication receipts will be recorded after upload.

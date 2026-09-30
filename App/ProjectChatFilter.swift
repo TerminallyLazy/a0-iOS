@@ -2,13 +2,15 @@ import SwiftUI
 import A0Core
 
 struct ProjectChatLabel: View {
+    @Environment(\.a0Theme) private var theme
     let project:ProjectSummary?
     var body: some View {
         if let project { ProjectDot(color:project.color).accessibilityLabel("Project: " + project.displayTitle) }
-        else { Image(systemName:"bubble.left").foregroundStyle(Color.a0Supporting).accessibilityHidden(true) }
+        else { Image(systemName:"bubble.left").foregroundStyle(theme.muted).accessibilityHidden(true) }
     }
 }
 struct ProjectChatFilter: View {
+    @Environment(\.a0Theme) private var theme
     let chats:[SpikeModel.ChatSummary]
     @Binding var selection:String?
     private var projects:[ProjectSummary] {

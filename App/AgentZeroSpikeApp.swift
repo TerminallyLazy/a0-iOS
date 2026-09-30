@@ -87,7 +87,7 @@ import A0Core
                         Section { Button("Disconnect",role:.destructive) { model.disconnect() } }
                     }
                 }
-                .scrollContentBackground(.hidden).background(Color("A0Canvas"))
+                .scrollContentBackground(.hidden).background { ThemeBackdrop() }
                 .navigationTitle(model.connected || model.demo ? "Chats" : "Connect")
                 .navigationBarTitleDisplayMode(.inline)
                 .searchable(text:$search,prompt:"Search chats")
@@ -109,7 +109,6 @@ import A0Core
                     if !model.connected && !model.demo { ConnectionActionBar(model:model) }
                 }
             }
-            .tint(Color("A0Tint"))
             .preferredColorScheme(DisplayPreferences.colorScheme(appearance))
             .accessibilityHidden(showingDrawer || !startupFinished)
             .overlay {
@@ -117,7 +116,14 @@ import A0Core
                     ConversationDrawer(model:model,onClose:closeDrawer,onSelect:selectChat,onNewChat:newChat)
                 }
                 if !startupFinished { LaunchSplashView(status:model.status) }
+                #if DEBUG
+                // Isolated screenshot preview; never delays or changes production startup.
+                if ProcessInfo.processInfo.arguments.contains("--synthetic-brand-screenshot") {
+                    LaunchSplashView(status:"Restoring session").preferredColorScheme(.dark)
+                }
+                #endif
             }
+            .modifier(ServerThemeHost(model:model))
             .task {
                 guard !startupFinished else { return }
                 defer { startupFinished = true }

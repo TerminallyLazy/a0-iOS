@@ -1,19 +1,13 @@
-Agent Zero 0.1.0 (4)
+Agent Zero 0.1.0 (5)
 
-New in build 4: model preset providers now match the WebUI catalogs. Change Main, Utility, Vision and Embed providers, search their suggested models, enter a custom model ID, and verify your staged edits survive failed discovery/retry. Provider credentials remain managed in WebUI. Saving preset definitions affects other chats/projects using them.
+Plugins: browse Custom, Built-in and Plugin Hub collections with thumbnails. Use card switches to enable or disable custom plugins; verify protected built-ins stay active. Open plugin settings and main screens, and test install/update/delete on plugins you intend to change. Native commands preserve uncertain outcomes and never automatically replay mutations.
 
-Agent activity now shows one concise latest-step preview and an expandable timeline with agent labels. Check long tool output, raw details, browser screenshots, large text and rotation.
+Workspace: open the attached A0 tab on the right of a chat, drag it vertically, and verify its position persists. Try File Browser, Browser, Desktop, Editor and your plugin panels from the tool tiles. Test file export/share and panel-only plugins such as Swarm. Tools that require an existing chat must still respect that requirement.
 
-Also included: a dedicated red Stop button beside Send. While the agent is working, queue a follow-up, leave an unsent draft, then tap Stop. Verify this chat and its subagents stop, queued follow-ups are cleared, local voice stops, and the unsent draft and attachments remain. If cancellation cannot be confirmed, inspect the WebUI; the app must not report success or automatically retry. Requires a server with the /api/stop endpoint. Other chats and detached external programs are not stopped.
+Themes: select a theme in the connected server's Selectable Theme plugin. With Settings > Match server theme enabled, check native chat, composer, sidebar, plugins, settings and their bottom edges. Test Light, Dark and System appearance, custom colors/gradients, local opt-out, foreground refresh and changes made on another device. Missing or disabled themes should fall back to the normal app palette.
 
-Connect to your own authenticated HTTPS Agent Zero server. Check sign-in, session restoration after reopening, opening older chats and creating a new chat.
+Embedded screens: test your authenticated HTTPS server and, if used, a Microsoft Dev Tunnel. Backgrounding clears embedded screens; reopen them afterward. Check any action in progress before repeating it. Plugin-provided screens retain their server WebUI behavior.
 
-Try Queue and Steer in Settings while the agent works. Verify queued follow-ups wait, Steer sends immediately, and the animated Send control remains usable. Tap the connection dot inside the input box for connection details.
+Check large text, VoiceOver, iPhone/iPad layouts and rotation. Also verify session restoration, existing chats, drafts, attachments, model presets, Queue/Steer and Stop. No always-running background connection is promised.
 
-Check Markdown, collapsed tools, browser screenshot previews, generated forecasts/charts/image carousels, project colors and model presets. Attach a small image or document, confirm it can be removed before sending, then verify receipt on your server.
-
-Try dictation into the message field, keyboard dismissal and continuous-listening preference. Speech requires on-device recognition support and explicit microphone activation.
-
-Report device/iOS version, reproducible steps and sanitized status text. Never include passwords, session cookies, tokens or private conversation content.
-
-Known limits: no always-running background socket; the app refreshes when foregrounded. Expired server sessions require login. Unknown send outcomes are deliberately not replayed. Generated UI depends on the server/model emitting supported payloads. This is a beta, not complete WebUI parity.
+Report device/iOS version, reproducible steps and sanitized status text. Never include passwords, session cookies, tokens or private conversation content. This beta does not provide complete WebUI parity.
