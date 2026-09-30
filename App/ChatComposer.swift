@@ -4,6 +4,7 @@ import AVFoundation
 
 /// Owns only composer interaction state; draft and storage state belong to the session.
 struct ChatComposer: View {
+    @Environment(\.a0Theme) private var theme
     @Bindable var chat: ChatSession
     var connectionReady = true
     var contextModel:SpikeModel?
@@ -26,12 +27,12 @@ struct ChatComposer: View {
             storageStatus
             AttachmentTray(chat:chat)
             if let notice = contextModel?.stopNotice {
-                Text(notice).font(.caption).foregroundStyle(Color.a0Supporting)
+                Text(notice).font(.caption).foregroundStyle(theme.muted)
                     .accessibilityIdentifier("stopNotice")
             }
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .top, spacing: 0) {
-                    TextField("Message Agent Zero", text: $chat.draft, prompt: Text("Message Agent Zero").foregroundStyle(Color.a0Supporting), axis: .vertical)
+                    TextField("Message Agent Zero", text: $chat.draft, prompt: Text("Message Agent Zero").foregroundStyle(theme.muted), axis: .vertical)
                         .lineLimit(1...6)
                         .focused($composerFocused)
                         .textFieldStyle(.plain)
@@ -46,7 +47,7 @@ struct ChatComposer: View {
                 }
                 if hasUsedVoice || voice.speaking {
                     Label(voice.status, systemImage: voice.listening ? "mic.fill" : voice.speaking ? "speaker.wave.2.fill" : "waveform")
-                        .font(.caption).foregroundStyle(Color.a0Supporting)
+                        .font(.caption).foregroundStyle(theme.muted)
                         .lineLimit(3).padding(.horizontal, 14)
                         .accessibilityIdentifier("voiceStatus")
                 }
@@ -82,8 +83,8 @@ struct ChatComposer: View {
                         Label("Send", systemImage: "arrow.up")
                             .labelStyle(.iconOnly).font(.system(size: 18, weight: .semibold))
                             .frame(width: 36, height: 36)
-                            .foregroundStyle(canSend ? Color("A0Canvas") : Color.a0Supporting)
-                            .background(canSend ? Color("A0Tint") : Color.clear, in: Circle())
+                            .foregroundStyle(canSend ? theme.onTint : theme.muted)
+                            .background(canSend ? theme.tint : Color.clear, in: Circle())
                             .overlay {
                                 if contextModel?.agentIsRunning == true && contextModel?.state.paused != true { WorkingSendRing() }
                             }
@@ -94,13 +95,13 @@ struct ChatComposer: View {
                     .accessibilityIdentifier("sendMessage")
                 }.padding(.horizontal, 6).padding(.bottom, 4)
             }
-            .background(Color("A0Panel"), in: RoundedRectangle(cornerRadius: 16))
-            .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(Color("A0Tint").opacity(composerFocused ? 0.5 : 0.2), lineWidth: 1) }
+            .background(composerFocused ? theme.inputFocus : theme.input, in: RoundedRectangle(cornerRadius: 16))
+            .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(composerFocused ? theme.tint : theme.border, lineWidth: 1) }
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("messageInputCard")
 
         }
-        .padding(.horizontal,16).padding(.vertical,10).background(.bar)
+        .padding(.horizontal,16).padding(.vertical,10).background(theme.isActive ? AnyShapeStyle(theme.panel) : AnyShapeStyle(.bar))
         .confirmationDialog("Clear this draft?", isPresented: $confirmsClear, titleVisibility: .visible) {
             Button("Clear saved draft", role: .destructive) { stopVoice(); chat.draft = ""; chat.attachments.map(\.id).forEach { chat.removeAttachment($0) } }
             Button("Cancel", role: .cancel) { }
@@ -201,7 +202,7 @@ struct ChatComposer: View {
     }
     private var storageLabel:some View {
         Label(statusText,systemImage:statusSymbol).font(.caption)
-            .foregroundStyle(chat.storageState == .failed ? Color.primary : Color.a0Supporting)
+            .foregroundStyle(chat.storageState == .failed ? Color.primary : theme.muted)
             .accessibilityIdentifier("draftStorageStatus")
     }
     private var statusText: String {
@@ -224,11 +225,12 @@ struct ChatComposer: View {
 
 
 private struct WorkingSendRing: View {
+    @Environment(\.a0Theme) private var theme
     @State private var rotating = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         Circle().trim(from:0.08,to:0.8)
-            .stroke(Color("A0Tint"),style:StrokeStyle(lineWidth:1.5,lineCap:.round))
+            .stroke(theme.tint,style:StrokeStyle(lineWidth:1.5,lineCap:.round))
             .frame(width:42,height:42)
             .rotationEffect(.degrees(rotating && !reduceMotion ? 360 : 0))
             .onAppear { rotating = true }

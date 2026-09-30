@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Branded cover for actual startup work; no invented progress or timed gate.
 struct LaunchSplashView: View {
+    @Environment(\.a0Theme) private var theme
     let status: String
     var body: some View {
         VStack(spacing: 24) {
@@ -15,7 +16,7 @@ struct LaunchSplashView: View {
                 .font(.subheadline).padding(.bottom, 32)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color("A0Canvas").ignoresSafeArea())
+        .background { ThemeBackdrop().ignoresSafeArea() }
         .accessibilityIdentifier("launchSplash")
     }
 }

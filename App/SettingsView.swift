@@ -19,8 +19,10 @@ import A0Core
 }
 
 struct SettingsView: View {
+    @Environment(\.a0Theme) private var theme
     let model: SpikeModel
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("matchServerTheme",store:DisplayPreferences.store) private var matchServerTheme = true
     @AppStorage("appearance",store:DisplayPreferences.store) private var appearance = "system"
     @AppStorage("collapseLongMessages",store:DisplayPreferences.store) private var collapseLongMessages = true
     @AppStorage("groupActivity",store:DisplayPreferences.store) private var groupActivity = true
@@ -36,6 +38,14 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
+                    Toggle("Match server theme",isOn:$matchServerTheme).accessibilityIdentifier("matchServerTheme")
+                    Text(matchServerTheme ? model.serverTheme.notice : "Using the app’s default colors.")
+                        .font(.footnote).foregroundStyle(theme.muted).accessibilityIdentifier("serverThemeStatus")
+                    if matchServerTheme {
+                        Button("Refresh server theme") { model.themeRefreshRevision += 1 }.disabled(!model.canSubmit)
+                    }
+                } header: { Text("Theme") }.listRowBackground(theme.panel)
+                Section {
                     Picker(selection:$appearance) {
                         Text("System").tag("system")
                         Text("Light").tag("light")
@@ -48,57 +58,52 @@ struct SettingsView: View {
                     Toggle(isOn:$groupActivity) {
                         Label("Group agent activity",systemImage:"square.stack.3d.up")
                     }.accessibilityIdentifier("groupActivity")
-                } header: { Text("Reading").foregroundStyle(Color.a0Supporting) } footer: {
-                    Text("Changes apply immediately. Tool details stay expandable. Text size follows your device settings.").foregroundStyle(Color.a0Supporting)
-                }
+                } header: { Text("Reading").foregroundStyle(theme.muted) } footer: {
+                    Text("Changes apply immediately. Tool details stay expandable. Text size follows your device settings.").foregroundStyle(theme.muted)
+                }.listRowBackground(theme.panel)
                 Section {
-                    Picker(selection:$sendMode) {
-                        Text("Queue").tag(SendMode.queue.rawValue)
-                        Text("Steer").tag(SendMode.steer.rawValue)
-                    } label: { Label("Follow-up messages",systemImage:"text.bubble") }
-                    .pickerStyle(.segmented)
-                    .accessibilityIdentifier("sendModePreference")
-                } header: { Text("While the agent works").foregroundStyle(Color.a0Supporting) } footer: {
-                    Text("Queue holds new messages until the agent is ready. Steer sends immediately to guide the current work. Changing this setting does not move messages already queued.").foregroundStyle(Color.a0Supporting)
-                }
+                    ThemeSegments(title:"Follow-up messages",labels:["Queue","Steer"],values:[SendMode.queue.rawValue,SendMode.steer.rawValue],selection:$sendMode,identifier:"sendModePreference")
+                } header: { Text("While the agent works").foregroundStyle(theme.muted) } footer: {
+                    Text("Queue holds new messages until the agent is ready. Steer sends immediately to guide the current work. Changing this setting does not move messages already queued.").foregroundStyle(theme.muted)
+                }.listRowBackground(theme.panel)
                 Section {
                     Toggle(isOn:$richReplies) { Label("Rich replies",systemImage:"rectangle.3.group") }
                         .accessibilityIdentifier("richReplies")
                     NavigationLink { GenerativeSetupView() } label: {
                         Label("Generative UI",systemImage:"rectangle.and.hand.point.up.left")
                     }.accessibilityIdentifier("generativeUISetup")
-                }
+                }.listRowBackground(theme.panel)
                 Section {
-                    LabeledContent { Text(model.demo ? "Synthetic preview" : URL(string:model.origin)?.host ?? "Not selected").foregroundStyle(Color.a0Supporting).textSelection(.enabled) }
+                    LabeledContent { Text(model.demo ? "Synthetic preview" : URL(string:model.origin)?.host ?? "Not selected").foregroundStyle(theme.muted).textSelection(.enabled) }
                         label: { Label("Server",systemImage:"server.rack") }
-                    LabeledContent { Text(model.status).foregroundStyle(Color.a0Supporting) } label: { Label("Connection",systemImage:"network") }
+                    LabeledContent { Text(model.status).foregroundStyle(theme.muted) } label: { Label("Connection",systemImage:"network") }
                     if model.connected || model.demo {
                         Button { confirmsChangeServer = true } label: {
                             Label("Change server",systemImage:"arrow.triangle.2.circlepath").frame(minHeight:44)
                         }.accessibilityIdentifier("changeServer")
                     } else {
-                        Text("Choose a saved server or scan its QR code on the Connect screen.").font(.footnote).foregroundStyle(Color.a0Supporting)
+                        Text("Choose a saved server or scan its QR code on the Connect screen.").font(.footnote).foregroundStyle(theme.muted)
                     }
-                } header: { Text("Connection").foregroundStyle(Color.a0Supporting) } footer: {
-                    Text("Changing servers disconnects this session. Your drafts and pending delivery records stay on this device.").foregroundStyle(Color.a0Supporting)
-                }
+                } header: { Text("Connection").foregroundStyle(theme.muted) } footer: {
+                    Text("Changing servers disconnects this session. Your drafts and pending delivery records stay on this device.").foregroundStyle(theme.muted)
+                }.listRowBackground(theme.panel)
                 Section {
                     Label("Drafts stay on this device",systemImage:"iphone")
                     Label("Saved passwords use Keychain",systemImage:"key.horizontal")
                     Label("Stay signed in on this device",systemImage:"lock.shield")
-                    Text("Your session is restored after reopening. Disconnect removes the saved session. Agent Zero keeps working on your server while this app is closed.").font(.footnote).foregroundStyle(Color.a0Supporting)
+                    Text("Your session is restored after reopening. Disconnect removes the saved session. Agent Zero keeps working on your server while this app is closed.").font(.footnote).foregroundStyle(theme.muted)
                     Text("Password saving is optional. Manage saved servers and passwords from the Connect screen.")
-                        .font(.footnote).foregroundStyle(Color.a0Supporting)
-                } header: { Text("Privacy & storage").foregroundStyle(Color.a0Supporting) }
+                        .font(.footnote).foregroundStyle(theme.muted)
+                } header: { Text("Privacy & storage").foregroundStyle(theme.muted) }.listRowBackground(theme.panel)
                 Section {
                     HStack(spacing:12) {
                         Image("AgentZeroMark").resizable().scaledToFit().frame(width:24,height:32).accessibilityHidden(true)
                         VStack(alignment:.leading,spacing:4) {
                             Text("Agent Zero").font(.headline)
-                            Text("Native companion · Beta").font(.caption).foregroundStyle(Color.a0Supporting)
+                            Text("Native companion · Beta").font(.caption).foregroundStyle(theme.muted)
                         }
                     }
-                    LabeledContent { Text(Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String ?? "—").foregroundStyle(Color.a0Supporting) } label: { Text("Version") }
+                    LabeledContent { Text(Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String ?? "—").foregroundStyle(theme.muted) } label: { Text("Version") }
                     LabeledContent("Build", value: Bundle.main.object(forInfoDictionaryKey:"CFBundleVersion") as? String ?? "—")
                     NavigationLink {
                         ScrollView {
@@ -106,18 +111,19 @@ struct SettingsView: View {
                                 .frame(maxWidth:.infinity,alignment:.leading).padding()
                         }.navigationTitle("Acknowledgments").navigationBarTitleDisplayMode(.inline)
                     } label: { Label("Acknowledgments",systemImage:"doc.text") }
-                } header: { Text("About").foregroundStyle(Color.a0Supporting) }
+                } header: { Text("About").foregroundStyle(theme.muted) }.listRowBackground(theme.panel)
             }
-            .scrollContentBackground(.hidden).background(Color("A0Canvas"))
+            .scrollContentBackground(.hidden).background { ThemeBackdrop() }
             .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
+            .modifier(ThemeNavigationChrome())
             .toolbar { ToolbarItem(placement:.confirmationAction) {
-                Button("Done",systemImage:"checkmark") { dismiss() }.accessibilityIdentifier("settingsDone")
+                Button("Done",systemImage:"checkmark") { dismiss() }.foregroundStyle(theme.onTint).accessibilityIdentifier("settingsDone")
             } }
             .alert("Change server?",isPresented:$confirmsChangeServer) {
                 Button("Disconnect and choose server") { model.disconnect(); dismiss() }
                 Button("Cancel",role:.cancel) { }
             } message: { Text("Your current draft is kept. Choose and sign in to a server on the Connect screen.") }
-        }.tint(Color("A0Tint")).preferredColorScheme(DisplayPreferences.colorScheme(appearance))
+        }.tint(theme.tint).preferredColorScheme(DisplayPreferences.colorScheme(appearance))
     }
 }
 

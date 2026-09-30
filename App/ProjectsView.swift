@@ -2,6 +2,7 @@ import SwiftUI
 import A0Core
 
 struct ProjectsView: View {
+    @Environment(\.a0Theme) private var theme
     let model:SpikeModel
     var onOpenChat:((String)->Void)?
     @Environment(\.dismiss) private var dismiss
@@ -14,7 +15,7 @@ struct ProjectsView: View {
     }
     var body:some View {
         NavigationStack {
-            List {
+            ThemeList {
                 if let notice = workspace.notice { Section { Text(notice).font(.callout).accessibilityIdentifier("projectsNotice") } }
                 if let receipt = workspace.pending {
                     Section("Check the previous action") {
@@ -33,8 +34,8 @@ struct ProjectsView: View {
                             HStack(alignment:.center,spacing:14) {
                                 ProjectDot(color:project.color,size:12)
                                 VStack(alignment:.leading,spacing:4) {
-                                    Text(project.displayTitle).font(.body.weight(.medium)).foregroundStyle(.primary)
-                                    if !project.description.isEmpty { Text(project.description).font(.subheadline).foregroundStyle(Color.a0Supporting).lineLimit(2) }
+                                    Text(project.displayTitle).font(.body.weight(.medium)).foregroundStyle(theme.text)
+                                    if !project.description.isEmpty { Text(project.description).font(.subheadline).foregroundStyle(theme.muted).lineLimit(2) }
                                 }
                                 Spacer(minLength:4)
                                 if activeName == project.name { Image(systemName:"checkmark.circle.fill").accessibilityLabel("Active in this chat") }
@@ -48,7 +49,7 @@ struct ProjectsView: View {
                 }
                 if workspace.busy { ProgressView("Loading projects…").frame(maxWidth:.infinity).listRowBackground(Color.clear) }
             }
-            .scrollContentBackground(.hidden).background(Color("A0Canvas"))
+            .scrollContentBackground(.hidden).background { ThemeBackdrop() }
             .navigationTitle("Projects").navigationBarTitleDisplayMode(.inline)
             .searchable(text:$search,prompt:"Find a project")
             .refreshable { await workspace.load(model) }
@@ -85,6 +86,7 @@ private struct ProjectEditorRoute:Identifiable {
 }
 
 private struct ProjectDetailView:View {
+    @Environment(\.a0Theme) private var theme
     let model:SpikeModel
     let workspace:ProjectWorkspace
     let summary:ProjectSummary
@@ -98,14 +100,14 @@ private struct ProjectDetailView:View {
     @State private var confirmingWeb = false
     @State private var deletionName = ""
     var body:some View {
-        List {
+        ThemeList {
             Section {
                 HStack(spacing:12) {
                     ProjectDot(color:document?.color ?? summary.color,size:14)
                     Text(document?.title.isEmpty == false ? document!.title : summary.displayTitle).font(.headline)
                 }
-                if let description = document?.description, !description.isEmpty { Text(description).foregroundStyle(Color.a0Supporting) }
-                LabeledContent("Folder",value:summary.name).font(.caption).foregroundStyle(Color.a0Supporting)
+                if let description = document?.description, !description.isEmpty { Text(description).foregroundStyle(theme.muted) }
+                LabeledContent("Folder",value:summary.name).font(.caption).foregroundStyle(theme.muted)
             }
             Section("Conversations") {
                 Button("New chat in project",systemImage:"square.and.pencil") {
@@ -126,7 +128,7 @@ private struct ProjectDetailView:View {
                 Section("Project chats") {
                     ForEach(projectChats) { chat in
                         Button { onOpenChat(chat.id) } label: {
-                            Label(chat.name,systemImage:"bubble.left").foregroundStyle(.primary).frame(minHeight:44)
+                            Label(chat.name,systemImage:"bubble.left").foregroundStyle(theme.text).frame(minHeight:44)
                         }.accessibilityIdentifier("project-chat-"+chat.id)
                     }
                 }
@@ -138,7 +140,7 @@ private struct ProjectDetailView:View {
                     LabeledContent("Knowledge files",value:count(document.fields["knowledge_files_count"]))
                 }
                 Button("Open project tools in WebUI",systemImage:"safari") { confirmingWeb = true }
-                Text("Manage project files, knowledge, memory, skills and model presets in the WebUI. Your browser may ask you to sign in.").font(.footnote).foregroundStyle(Color.a0Supporting)
+                Text("Manage project files, knowledge, memory, skills and model presets in the WebUI. Your browser may ask you to sign in.").font(.footnote).foregroundStyle(theme.muted)
             }
             if workspace.busy { ProgressView("Contacting Agent Zero…") }
             if let notice = workspace.notice { Text(notice).font(.callout).accessibilityIdentifier("projectDetailNotice") }
@@ -156,7 +158,7 @@ private struct ProjectDetailView:View {
         }
         .sheet(isPresented:$confirmingDelete) {
             NavigationStack {
-                Form {
+                ThemeForm {
                     Section {
                         Label("Delete all project files",systemImage:"trash").font(.headline)
                         Text("This permanently deletes the entire project folder on Agent Zero, including its files, instructions, knowledge and settings. It also removes this project from every chat. This cannot be undone.")
@@ -178,7 +180,7 @@ private struct ProjectDetailView:View {
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(deletionName != summary.name || !canMutate).accessibilityIdentifier("confirmDeleteProject")
-                    .padding(.horizontal,20).padding(.vertical,10).background(Color("A0Canvas"))
+                    .padding(.horizontal,20).padding(.vertical,10).background { ThemeBackdrop() }
                 }
                 .toolbar { ToolbarItem(placement:.cancellationAction) { Button("Cancel") { confirmingDelete = false } } }
             }.interactiveDismissDisabled(workspace.busy)

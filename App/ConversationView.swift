@@ -5,6 +5,7 @@ import A0GenerativeUI
 enum ConversationRoute: Hashable { case draft, chat(String) }
 
 struct ConversationView: View {
+    @Environment(\.a0Theme) private var theme
     let model: SpikeModel
     let route: ConversationRoute
     var onSelectChat: ((String) -> Void)?
@@ -13,6 +14,7 @@ struct ConversationView: View {
     var hidesBackButton = false
     var sidebarOpen = false
     @AccessibilityFocusState private var sidebarButtonFocused: Bool
+    @State private var showingWorkspace = false
     @State private var showingTools = false
     @State private var showingAttachments = false
     @State private var showingAgents = false
@@ -92,7 +94,7 @@ struct ConversationView: View {
                             } label: {
                                 Label("Latest", systemImage: "arrow.down").labelStyle(.iconOnly)
                                     .font(.body.weight(.semibold)).frame(width: 36, height: 36)
-                                    .foregroundStyle(Color("A0Canvas")).background(Color("A0Tint"), in: Circle())
+                                    .foregroundStyle(theme.onTint).background(theme.tint, in: Circle())
                                     .frame(width: 44, height: 44).contentShape(Circle())
                             }.buttonStyle(.plain).padding(12)
                                 .accessibilityLabel("Jump to latest reply")
@@ -100,15 +102,23 @@ struct ConversationView: View {
                         }
                     }
                 }
+                .overlay(alignment:.topTrailing) {
+                    if !sidebarOpen {
+                        WorkspaceEdgeTab(availableHeight:viewport.size.height) { showingWorkspace = true }
+                            .disabled(!model.canSubmit || model.demo)
+                    }
+                }
             }
         }
-        .background(Color("A0Canvas"))
+        .background { ThemeBackdrop() }
         .sheet(isPresented:$showingSettings) { SettingsView(model:model) }
         .sheet(isPresented:$showingAgents) { AgentActivitySheet(logs:model.state.logs,browserMedia:BrowserMediaScope(model:model)) }
         .sheet(isPresented:$showingProjects) { ProjectsView(model:model,onOpenChat:{ id in showingProjects = false; onSelectChat?(id) }) }
         .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+        .modifier(ThemeNavigationChrome())
         .navigationBarBackButtonHidden(hidesBackButton)
         .onChange(of:sidebarOpen) { _,open in if !open { sidebarButtonFocused = true } }
+        .fullScreenCover(isPresented:$showingWorkspace) { PluginWebScreen(model:model,route:.workspace(contextID:model.chat?.selectedContext)) }
         .toolbar {
             if let onOpenSidebar {
                 ToolbarItem(placement:.topBarLeading) {
@@ -130,7 +140,7 @@ struct ConversationView: View {
                     Button("Chat tools",systemImage:"slider.horizontal.3") { showingTools = true }
                     Button("Settings",systemImage:"gearshape") { showingSettings = true }
                     Button("Disconnect",systemImage:"network.slash",role:.destructive) { model.disconnect() }
-                } label: { Label("Conversation options",systemImage:"ellipsis").frame(minWidth:44,minHeight:44) }
+                } label: { Label("Conversation options",systemImage:"ellipsis").foregroundStyle(theme.text).frame(minWidth:44,minHeight:44) }
                 .accessibilityIdentifier("conversationOptions")
             }
         }
@@ -172,12 +182,12 @@ struct ConversationView: View {
     }
     private var emptyConversation: some View {
         VStack(spacing:16) {
-            Image("AgentZeroMark").resizable().scaledToFit().frame(width:48,height:72).foregroundStyle(.secondary).accessibilityHidden(true)
+            Image("AgentZeroMark").resizable().scaledToFit().frame(width:48,height:72).foregroundStyle(theme.muted).accessibilityHidden(true)
             if model.state.needsFullSync && !model.demo {
                 ProgressView("Loading conversation…")
             } else {
                 Text(model.chat?.selectedContext == nil ? "What would you like to do?" : "No messages yet").font(.title2.weight(.semibold))
-                Text("Send a message to Agent Zero.").font(.subheadline).foregroundStyle(.secondary)
+                Text("Send a message to Agent Zero.").font(.subheadline).foregroundStyle(theme.muted)
             }
         }.frame(maxWidth:.infinity).padding(.vertical,48)
     }
@@ -187,6 +197,7 @@ private struct TranscriptBottom: PreferenceKey {
     static func reduce(value: inout CGFloat,nextValue:()->CGFloat) { value = nextValue() }
 }
 struct ConnectionStatusView: View {
+    @Environment(\.a0Theme) private var theme
     let model: SpikeModel
     var body: some View {
         VStack(alignment:.leading,spacing:8) {
@@ -199,12 +210,13 @@ struct ConnectionStatusView: View {
                 if model.recoveryStopped { Button { model.retrySync() } label: { Text("Retry sync").font(.caption).frame(minHeight:44) } }
             }
             if model.recoveryStopped || model.status == "Reconnecting" || model.detail.hasPrefix("Realtime retry") {
-                Text(model.detail).font(.caption).foregroundStyle(.secondary)
+                Text(model.detail).font(.caption).foregroundStyle(theme.muted)
             }
         }.padding(.horizontal,20).padding(.vertical,10)
     }
 }
 struct DeliveryContent: View {
+    @Environment(\.a0Theme) private var theme
     let model: SpikeModel
     var body: some View {
         if let chat = model.chat {
@@ -215,14 +227,57 @@ struct DeliveryContent: View {
                         Label("\(ids.count) \(ids.count == 1 ? "attachment" : "attachments")",systemImage:"paperclip").font(.caption)
                     }
                     Label(deliveryLabel(delivery.status),systemImage:delivery.status == .uncertain ? "exclamationmark.circle" : "checkmark.circle")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(theme.muted)
                     if delivery.status == .uncertain {
                         Text("The server may have received this message. Your draft is kept; sending is blocked until a matching server receipt arrives.")
-                            .font(.caption).foregroundStyle(.secondary)
+                            .font(.caption).foregroundStyle(theme.muted)
                     }
                 }.padding(16).frame(maxWidth:.infinity,alignment:.leading)
-                    .background(Color("A0Panel"),in:RoundedRectangle(cornerRadius:16))
+                    .background(theme.panel,in:RoundedRectangle(cornerRadius:16))
             }
         }
+    }
+}
+
+/// Stays attached to the physical edge without changing the transcript's layout.
+private struct WorkspaceEdgeTab: View {
+    @Environment(\.a0Theme) private var theme
+    let availableHeight: CGFloat
+    let open: () -> Void
+    @AppStorage("workspaceTabPosition",store:DisplayPreferences.store) private var position = 0.5
+    @GestureState private var translation: CGFloat = 0
+    private var travel: CGFloat { max(0,availableHeight - 72) }
+    private var offset: CGFloat { 8 + min(travel,max(0,CGFloat(position) * travel + translation)) }
+    private var shape: UnevenRoundedRectangle {
+        UnevenRoundedRectangle(topLeadingRadius:16,bottomLeadingRadius:16)
+    }
+    var body: some View {
+        Button(action:open) {
+            Image("AgentZeroMark").resizable().scaledToFit()
+                .frame(width:26,height:42).foregroundStyle(theme.text)
+                .frame(width:44,height:56)
+                .background(theme.isActive ? AnyShapeStyle(theme.panel) : AnyShapeStyle(.regularMaterial),in:shape)
+                .overlay { shape.strokeBorder(theme.border,lineWidth:0.5) }
+                .shadow(color:.black.opacity(0.12),radius:4,x:-2,y:1)
+                .contentShape(shape)
+        }
+        .buttonStyle(.plain)
+        .highPriorityGesture(DragGesture(minimumDistance:8,coordinateSpace:.global)
+            .updating($translation) { value,state,_ in state = value.translation.height }
+            .onEnded { value in
+                guard travel > 0 else { return }
+                position = min(1,max(0,position + Double(value.translation.height / travel)))
+            })
+        .offset(y:offset)
+        .accessibilityLabel("Open Workspace")
+        .accessibilityHint("Open server tools and plugin panels. Drag up or down to reposition.")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: position = min(1,position + 0.15)
+            case .decrement: position = max(0,position - 0.15)
+            @unknown default: break
+            }
+        }
+        .accessibilityIdentifier("openWorkspace")
     }
 }

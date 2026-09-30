@@ -3,6 +3,7 @@ import ImageIO
 import A0GenerativeUI
 
 struct RemoteGeneratedImage: View {
+    @Environment(\.a0Theme) private var theme
     let url:String
     let title:String
     @State private var image:UIImage?
@@ -11,15 +12,15 @@ struct RemoteGeneratedImage: View {
     @Environment(\.scenePhase) private var scenePhase
     var body: some View {
         ZStack {
-            Color("A0Canvas")
+            theme.canvas
             if let image { Image(uiImage:image).resizable().scaledToFit().accessibilityLabel(title) }
             else if synthetic {
-                VStack(spacing:12) { Image(systemName:"photo.on.rectangle.angled").font(.largeTitle); Text("Synthetic image preview").font(.caption) }.foregroundStyle(Color.a0Supporting)
+                VStack(spacing:12) { Image(systemName:"photo.on.rectangle.angled").font(.largeTitle); Text("Synthetic image preview").font(.caption) }.foregroundStyle(theme.muted)
             } else if failed {
                 VStack(spacing:12) {
                     Label("Image unavailable",systemImage:"photo.badge.exclamationmark")
                     Button("Retry",systemImage:"arrow.clockwise") { retry += 1 }
-                }.foregroundStyle(Color.a0Supporting)
+                }.foregroundStyle(theme.muted)
             } else { ProgressView("Loading image…") }
         }.task(id:"\(url)-\(retry)-\(scenePhase == .active)") {
             guard !synthetic, scenePhase == .active else { return }

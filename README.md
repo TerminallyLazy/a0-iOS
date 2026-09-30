@@ -128,3 +128,11 @@ The captured Speech permission crash was an executor assertion in Apple’s back
 Tap the composer microphone to dictate into the existing message; Stop voice ends capture and Send stays explicit. Voice options remembers Continuous listening across launches without starting it automatically, and offers Read reply and supported on-device draft polishing. Ordinary saved-state text is removed from the composer; failed storage still shows a clear warning and Retry saving. The context meter now scales and stacks its breakdown at accessibility text sizes while keeping numeric groups intact.
 
 Browser tool captures now appear as native thumbnail cards with contained previews. A compact composer status dot explains connection state on tap. See [chat media and attachments](docs/CHAT-MEDIA.md).
+
+## Plugins in the current source
+
+Open **Plugins** from the conversation sidebar to browse **Custom**, **Built-in**, and **Plugin Hub** with plugin thumbnails, install/update community plugins, change scoped activation, or delete a custom plugin. Plugin settings and main screens open inside the app using the connected server's WebUI. See [plugin behavior and verification boundaries](docs/PLUGINS.md). This source change has not been distributed to TestFlight.
+
+A floating right-edge tab and the sidebar menu expose [Workspace](docs/WORKSPACE.md), preserving the server canvas, siderail and plugin-registered File Browser/Browser/Desktop/Editor surfaces inside the authenticated app.
+
+Native appearance can follow the connected server’s Selectable Theme plugin, including custom palettes and linear gradients. Settings → Match server theme controls this locally; Light/Dark/System remains independent. See [theme behavior](docs/THEMES.md).

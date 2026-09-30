@@ -2,6 +2,7 @@ import SwiftUI
 import A0Core
 
 struct ConnectionStatusButton: View {
+    @Environment(\.a0Theme) private var theme
     let model: SpikeModel
     @State private var showingDetails = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -40,7 +41,7 @@ struct ConnectionStatusButton: View {
                                 .frame(width:44,height:44).contentShape(Rectangle())
                         }
                     }
-                    Text(model.detail).font(.subheadline).foregroundStyle(Color.a0Supporting)
+                    Text(model.detail).font(.subheadline).foregroundStyle(theme.muted)
                         .fixedSize(horizontal:false,vertical:true)
                     if model.state.paused { Label("Agent is paused",systemImage:"pause.circle").font(.subheadline) }
                     if model.recoveryStopped {

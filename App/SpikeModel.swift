@@ -4,6 +4,8 @@ import A0GenerativeUI
 import A0Realtime
 
 @MainActor @Observable final class SpikeModel {
+    let serverTheme = ServerThemeStore()
+    var themeRefreshRevision = 0
     var origin = ""
     var localDevelopment = false
     var username = ""

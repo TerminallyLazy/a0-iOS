@@ -28,6 +28,7 @@ import A0Core
 private struct DecodedBrowserImage: @unchecked Sendable { let image: CGImage }
 
 struct BrowserScreenshotView: View {
+    @Environment(\.a0Theme) private var theme
     let screenshot: BrowserScreenshot
     let scope: BrowserMediaScope
     var onOpen: () -> Void = {}
@@ -45,14 +46,14 @@ struct BrowserScreenshotView: View {
                 onOpen(); preview = true
             } label: {
                 ZStack {
-                    RoundedRectangle(cornerRadius:12).fill(Color("A0Canvas"))
+                    RoundedRectangle(cornerRadius:12).fill(theme.canvas)
                     if let image {
                         Image(decorative:image,scale:1).resizable().scaledToFit()
                     } else if failed {
                         VStack(spacing:8) {
                             Image(systemName:"photo.badge.exclamationmark").font(.title2)
                             Text("Screenshot unavailable").font(.caption)
-                        }.foregroundStyle(Color.a0Supporting)
+                        }.foregroundStyle(theme.muted)
                     } else {
                         ProgressView().accessibilityLabel("Loading browser screenshot")
                     }
@@ -62,7 +63,7 @@ struct BrowserScreenshotView: View {
                 .accessibilityHint("Opens a larger preview")
                 .accessibilityIdentifier("browserScreenshot")
             HStack(spacing:8) {
-                Image(systemName:"globe").foregroundStyle(Color.a0Supporting).accessibilityHidden(true)
+                Image(systemName:"globe").foregroundStyle(theme.muted).accessibilityHidden(true)
                 Text("Browser capture").font(.caption.weight(.medium))
                 Spacer()
                 if failed {
@@ -70,13 +71,13 @@ struct BrowserScreenshotView: View {
                         Label("Retry",systemImage:"arrow.clockwise").font(.caption).frame(minWidth:44,minHeight:44)
                     }
                 } else {
-                    Image(systemName:"arrow.up.left.and.arrow.down.right").font(.caption).foregroundStyle(Color.a0Supporting).accessibilityHidden(true)
+                    Image(systemName:"arrow.up.left.and.arrow.down.right").font(.caption).foregroundStyle(theme.muted).accessibilityHidden(true)
                 }
             }.padding(.horizontal,12).frame(minHeight:44)
         }
-        .background(Color("A0Canvas"),in:RoundedRectangle(cornerRadius:12))
+        .background(theme.canvas,in:RoundedRectangle(cornerRadius:12))
         .clipShape(RoundedRectangle(cornerRadius:12))
-        .overlay(RoundedRectangle(cornerRadius:12).strokeBorder(Color.a0Supporting.opacity(0.2),lineWidth:0.5))
+        .overlay(RoundedRectangle(cornerRadius:12).strokeBorder(theme.muted.opacity(0.2),lineWidth:0.5))
         .popover(isPresented:$preview) {
             VStack(spacing:12) {
                 HStack {

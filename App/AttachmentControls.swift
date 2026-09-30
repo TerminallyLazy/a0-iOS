@@ -5,6 +5,7 @@ import A0Core
 
 /// A locally staged tray. Selection never uploads; ordinary Send owns submission.
 struct AttachmentTray: View {
+    @Environment(\.a0Theme) private var theme
     @Bindable var chat: ChatSession
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     var body: some View {
@@ -14,21 +15,21 @@ struct AttachmentTray: View {
                     ForEach(chat.attachments) { file in
                         HStack(spacing: 8) {
                             Image(systemName: file.contentType.hasPrefix("image/") ? "photo" : "doc")
-                                .foregroundStyle(Color("A0Tint"))
+                                .foregroundStyle(theme.tint)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(file.name).font(.caption.weight(.medium))
                                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1).truncationMode(.middle)
                                     .fixedSize(horizontal:false,vertical:true)
                                 Text(ByteCountFormatter.string(fromByteCount: Int64(file.byteCount), countStyle: .file))
-                                    .font(.caption2).foregroundStyle(Color.a0Supporting)
+                                    .font(.caption2).foregroundStyle(theme.muted)
                             }.frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? 280 : 160, alignment: .leading)
                             Button { chat.removeAttachment(file.id) } label: {
                                 Image(systemName: "xmark").font(.caption.weight(.semibold)).frame(width: 44, height: 44)
                             }.accessibilityLabel("Remove \(file.name)")
                                 .accessibilityIdentifier("removeAttachment-\(file.id)")
                         }.padding(.leading, 12)
-                            .background(Color("A0Panel"), in: RoundedRectangle(cornerRadius: 12))
-                            .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(Color("A0Tint").opacity(0.16)) }
+                            .background(theme.panel, in: RoundedRectangle(cornerRadius: 12))
+                            .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(theme.tint.opacity(0.16)) }
                     }
                 }
             }.accessibilityIdentifier("attachmentTray")

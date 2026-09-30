@@ -2,6 +2,7 @@ import SwiftUI
 import A0Core
 
 struct ServerToolsView: View {
+    @Environment(\.a0Theme) private var theme
     let model:SpikeModel
     var onAttach: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
@@ -20,7 +21,7 @@ struct ServerToolsView: View {
     private var profile:ProfileIdentity? { try? ProfileIdentity(origin:ServerOrigin(model.origin),username:model.username) }
     var body: some View {
         NavigationStack {
-            List {
+            ThemeList {
                 if let onAttach {
                     Section {
                         Button(action:onAttach) {
@@ -57,7 +58,7 @@ struct ServerToolsView: View {
                 ScrollView {
                     if let result {
                         VStack(alignment:.leading,spacing:16) {
-                            if let tokens = result.tokens { Label("\(tokens) tokens",systemImage:"text.word.spacing").font(.caption).foregroundStyle(Color.a0Supporting) }
+                            if let tokens = result.tokens { Label("\(tokens) tokens",systemImage:"text.word.spacing").font(.caption).foregroundStyle(theme.muted) }
                             Text(result.text.isEmpty ? "Nothing here yet." : result.text).font(.body).textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading)
                         }.padding(20)
                     }

@@ -2,6 +2,7 @@ import SwiftUI
 import A0Core
 
 struct ModelPresetPicker:View {
+    @Environment(\.a0Theme) private var theme
     let model:SpikeModel
     @State private var workspace = ModelPresetWorkspace()
     @State private var presented = false
@@ -15,7 +16,7 @@ struct ModelPresetPicker:View {
                 Image(systemName:"brain")
                 Text(workspace.closedLabel).lineLimit(1)
                 Image(systemName:"chevron.down").font(.caption2.weight(.semibold))
-            }.font(.caption).foregroundStyle(Color.a0Supporting).frame(minHeight:44)
+            }.font(.caption).foregroundStyle(theme.muted).frame(minHeight:44)
         }.accessibilityLabel("Model presets, \(workspace.closedLabel)").accessibilityIdentifier("modelPresetPicker")
             .popover(isPresented:$presented) {
                 VStack(alignment:.leading,spacing:0) {
@@ -47,7 +48,7 @@ struct ModelPresetPicker:View {
                                 Divider().padding(.leading,16)
                             }
                             if workspace.presets.isEmpty && !workspace.busy {
-                                Text("No model presets available.").font(.callout).foregroundStyle(Color.a0Supporting).padding(16)
+                                Text("No model presets available.").font(.callout).foregroundStyle(theme.muted).padding(16)
                             }
                         }
                     }
@@ -78,15 +79,15 @@ struct ModelPresetPicker:View {
     @ViewBuilder private var scopeStatus:some View {
         if let state = workspace.overrideState {
             VStack(alignment:.leading,spacing:8) {
-                Text(state.override == nil ? "Using inherited preset: \(state.configuredPreset)" : "Selection applies to this chat").font(.caption).foregroundStyle(Color.a0Supporting)
+                Text(state.override == nil ? "Using inherited preset: \(state.configuredPreset)" : "Selection applies to this chat").font(.caption).foregroundStyle(theme.muted)
                 if state.override != nil {
                     Button("Use inherited \(state.configuredPreset)",systemImage:"arrow.uturn.backward") { clearOverride() }
                         .font(.callout).frame(minHeight:44).disabled(!workspace.canMutate || !model.canSubmit).accessibilityIdentifier("inheritModelPreset")
                 }
-                if !state.allowed { Text("Model overrides are disabled for this chat.").font(.caption).foregroundStyle(Color.a0Supporting) }
+                if !state.allowed { Text("Model overrides are disabled for this chat.").font(.caption).foregroundStyle(theme.muted) }
             }
         } else {
-            Text(model.chat?.selectedContext == nil ? "Create a chat to choose its model preset. Preset definitions are shared across Agent Zero." : "Checking the current chat’s model selection…").font(.caption).foregroundStyle(Color.a0Supporting)
+            Text(model.chat?.selectedContext == nil ? "Create a chat to choose its model preset. Preset definitions are shared across Agent Zero." : "Checking the current chat’s model selection…").font(.caption).foregroundStyle(theme.muted)
         }
     }
     private func select(_ name:String) {
@@ -108,6 +109,7 @@ struct ModelPresetPicker:View {
 }
 
 struct ModelPresetSummary:View {
+    @Environment(\.a0Theme) private var theme
     let preset:ModelPresetDocument
     let defaultPreset:ModelPresetDocument?
     var selected = false
@@ -115,16 +117,16 @@ struct ModelPresetSummary:View {
     var body:some View {
         VStack(alignment:.leading,spacing:8) {
             HStack {
-                Text(preset.name).font(.callout.weight(.semibold)).foregroundStyle(.primary)
+                Text(preset.name).font(.callout.weight(.semibold)).foregroundStyle(theme.text)
                 Spacer(minLength:6)
                 if selected { Image(systemName:"checkmark").font(.callout.weight(.semibold)).accessibilityLabel("Selected") }
             }
             ForEach(preset.summaryRows(defaultPreset:defaultPreset)) { row in
                 HStack(alignment:.firstTextBaseline,spacing:10) {
-                    Text(row.id == "embedding" ? "Embed" : row.id == "vision" ? "Vision" : row.title).font(.caption.weight(.medium)).foregroundStyle(Color.a0Supporting).frame(width:labelWidth,alignment:.leading)
+                    Text(row.id == "embedding" ? "Embed" : row.id == "vision" ? "Vision" : row.title).font(.caption.weight(.medium)).foregroundStyle(theme.muted).frame(width:labelWidth,alignment:.leading)
                     VStack(alignment:.leading,spacing:2) {
-                        Text(row.name.isEmpty ? "Not configured" : row.name).font(.caption).foregroundStyle(.primary).lineLimit(2)
-                        if !row.provider.isEmpty { Text(row.provider).font(.caption2).foregroundStyle(Color.a0Supporting) }
+                        Text(row.name.isEmpty ? "Not configured" : row.name).font(.caption).foregroundStyle(theme.text).lineLimit(2)
+                        if !row.provider.isEmpty { Text(row.provider).font(.caption2).foregroundStyle(theme.muted) }
                     }
                     Spacer(minLength:0)
                 }

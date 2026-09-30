@@ -2,6 +2,7 @@ import SwiftUI
 import A0Core
 
 struct MarkdownView: View {
+    @Environment(\.a0Theme) private var theme
     let source: String
     @State private var blocks: [MarkdownBlock] = []
     var body: some View {
@@ -25,9 +26,9 @@ struct MarkdownView: View {
                 .accessibilityAddTraits(.isHeader)
         case .paragraph(let text): InlineMarkdown(source:text)
         case .listItem(let marker,let text):
-            HStack(alignment:.firstTextBaseline,spacing:10) { Text(marker).foregroundStyle(.secondary); InlineMarkdown(source:text) }
+            HStack(alignment:.firstTextBaseline,spacing:10) { Text(marker).foregroundStyle(theme.muted); InlineMarkdown(source:text) }
         case .quote(let text):
-            HStack(alignment:.top,spacing:10) { Image(systemName:"quote.opening").foregroundStyle(.secondary); InlineMarkdown(source:text).italic() }
+            HStack(alignment:.top,spacing:10) { Image(systemName:"quote.opening").foregroundStyle(theme.muted); InlineMarkdown(source:text).italic() }
         case .divider: Divider()
         case .code(let language,let code): CodeBlock(language:language,code:code)
         case .table(let rows):
@@ -40,12 +41,13 @@ struct MarkdownView: View {
                         if index == 0 { Divider() }
                     }
                 }.padding(12)
-            }.background(Color("A0Panel"),in:RoundedRectangle(cornerRadius:12))
+            }.background(theme.panel,in:RoundedRectangle(cornerRadius:12))
         }
     }
 }
 
 struct InlineMarkdown: View {
+    @Environment(\.a0Theme) private var theme
     let source: String
     @State private var text: AttributedString?
     var body: some View {
@@ -63,13 +65,14 @@ struct InlineMarkdown: View {
 }
 
 private struct CodeBlock: View {
+    @Environment(\.a0Theme) private var theme
     let language: String
     let code: String
     @State private var copied = false
     var body: some View {
         VStack(alignment:.leading,spacing:8) {
             HStack {
-                Text(language.isEmpty ? "Code" : language).font(.caption).foregroundStyle(.secondary)
+                Text(language.isEmpty ? "Code" : language).font(.caption).foregroundStyle(theme.muted)
                 Spacer()
                 Button {
                     UIPasteboard.general.string = code; copied = true
@@ -79,6 +82,6 @@ private struct CodeBlock: View {
                 }
             }
             ScrollView(.horizontal) { Text(verbatim:code).font(.system(.callout,design:.monospaced)).textSelection(.enabled) }
-        }.padding(12).background(Color("A0Panel"),in:RoundedRectangle(cornerRadius:12))
+        }.padding(12).background(theme.panel,in:RoundedRectangle(cornerRadius:12))
     }
 }
