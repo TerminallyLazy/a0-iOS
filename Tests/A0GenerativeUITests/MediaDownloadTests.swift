@@ -40,7 +40,7 @@ private final class MediaFixtureProtocol:URLProtocol,@unchecked Sendable {
         }
         let path = request.url!.lastPathComponent
         let mime = ["html":"text/html","playlist":"application/vnd.apple.mpegurl","video":"video/mp4"][path] ?? "audio/mpeg"
-        let data = path == "empty" ? Data() : path == "overflow" ? Data(repeating:1,count:17) : Data([1,2,3])
+        let data = path == "chunks" ? Data(repeating:1,count:70_000) : path == "empty" ? Data() : path == "overflow" ? Data(repeating:1,count:17) : Data([1,2,3])
         var headers = ["Content-Type":mime]
         if path != "overflow" { headers["Content-Length"] = path == "large" ? "999999999" : "\(data.count)" }
         let response = HTTPURLResponse(url:request.url!,statusCode:path == "redirect" ? 302 : 200,httpVersion:nil,headerFields:headers)!
@@ -49,4 +49,21 @@ private final class MediaFixtureProtocol:URLProtocol,@unchecked Sendable {
         client?.urlProtocolDidFinishLoading(self)
     }
     override func stopLoading() {}
+}
+
+extension MediaDownloadTests {
+    @Test func allowlistDistinguishesAudioVideoAndRejectsRemotePlaylists() {
+        for mime in ["audio/mpeg","audio/mp4","audio/x-m4a","audio/aac","audio/wav","audio/x-wav"] {
+            #expect(MediaKind.audio.fileExtension(for:mime) != nil)
+            #expect(MediaKind.video.fileExtension(for:mime) == nil)
+        }
+        #expect(MediaKind.video.fileExtension(for:"video/quicktime") == "mov")
+        #expect(MediaKind.audio.byteLimit == 33_554_432)
+        #expect(MediaKind.video.byteLimit == 104_857_600)
+        #expect(MediaKind.video.fileExtension(for:"application/vnd.apple.mpegurl") == nil)
+    }
+    @Test func streamsAcrossDiskChunkBoundary() async throws {
+        let file = try await loader(limit:80_000).load("https://media.example.com/chunks",kind:.audio)
+        #expect(try Data(contentsOf:file.url).count == 70_000)
+    }
 }

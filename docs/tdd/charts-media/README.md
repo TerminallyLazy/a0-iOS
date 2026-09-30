@@ -14,3 +14,6 @@ Media transport tests specify bounded credential-free file downloads, rejection 
 
 ## Native RED
 The simulator executed `ChartMediaUITests/testLargeTextChart` and failed its `View values` assertion for the absent donut fixture/rendering. Command: `xcodebuild -project AgentZeroSpike.xcodeproj -scheme AgentZeroSpike -destination 'platform=iOS Simulator,id=0758A3EE-44E9-4645-AEC3-8CA818DBF74C' -derivedDataPath /tmp/a0-charts-derived -disableAutomaticPackageResolution -skipPackageUpdates -only-testing:A0UITests/ChartMediaUITests/testLargeTextChart test`.
+
+## Media routing RED
+Native testing exposed that the SDK reserves `AudioPlayer`/`Video` names and bypasses the custom catalog for those built-ins. Added `mediaAlwaysUsesTrustedLocalPlayerInsteadOfSDKBuiltins`; `swift test --filter mediaAlwaysUsesTrustedLocalPlayerInsteadOfSDKBuiltins` executed one test with two intended routing failures. The fix must remap both types before any SDK processing, preserving the bounded local-file-only player.

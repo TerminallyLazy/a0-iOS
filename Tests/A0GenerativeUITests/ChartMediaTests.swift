@@ -59,3 +59,48 @@ import Testing
         }
     }
 }
+
+extension ChartMediaTests {
+    @Test func chartDisplayAndBoundsRetainSuppliedValues() throws {
+        let p:[String:Any] = ["label":"Sample","value":4,"series":"Group","x":2,"lower":1,"upper":5,"size":3,"row":"North"]
+        let content = try JSONDecoder().decode(ChartContent.self,from:JSONSerialization.data(withJSONObject:chart("range",[p])))
+        #expect(content.points[0].name == "Sample · Group · North")
+        #expect(content.points[0].detail == "4; x: 2; Range: 1–5; Size: 3")
+        #expect(content.series == ["Group"])
+        for field in ["title","yLabel","xLabel"] {
+            var bad = chart("line",[["label":"A","value":1]]); bad[field] = ""
+            #expect(throws:(any Error).self) { try GeneratedDocument.validate(surface(bad)) }
+        }
+        for points in [[],[["label":"A","value":1e12]],(0..<33).map{["label":"\($0)","value":1]}] as [[[String:Any]]] {
+            #expect(throws:(any Error).self) { try GeneratedDocument.validate(surface(chart("line",points))) }
+        }
+        #expect(throws:Never.self) { try GeneratedDocument.validate(surface(chart("scatter",(0..<128).map{["label":"\($0)","value":$0,"x":$0]}))) }
+    }
+    @Test func mediaCandidatesKeepTranscriptsAndURLsOutOfJevProjection() throws {
+        for type in ["AudioPlayer","Video"] {
+            let source = try surface(["component":type,"title":"Private title","url":"https://media.example.com/private","transcript":"Private transcript"])
+            let object = try JSONSerialization.jsonObject(with:Data(source.utf8))
+            let envelope:[String:Any] = ["version":1,"intent":"Review supplied media","candidates":[["id":"clip","description":"A playable clip","surface":object]]]
+            let json = String(decoding:try JSONSerialization.data(withJSONObject:envelope),as:UTF8.self)
+            let batch = try JevCandidates(prose:"Summary",source:json,complete:true).validated()
+            let request = String(decoding:try batch.requestData(),as:UTF8.self)
+            #expect(request.contains(type)); #expect(!request.contains("Private")); #expect(!request.contains("media.example.com"))
+        }
+    }
+    @Test func mediaRejectsExcessiveTextAndBadSources() throws {
+        let valid:[String:Any] = ["component":"AudioPlayer","title":"A","url":"https://media.example.com/a"]
+        for change in [["title":String(repeating:"a",count:161)],["transcript":String(repeating:"a",count:8193)],["sourceURL":"file:///a"]] {
+            #expect(throws:(any Error).self) { try GeneratedDocument.validate(surface(valid.merging(change){_,b in b})) }
+        }
+    }
+}
+
+extension ChartMediaTests {
+    @Test @MainActor func mediaAlwaysUsesTrustedLocalPlayerInsteadOfSDKBuiltins() throws {
+        for type in ["AudioPlayer","Video"] {
+            let session = GeneratedSession()
+            try session.load(surface(["component":type,"title":"A clip","url":"https://media.example.com/clip"]))
+            #expect(session.viewModel?.componentTree?.instance.component == "A0" + type)
+        }
+    }
+}
