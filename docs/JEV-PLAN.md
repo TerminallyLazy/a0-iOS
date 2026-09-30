@@ -119,3 +119,7 @@ Out of scope: production-chat testing, new dependency installation, pushes, merg
 - Existing repository experiment: [Jev A2UI experiment](experiments/jev-a2ui/README.md).
 - [TypeSafe HTTP API](https://docs.typesafe.ai/api), checked September 30, 2026: direct Choice endpoint and authentication contract.
 - [json-render Jev experiment](https://json-render.dev/docs/jev), checked September 30, 2026: candidate-based composition; its experimental JavaScript APIs are not required for this Swift implementation.
+
+## Approved catalog expansion
+
+During implementation the user explicitly requested broader A2UI coverage. Include four native component types in this task: Metric (value/unit/change/source), DataTable (bounded rectangular comparisons), Timeline (bounded events and supplied status), and Checklist (a titled collection of existing bound CheckBox controls and an optional reviewed Button). Jev can select these complete candidates and Dashboard can combine them. Keep all existing size, source-link, form-state and action-review protections. Add contract and synthetic native rendering tests before implementation; no arbitrary web UI, new server action API, or unreviewed checklist submission is added.

@@ -22,3 +22,7 @@ Coverage, live API checks and physical-device acceptance remain unverified. Only
 `swift test --enable-code-coverage --filter Jev` passed 14 tests in five suites. The same missing implementations now compile and exercise candidate validation, credential storage, transport failures, durable deduplication and coordinator isolation. Raw output: `/tmp/a0-jev-green.log`. Coverage measurement follows integration.
 
 The iPhone JevUITests runtime RED reached Settings / Generative UI, then failed because secure field `jevAPIKey` did not exist. This validates the missing Settings behavior before App implementation. Raw output: `/tmp/a0-jev-ui-red.log`.
+
+## Expanded catalog RED
+
+The user expanded scope to Metric, DataTable, Timeline and Checklist during implementation. `swift test --enable-code-coverage --filter ExpandedCatalogTests` failed because the tested `GenerativeGuide.expandedExample` and catalog behavior are missing. Native metric/table/timeline eligibility, malformed data rejection and persistent local checklist binding are explicit guarantees in the new test target. Raw output: `/tmp/a0-jev-catalog-red.log`.
