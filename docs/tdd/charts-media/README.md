@@ -56,7 +56,11 @@ xcodebuild -project AgentZeroSpike.xcodeproj -scheme AgentZeroSpike \
 
 Earlier full chart runs used the same base with a 240-second test allowance and the full `ChartMediaUITests` selector. The final iPad run used destination `256E8E14-492E-4A80-B1F1-B3EF18E1FA90`, `test-without-building`, and the three media/background, cancellation and large-text selectors. Its result was three tests, zero failures, `TEST EXECUTE SUCCEEDED`. Both simulators run iOS 26.5; iPhone is dark and iPad light, with the synthetic Catalog Ocean server theme. [Retained screenshots](../../evidence/charts-media/) are synthetic.
 
-[Coverage](coverage.md): new package chart/media files are 91.89% covered by lines; native media is separately 84.15%. This is not whole-app coverage. Hardware output/interruption behavior, caption-track selection, real public media hosts, authenticated server media and live Jev/model generation were not verified. No physical-device install or release was performed. Xcode simulator archives, failed-run diagnostics, exported recordings and temporary playback fixtures are disposable; compact evidence and selected PNGs are retained.
+[Coverage](coverage.md): new package chart/media files are 91.89% covered by lines; native media is separately 84.15%. This is not whole-app coverage. Hardware output/interruption behavior, caption-track selection, real public media hosts, authenticated server media and live Jev/model generation were not verified. Xcode simulator archives, failed-run diagnostics, exported recordings and temporary playback fixtures are disposable; compact evidence and selected PNGs are retained.
+
+## Physical-device handoff
+
+Source `1fd0b93` built successfully as a signed Release with the pinned dependencies; `codesign --verify --deep --strict` passed. `devicectl` installation and ordinary launch both succeeded on the physical iPhone 15 / iOS 27.2. The installed app retains identity `com.terminallylazy.a0-ios` and version 0.1.0 (5), without fixture launch arguments. This is installation evidence, not live-feature acceptance or a TestFlight release. Task-owned device DerivedData was removed after delivery; private signing and raw device metadata are not committed.
 
 ## Local checkpoint chain
 
