@@ -8,6 +8,7 @@ Adapt explicit Agent Zero response payloads to the pinned A2UI Swift SDK and the
 - GeneratedDocument validates the complete snapshot, including intermediate graphs, before SDK processing.
 - GeneratedSession owns surface replacement/disposal and reviewed action envelopes.
 - RichComponents owns forecast, chart, carousel DTOs and public-URL policy.
+- ExpandedComponents owns Metric, DataTable, Timeline and Checklist DTOs and bounds; Checklist reuses reviewed native form actions.
 - ImageDownloads owns isolated, bounded raster downloads and DNS preflight.
 - GenerativeGuide and GenerativeChatAPI own opt-in capability guidance on ordinary explicit sends.
 - JevCandidates owns explicit candidate-envelope recognition, local eligibility and minimized provider projection. JevClient owns isolated bounded TypeSafe Choice transport. JevSettingsStore owns profile-scoped consent/key operations through a dedicated credential backend. JevAttemptJournal and JevCoordinator own durable one-attempt admission and stale-result rejection.

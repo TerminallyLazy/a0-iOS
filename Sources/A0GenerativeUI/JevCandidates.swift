@@ -49,7 +49,7 @@ public struct JevCandidates: Equatable, Sendable {
                 }
             }
             let kinds = Set(nodes.values.compactMap { $0["component"] as? String })
-            let rich = nodes.values.filter { ["Forecast","Chart","ImageCarousel"].contains($0["component"] as? String ?? "") }
+            let rich = nodes.values.filter { ["Forecast","Chart","ImageCarousel","Metric","DataTable","Timeline","Checklist"].contains($0["component"] as? String ?? "") }
             guard !rich.isEmpty, !kinds.contains("Dashboard") || rich.count >= 2 else { continue }
             valid.append(.init(id:id,description:description,source:source,components:kinds.sorted()))
         }

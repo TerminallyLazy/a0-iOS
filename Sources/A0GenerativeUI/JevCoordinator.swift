@@ -41,6 +41,7 @@ import A0Core
             sources[entry.no] = fingerprint
             let generation = generation, chooser = chooser, journal = journal
             pending[entry.no] = Task { [weak self] in
+                defer { if let self, self.generation == generation { self.pending[entry.no] = nil } }
                 do {
                     let batch = try await Task.detached { try reply.validated() }.value
                     try Task.checkCancellation()
@@ -54,7 +55,6 @@ import A0Core
                         self.models[entry.no] = result.model
                     }
                 } catch { /* Preserve prose; never log keys, payloads or raw provider errors. */ }
-                if let self, self.generation == generation { self.pending[entry.no] = nil }
             }
         }
     }

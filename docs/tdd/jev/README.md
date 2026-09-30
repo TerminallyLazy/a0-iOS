@@ -30,3 +30,9 @@ The user expanded scope to Metric, DataTable, Timeline and Checklist during impl
 ## Admission-capacity regression RED
 
 `swift test --enable-code-coverage --filter JevCoordinatorTests` ran five tests and failed the new `journalRejectionReleasesCapacityForLaterReplies` assertion: a previously journaled attempt occupied an in-memory pending slot after its early return, reducing later selection capacity. The in-flight provider cancellation regression passed. Raw output: `/tmp/a0-jev-capacity-red.log`.
+
+## Expanded implementation GREEN
+
+`swift test --enable-code-coverage` passed 251 tests: 43 generated-UI tests and 208 core tests. This includes the five coordinator regressions (early-return capacity is now released) and five expanded-catalog tests. A further runtime RED (`de8754d`, `/tmp/a0-jev-checklist-red.log`) proved that 21 checkboxes incorrectly passed the documented 20-task bound; validation now rejects that input. Final package output is `/tmp/a0-jev-package-complete.log`.
+
+New Jev/expanded DTO logic has 97.34% line coverage (293/301 lines), 92.24% regions and 91.58% functions. `coverage.txt` records the exact six-file scope; this is not whole-app or Keychain/UI coverage. The command uses `xcrun llvm-cov report .build/out/Products/Debug/A0GenerativeUITests.xctest/Contents/MacOS/A0GenerativeUITests -instr-profile=.build/out/Products/Debug/codecov/default.profdata` with the six files listed in that report.

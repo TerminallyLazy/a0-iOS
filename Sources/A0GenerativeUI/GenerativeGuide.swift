@@ -23,7 +23,7 @@ public enum GenerativeGuide {
 }
 
 extension GenerativeGuide {
-    public static let capabilities = """
+    public static let legacyCapabilities = """
     Native client presentation preferences (not a separate user task): Answer normally with Markdown when suitable. For forecasts use Forecast, image searches use ImageCarousel, numeric trends use Chart, and summaries use Dashboard. Choose the useful presentation automatically. Use real retrieved values and source links; never invent measurements or image URLs. If a rich format is unsuitable, reply with Markdown.
     To render rich UI, put one self-contained JSON array in a fenced a2ui block inside your normal response tool text. Messages use version v0.9 and one of createSurface/updateComponents/updateDataModel/deleteSurface. Start createSurface with surfaceId and catalogId agent-zero:mobile:v1. updateComponents contains surfaceId and components. Each component is {id,component,...properties}; root ID is root. Put readable prose outside the block. One surface per reply; include complete current state. Layout children must be explicit arrays of component IDs; no functions, expressions, themes, checks, HTML or templates.
     Components/properties:
@@ -45,6 +45,35 @@ extension GenerativeGuide {
         {"id":"trend","component":"Chart","title":"Afternoon temperature","kind":"line","yLabel":"Temperature (°F)","points":[{"label":"12 PM","value":68},{"label":"2 PM","value":72},{"label":"4 PM","value":74},{"label":"6 PM","value":70}],"sourceURL":"https://www.weather.gov/"},
         {"id":"photos","component":"ImageCarousel","title":"Places to explore","images":[{"url":"https://images.example.com/one.jpg","title":"A lakeside trail","sourceURL":"https://example.com/trail"},{"url":"https://images.example.com/two.jpg","title":"A tree-lined park","sourceURL":"https://example.com/park"}]}
       ]}}
+    ]
+    """#
+}
+
+
+extension GenerativeGuide {
+    public static let capabilities = legacyCapabilities + "\n" + expandedCapabilities
+    public static let expandedCapabilities = """
+    Additional native components under agent-zero:mobile:v1:
+    Metric: title:string(max160),value:string(max80),unit:optional string(max40),change:optional string(max160),trend:optional up/down/neutral,sourceURL:optional public HTTPS. Display actual source values; a trend is descriptive, not a success judgement.
+    DataTable: title:string(max160),columns:[unique string(max80),1-6],rows:[[string(max512)]],1-50 rows with exactly one cell per column; sourceURL:optional public HTTPS. Supply display-ready strings including units; use an empty string for a genuinely empty cell, never invent missing values.
+    Timeline: title:string(max160),items:[{id:unique component-style ID,title:string(max160),time:optional string(max80),detail:optional string(max1024),state:optional pending/current/complete}],1-30 entries; sourceURL:optional public HTTPS. Dates and status are source-supplied display values; do not imply the app executed a step.
+    Checklist: title:string(max160),children:[1-20 CheckBox IDs and optionally one Button ID]. CheckBox values use existing local data-model paths initialized by updateDataModel. The optional Button uses the existing reviewed event action with only explicitly declared context. Checkbox edits alone never send or change a server. A Checklist is a titled native layout, not an action API.
+    Choose Metric for summary indicators, DataTable for comparisons, Timeline for schedules/history, Checklist for actionable task lists, and Dashboard to combine independently useful components. All existing byte/graph/media/action boundaries still apply.
+    """
+    public static let expandedExample = #"""
+    [
+      {"version":"v0.9","createSurface":{"surfaceId":"expanded","catalogId":"agent-zero:mobile:v1"}},
+      {"version":"v0.9","updateComponents":{"surfaceId":"expanded","components":[
+        {"id":"root","component":"Column","children":["metric","table","timeline","tasks"]},
+        {"id":"metric","component":"Metric","title":"Open tasks","value":"12","unit":"tasks","change":"3 fewer than yesterday","trend":"down","sourceURL":"https://example.com/tasks"},
+        {"id":"table","component":"DataTable","title":"Afternoon options","columns":["Activity","Duration"],"rows":[["Walk","20 minutes"],["Read","30 minutes"]]},
+        {"id":"timeline","component":"Timeline","title":"Your afternoon","items":[{"id":"focus","title":"Focus time","time":"1 PM","state":"complete"},{"id":"walk","title":"Take a walk","time":"2 PM","detail":"Around the park","state":"current"},{"id":"review","title":"Review the day","time":"3 PM","state":"pending"}]},
+        {"id":"tasks","component":"Checklist","title":"Before you go","children":["pack","review_tasks"]},
+        {"id":"pack","component":"CheckBox","label":"Pack your bag","value":{"path":"/packed"}},
+        {"id":"review_tasks","component":"Button","child":"review_label","action":{"event":{"name":"update_tasks","context":{"packed":{"path":"/packed"}}}}},
+        {"id":"review_label","component":"Text","text":"Review checklist"}
+      ]}},
+      {"version":"v0.9","updateDataModel":{"surfaceId":"expanded","path":"/","value":{"packed":false}}}
     ]
     """#
 }
