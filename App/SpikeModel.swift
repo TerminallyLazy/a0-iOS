@@ -20,7 +20,12 @@ import A0Realtime
     private let fixtureID = UUID()
     var status = "Not connected"
     var detail = "Connect to an authenticated HTTPS Agent Zero server."
-    var state = SyncReducer()
+    var state = SyncReducer() { didSet { updateJevReplies() } }
+    var jevCoordinator: JevCoordinator?
+    private var jevStore: JevSettingsStore?
+    private var pendingJev: (context:String, baseline:[LogEntry], key:String)?
+    private var preparingJevSend = false
+    private var jevRevision = UUID()
     var connecting = false
     var connected = false
     var demo = false
@@ -41,7 +46,7 @@ import A0Realtime
         !connecting && !profileBusy && !origin.isEmpty
             && (localDevelopment || (!username.isEmpty && !password.isEmpty))
     }
-    var canSubmit: Bool { !stoppingAgent && (demo || (connected && !syncInterrupted && !state.needsFullSync)) }
+    var canSubmit: Bool { !preparingJevSend && !stoppingAgent && (demo || (connected && !syncInterrupted && !state.needsFullSync)) }
     var agentIsRunning: Bool {
         guard let contextID = chat?.selectedContext else { return false }
         let context = state.contexts.first { $0["id"]?.string == contextID }
@@ -359,6 +364,8 @@ import A0Realtime
         profileBusy = true
         defer { profileBusy = false }
         do {
+            invalidateJev()
+            try await jevSettingsStore().remove(profile.identity)
             try await library().remove(profile.identity)
             if activeIdentity == profile.identity { disconnect() }
             profiles = try await library().load()
@@ -529,6 +536,7 @@ import A0Realtime
     }
     func select(_ context: String?) {
         guard connected || demo else { return }
+        invalidateJev()
         if candidate != nil { cancelRealtimeAttempt() }
         chat?.select(context)
         state.select(context: context)
@@ -548,20 +556,34 @@ import A0Realtime
     }
     func send() async {
         guard canSubmit, let chat else { return }
+        preparingJevSend = true
+        defer { preparingJevSend = false }
+        let sendGeneration = generation, sendRevision = jevRevision, initialContext = chat.selectedContext
+        let baseline = state.logs, before = Set(chat.deliveries.map(\.id))
+        let richEnabled = DisplayPreferences.store.object(forKey:"richReplies") as? Bool ?? true
+        let key: String?
+        if richEnabled, let profile = jevProfile { key = try? await jevSettingsStore().keyIfEnabled(for:profile) }
+        else { key = nil }
+        guard generation == sendGeneration, jevRevision == sendRevision, self.chat === chat,
+              chat.selectedContext == initialContext, connected || demo else { return }
         let context = state.contexts.first { $0["id"]?.string == chat.selectedContext }
         let busy = agentIsRunning
         var hasQueue = false
         if case .array(let queue) = context?["message_queue"] { hasQueue = !queue.isEmpty }
         if let client {
-            let enabled = DisplayPreferences.store.object(forKey:"richReplies") as? Bool ?? true
-            chat.resume(api:GenerativeChatAPI(base:client,enabled:enabled))
+            chat.resume(api:GenerativeChatAPI(base:client,enabled:richEnabled,jev:key != nil))
         }
         let mode = SendMode(preference: DisplayPreferences.store.string(forKey: "sendMode"))
         await chat.send(mode: mode, isBusy: busy, hasQueue: hasQueue)
         guard self.chat === chat, connected || demo else { return }
         synchronizeSelection()
+        guard sendGeneration == generation, sendRevision == jevRevision, let key, let context = chat.selectedContext,
+              chat.deliveries.contains(where:{ !before.contains($0.id) && [.accepted,.queued].contains($0.status) }) else { return }
+        pendingJev = (context,baseline,key)
+        updateJevReplies()
     }
     func disconnect() {
+        invalidateJev()
         clearSavedAuthentication()
         activeIdentity = nil; restoredSession = false; restorationPending = false
         chat?.suspend()
@@ -574,6 +596,7 @@ import A0Realtime
         state = SyncReducer(); status = "Not connected"
     }
     func suspend() {
+        invalidateJev()
         backgrounded = true
         password = ""; credentialLoaded = false
         // iOS suspends transports; the server session and server-side agent remain alive.
@@ -617,5 +640,40 @@ private actor PreviewChatAPI: ChatAPI {
     }
     func sendText(context: String, text: String, messageID: String, queued: Bool) async throws {
         if timeout { throw URLError(.timedOut) }
+    }
+}
+
+
+extension SpikeModel {
+    var jevProfile: ProfileIdentity? { activeIdentity }
+    func jevSettingsStore() -> JevSettingsStore {
+        if let jevStore { return jevStore }
+        let service = "local.agentzero.jev.v1" + (usesFixture ? ".test." + testNamespace.uuidString : "")
+        let store = JevSettingsStore(credentials:KeychainCredentialStore(service:service))
+        jevStore = store; return store
+    }
+    func invalidateJev() {
+        jevRevision = UUID(); pendingJev = nil; jevCoordinator?.cancel()
+    }
+    private func updateJevReplies() {
+        guard let profile = activeIdentity, let context = chat?.selectedContext,
+              state.context == context, let epoch = state.logGUID, !state.needsFullSync else { return }
+        let encoder = JSONEncoder(); encoder.outputFormatting = .sortedKeys
+        guard let identity = try? encoder.encode(profile),
+              let scopeData = try? encoder.encode([String(decoding:identity,as:UTF8.self),context,epoch]) else { return }
+        let scope = String(decoding:scopeData,as:UTF8.self)
+        if let pending = pendingJev, pending.context == context {
+            if jevCoordinator == nil {
+                guard let directory = try? storageDirectory().appendingPathComponent("JevAttempts") else { pendingJev = nil; return }
+                var chooser: any JevChoosing = JevClient()
+                #if DEBUG
+                if usesFixture { chooser = JevPreviewChooser() }
+                #endif
+                jevCoordinator = JevCoordinator(chooser:chooser,journal:JevAttemptJournal(directory:directory))
+            }
+            jevCoordinator?.arm(scope:scope,baseline:pending.baseline,key:pending.key)
+            pendingJev = nil
+        }
+        jevCoordinator?.observe(state.logs,scope:scope)
     }
 }

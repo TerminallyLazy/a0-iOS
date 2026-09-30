@@ -5,6 +5,7 @@ import A0GenerativeUI
 struct MessageRow: View {
     @Environment(\.a0Theme) private var theme
     let entry: LogEntry
+    var jevSelected: GeneratedContent? = nil
     var browserMedia: BrowserMediaScope? = nil
     var onExpand: () -> Void = {}
     var embedded = false
@@ -57,7 +58,13 @@ struct MessageRow: View {
             if let browserMedia, let screenshot = BrowserScreenshot.extract(entry,context:browserMedia.context) {
                 BrowserScreenshotView(screenshot:screenshot,scope:browserMedia,onOpen:onExpand)
             }
-            if let generated = GeneratedContent.extract(entry) {
+            if let candidates = JevCandidates.extract(entry) {
+                if let selected = jevSelected {
+                    GeneratedReplyView(content:selected,onInteract:onExpand,onDraft:onGeneratedDraft)
+                } else {
+                    MarkdownView(source:candidates.prose.isEmpty ? "This reply has no readable fallback. Ask Agent Zero to resend it as Markdown." : candidates.prose)
+                }
+            } else if let generated = GeneratedContent.extract(entry) {
                 GeneratedReplyView(content:generated,onInteract:onExpand,onDraft:onGeneratedDraft)
             } else if collapsible && !expanded {
                 if activity {

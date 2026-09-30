@@ -69,7 +69,7 @@ struct SettingsView: View {
                 Section {
                     Toggle(isOn:$richReplies) { Label("Rich replies",systemImage:"rectangle.3.group") }
                         .accessibilityIdentifier("richReplies")
-                    NavigationLink { GenerativeSetupView() } label: {
+                    NavigationLink { GenerativeSetupView(model:model) } label: {
                         Label("Generative UI",systemImage:"rectangle.and.hand.point.up.left")
                     }.accessibilityIdentifier("generativeUISetup")
                 }.listRowBackground(theme.panel)
@@ -114,6 +114,7 @@ struct SettingsView: View {
                 } header: { Text("About").foregroundStyle(theme.muted) }.listRowBackground(theme.panel)
             }
             .scrollContentBackground(.hidden).background { ThemeBackdrop() }
+            .onChange(of:richReplies) { _,_ in model.invalidateJev() }
             .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
             .modifier(ThemeNavigationChrome())
             .toolbar { ToolbarItem(placement:.confirmationAction) {

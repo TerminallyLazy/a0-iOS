@@ -30,7 +30,7 @@ Adapt explicit Agent Zero response payloads to the pinned A2UI Swift SDK and the
 Keep native catalog properties synchronized with GenerativeGuide, tests, App/GeneratedCatalog.swift and docs/GENERATIVE-UI.md. Maintain Markdown fallbacks and inspectable rejected data. Never log payloads or form values.
 
 ## Verification
-Run swift test --enable-code-coverage; A0GenerativeUITests covers recognition, validation, lifecycle, actions, guidance and transport. Run GenerativeUITests native flows for form review, rich views, source confirmation and Settings. Physical/simulator synthetic success is not live generation acceptance.
+Run swift test --enable-code-coverage; A0GenerativeUITests covers recognition, validation, lifecycle, actions, guidance and transport. Run GenerativeUITests and JevUITests native flows for form review, rich views, source confirmation, Settings, candidate selection/fallback and large-text server-theme rendering. Keep the transcript bottom anchor outside lazy row estimation so tall generated surfaces remain scrollable. Physical/simulator synthetic success is not live generation acceptance.
 
 ## Child DOX Index
 None.

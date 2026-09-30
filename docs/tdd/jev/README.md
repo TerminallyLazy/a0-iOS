@@ -56,3 +56,28 @@ The final layout fix preserves lazy message rows and moves `DeliveryContent` plu
 ## Final package GREEN
 
 After restricting candidate summaries and Dashboard eligibility to the reachable graph, `swift test --enable-code-coverage` passed **252 tests** (44 generated-UI tests plus 208 core tests), including both previously failing orphan-component cases. Output: `/tmp/a0-jev-package-final-reviewed.log`. This supersedes the earlier package totals above. Updated six-file coverage in `coverage.txt` is **97.27% lines (321/330), 91.70% regions and 90.91% functions**. The same owned-source coverage command now reports **91.52% lines (2,905/3,174)** across the two package test binaries.
+
+## Native GREEN and guarantees
+
+| Guarantee | Executed check | Result / evidence |
+| --- | --- | --- |
+| Save does not enable; replacement turns consent off; removal clears configured state | `JevUITests.testSecureSettingsSaveEnableReplaceRemove` | PASS on iPhone and iPad |
+| A new explicitly requested candidate renders all four added components; checked values require review and remain an unsent draft | `JevUITests.testNewReplyChoosesExpandedSurfaceAndChecklistReviewKeepsDraft` | PASS on both devices; final trailing-thumb targeting also passed on iPhone |
+| Unavailable chooser keeps readable prose without raw candidate JSON | `JevUITests.testUnavailableJevRetainsReadableProse` | PASS on both devices |
+| Maximum Dynamic Type uses stacked table cells and reads a synthetic server-selected palette | `JevUITests.testExpandedCatalogAtAccessibilitySizeWithServerTheme` | PASS in iPhone dark and iPad light appearance; screenshots inspected |
+| Moving into history pauses following; Latest returns to incoming content | `ChatInterfaceUITests.testReadingHistoryPausesFollowingUntilLatestIsTapped` | PASS on iPhone after the anchor correction |
+| Existing forecasts/charts/carousels, source confirmation and form review remain functional | `GenerativeUITests` | Three checks PASS on iPad after the correction |
+
+Device matrix: iPhone 14 Plus (`0758A3EE-44E9-4645-AEC3-8CA818DBF74C`) and iPad Pro 13-inch (`256E8E14-492E-4A80-B1F1-B3EF18E1FA90`), iOS 26.5 simulators. Transport is the DEBUG in-memory HTTP fixture and local Jev chooser; no owner key or real chat reached TypeSafe.
+
+Commands used `xcodebuild -project AgentZeroSpike.xcodeproj -scheme AgentZeroSpike -destination 'platform=iOS Simulator,id=<UUID>' -derivedDataPath /tmp/a0-jev-derived -disableAutomaticPackageResolution -skipPackageUpdates -enableCodeCoverage YES` with these actual selections:
+
+- iPhone `test`: `-only-testing:A0UITests/JevUITests -only-testing:A0UITests/ChatInterfaceUITests/testReadingHistoryPausesFollowingUntilLatestIsTapped`; all five passed in `/tmp/a0-jev-phone-complete.log`.
+- iPad `test-without-building`: `-only-testing:A0UITests/JevUITests -only-testing:A0UITests/GenerativeUITests`; five passed initially, while two encountered incorrect test navigation through the underlying chat bar (`/tmp/a0-jev-ipad-complete.log`). The helper now scopes Back to the Generative UI navigation bar. Fallback passed in `/tmp/a0-jev-ipad-routing.log`; checklist selection passed after a fixed trailing-edge switch target in `/tmp/a0-jev-ipad-checklist.log`. All seven distinct iPad checks passed across these runs, not in a single initial batch.
+- Final phone helper check `test-without-building`: `-only-testing:A0UITests/JevUITests/testNewReplyChoosesExpandedSurfaceAndChecklistReviewKeepsDraft`; passed in `/tmp/a0-jev-phone-routing-final.log`.
+
+Kept synthetic PNGs are under `docs/evidence/jev/`; settings capture contains no saved or typed key. Screenshots cover default dark phone, default light tablet and a custom dark server palette at maximum text size. Platform-owned controls and existing unrelated composer layout are outside a claim of exhaustive theme/accessibility compliance.
+
+Live provider behavior with the user's key, real Agent Zero generation and physical-device acceptance are not verified by these fixtures. No push, merge, version bump or TestFlight distribution is part of this task. Local RED/GREEN history is retained on `codex/jev-ios`; preserve this evidence if later squashing it.
+
+Final iOS compile: `xcodebuild -project AgentZeroSpike.xcodeproj -scheme AgentZeroSpike -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/a0-jev-derived -disableAutomaticPackageResolution -skipPackageUpdates CODE_SIGNING_ALLOWED=NO build` reported `BUILD SUCCEEDED` after the final visible-graph eligibility change (`/tmp/a0-jev-final-build.log`). `git diff --check` passed. Temporary DerivedData/raw test bundles and exported diagnostic copies are removed after saving these compact results and selected PNGs; the normal Swift package cache is retained.

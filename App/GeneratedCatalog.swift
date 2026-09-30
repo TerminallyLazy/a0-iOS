@@ -15,6 +15,10 @@ struct GeneratedCatalog: CustomComponentCatalog {
         case "Chart":
             if let value = decode(A0GenerativeUI.ChartContent.self,node) { GeneratedChart(value:value) }
         case "Dashboard": GeneratedDashboard(node:node,surface:surface)
+        case "Metric": if let value = decode(MetricContent.self,node) { GeneratedMetric(value:value) }
+        case "DataTable": if let value = decode(DataTableContent.self,node) { GeneratedDataTable(value:value) }
+        case "Timeline": if let value = decode(TimelineContent.self,node) { GeneratedTimeline(value:value) }
+        case "Checklist": GeneratedChecklist(node:node,surface:surface)
         default: EmptyView()
         }
     }
@@ -156,7 +160,7 @@ private struct GeneratedDashboard: View {
         }
     }
 }
-@MainActor @ViewBuilder private func sourceLink(_ string:String) -> some View {
+@MainActor @ViewBuilder func sourceLink(_ string:String) -> some View {
     if let url = URL(string:string) {
         Link(destination:url) { Label("Source · " + (url.host ?? "Website"),systemImage:"arrow.up.right.square").font(.caption).frame(minHeight:44) }.accessibilityIdentifier("generatedSource-" + (url.host ?? "website"))
     }

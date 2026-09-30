@@ -1,10 +1,10 @@
 # Jev presentation selection for Agent Zero iOS
 
-Status: approved by the user in chat; implementation in progress. Prepared September 30, 2026. Workflow: plan-canvas followed by tdd-workflow; the previous orchestration commands are superseded.
+Status: approved by the user in chat; implemented and verified with synthetic package and simulator checks. Live TypeSafe and physical-device acceptance remain separate. Prepared September 30, 2026. Workflow: plan-canvas followed by tdd-workflow; the previous orchestration commands are superseded.
 
 The user requested proceeding with Jev and adding a Settings field for `TYPESAFE_API_KEY`. This plan extends the existing synthetic experiment in `experiments/jev-a2ui/README.md`.
 
-Approved architecture: a user-supplied key stays in this device's Keychain, scoped to the selected saved server profile, and iOS calls TypeSafe directly. This proposal supersedes the experiment's server-only recommendation for this optional path; it does not describe current production behavior.
+Approved architecture: a user-supplied key stays in this device's Keychain, scoped to the selected saved server profile, and iOS calls TypeSafe directly. This approved architecture supersedes the experiment's server-only recommendation for this optional path.
 
 The implementation belongs in `/Users/lazy/Projects/agent-zero-ios`. The separate Agent Zero server checkout is not an implementation target. Read root and owning child AGENTS.md files before edits. Existing rich replies and ordinary chat work without a TypeSafe account.
 

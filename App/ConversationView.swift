@@ -46,20 +46,24 @@ struct ConversationView: View {
             GeometryReader { viewport in
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(alignment:.leading,spacing:24) {
-                            if model.state.logs.isEmpty {
-                                emptyConversation
-                            }
-                            ForEach(TranscriptGroup.make(model.state.logs)) { group in
-                                if groupActivity && group.isActivity && group.entries.count > 1 {
-                                    ActivityGroupView(group:group,browserMedia:BrowserMediaScope(model:model)) { follow.beginReading() }
-                                        .id("\(model.state.logGUID ?? "pending")-activity-\(group.id)")
-                                } else {
-                                    ForEach(group.entries,id:\.no) { entry in
-                                        MessageRow(entry:entry,browserMedia:BrowserMediaScope(model:model),onExpand:{ follow.beginReading() },onGeneratedDraft:{ text in
-                                            guard let chat = model.chat else { return }
-                                            chat.draft = chat.draft.isEmpty ? text : chat.draft + "\n\n" + text
-                                        }).id("\(model.state.logGUID ?? "pending")-\(entry.no)")
+                        // Keep the bottom anchor outside lazy estimation. Tall replies can
+                        // otherwise trap scrolling in repeated placement updates.
+                        VStack(alignment:.leading,spacing:24) {
+                            LazyVStack(alignment:.leading,spacing:24) {
+                                if model.state.logs.isEmpty {
+                                    emptyConversation
+                                }
+                                ForEach(TranscriptGroup.make(model.state.logs)) { group in
+                                    if groupActivity && group.isActivity && group.entries.count > 1 {
+                                        ActivityGroupView(group:group,browserMedia:BrowserMediaScope(model:model)) { follow.beginReading() }
+                                            .id("\(model.state.logGUID ?? "pending")-activity-\(group.id)")
+                                    } else {
+                                        ForEach(group.entries,id:\.no) { entry in
+                                            MessageRow(entry:entry,jevSelected:model.jevCoordinator?.selected[entry.no],browserMedia:BrowserMediaScope(model:model),onExpand:{ follow.beginReading() },onGeneratedDraft:{ text in
+                                                guard let chat = model.chat else { return }
+                                                chat.draft = chat.draft.isEmpty ? text : chat.draft + "\n\n" + text
+                                            }).id("\(model.state.logGUID ?? "pending")-\(entry.no)")
+                                        }
                                     }
                                 }
                             }
@@ -158,7 +162,7 @@ struct ConversationView: View {
     private var currentProject:ProjectSummary? { model.chatSummaries.first(where:{$0.id == model.chat?.selectedContext})?.project }
     private var latestReply: String? {
         guard let entry = model.state.logs.last(where: { $0.type == "response" }) else { return nil }
-        let prose = GeneratedContent.extract(entry)?.prose ?? entry.content ?? ""
+        let prose = JevCandidates.extract(entry)?.prose ?? GeneratedContent.extract(entry)?.prose ?? entry.content ?? ""
         return MarkdownDocument.parse(prose).compactMap { block -> String? in
             let text: String
             switch block {

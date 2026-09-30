@@ -41,8 +41,10 @@ extension JevUITests {
         let key = app.secureTextFields["jevAPIKey"]; XCTAssertTrue(key.waitForExistence(timeout:5))
         key.tap(); key.typeText("synthetic-ui-key"); app.buttons["jevSaveKey"].tap()
         XCTAssertTrue(app.staticTexts["Key saved on this device"].waitForExistence(timeout:3))
-        app.switches["jevEnabled"].tap()
-        app.navigationBars.buttons.element(boundBy:0).tap()
+        app.switches["jevEnabled"].coordinate(withNormalizedOffset:CGVector(dx:1,dy:0.5)).withOffset(CGVector(dx:-25,dy:0)).tap()
+        XCTAssertEqual(app.switches["jevEnabled"].value as? String,"1")
+        app.navigationBars["Generative UI"].buttons.firstMatch.tap()
+        XCTAssertTrue(app.buttons["settingsDone"].waitForExistence(timeout:3))
         app.buttons["settingsDone"].tap()
         return app
     }
@@ -58,7 +60,8 @@ extension JevUITests {
         reveal(app.staticTexts["Your afternoon"],app)
         XCTAssertTrue(app.staticTexts["Your afternoon"].exists)
         reveal(app.switches["Pack your bag"],app)
-        app.switches["Pack your bag"].tap()
+        app.switches["Pack your bag"].coordinate(withNormalizedOffset:CGVector(dx:1,dy:0.5)).withOffset(CGVector(dx:-25,dy:0)).tap()
+        XCTAssertEqual(app.switches["Pack your bag"].value as? String,"1")
         reveal(app.buttons["Review checklist"],app)
         app.buttons["Review checklist"].tap()
         XCTAssertTrue(app.navigationBars["Review response"].waitForExistence(timeout:3))

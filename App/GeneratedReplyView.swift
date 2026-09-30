@@ -111,13 +111,15 @@ struct GeneratedReplyView: View {
 }
 
 struct GenerativeSetupView: View {
+    let model: SpikeModel
     @Environment(\.a0Theme) private var theme
     @State private var copied = false
     var body: some View {
         ScrollView {
             VStack(alignment:.leading,spacing:20) {
+                JevSettingsSection(model:model)
                 Label("Interactive replies",systemImage:"rectangle.and.hand.point.up.left").font(.title2.weight(.semibold))
-                Text("Agent Zero can present forecasts, image carousels, charts, dashboards and forms. Rich replies advertise the supported format with each message you send. You can also copy the full instructions for a server profile.")
+                Text("Agent Zero can present forecasts, image carousels, charts, metrics, tables, timelines, checklists, dashboards and forms. Rich replies advertise the supported format with each message you send. You can also copy the full instructions for a server profile.")
                 Text("Form edits stay here until you review an action, add it to your draft and send. Unsubmitted form values aren’t saved when you leave the conversation.").font(.subheadline).foregroundStyle(theme.muted)
                 Button(copied ? "Copied" : "Copy agent instructions",systemImage:copied ? "checkmark" : "doc.on.doc") {
                     UIPasteboard.general.string = GenerativeGuide.instructions; copied = true
