@@ -20,7 +20,28 @@ import A0Realtime
     private let fixtureID = UUID()
     var status = "Not connected"
     var detail = "Connect to an authenticated HTTPS Agent Zero server."
-    var state = SyncReducer() { didSet { updateJevReplies() } }
+    var state = SyncReducer() {
+        didSet {
+            updateJevReplies()
+            if oldValue.contexts != state.contexts || oldValue.needsFullSync != state.needsFullSync {
+                updateSubagents()
+            }
+        }
+    }
+    private(set) var subagentRelationships = SubagentRelationships(contexts:[])
+    private(set) var subagentDiscovery = SubagentDiscovery()
+    // Transport generations change on backgrounding; discovery belongs to the
+    // authenticated session and survives a read-only foreground refresh.
+    private var subagentDiscoveryScope = UUID()
+    private func resetSubagentDiscovery() {
+        subagentDiscoveryScope = UUID()
+        subagentDiscovery = SubagentDiscovery()
+    }
+    private func updateSubagents() {
+        subagentRelationships = SubagentRelationships(contexts:state.contexts)
+        subagentDiscovery.reconcile(subagentRelationships,scope:subagentDiscoveryScope,fresh:!state.needsFullSync)
+    }
+    func newSubagents(in context: String) -> Set<String> { subagentDiscovery.newIDs(parent:context) }
     var jevCoordinator: JevCoordinator?
     private var jevStore: JevSettingsStore?
     private var pendingJev: (context:String, baseline:[LogEntry], key:String)?
@@ -161,6 +182,7 @@ import A0Realtime
             guard generation == self.generation, !backgrounded else { return }
             restored.resume(api: client)
             chat = restored; chatsByProfile[identity] = restored
+            resetSubagentDiscovery()
             activeIdentity = identity; origin = identity.origin; username = identity.username
             profileName = profiles.first(where: { $0.identity == identity })?.name ?? identity.origin
             state.select(context: restored.selectedContext)
@@ -538,6 +560,7 @@ import A0Realtime
         guard connected || demo else { return }
         invalidateJev()
         if candidate != nil { cancelRealtimeAttempt() }
+        if let context { subagentDiscovery.acknowledge(child:context) }
         chat?.select(context)
         state.select(context: context)
         if connected && !syncInterrupted {
@@ -583,6 +606,7 @@ import A0Realtime
         updateJevReplies()
     }
     func disconnect() {
+        resetSubagentDiscovery()
         invalidateJev()
         clearSavedAuthentication()
         activeIdentity = nil; restoredSession = false; restorationPending = false

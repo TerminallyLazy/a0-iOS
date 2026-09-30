@@ -14,7 +14,11 @@ struct GeneratedMedia:View {
         VStack(alignment:.leading,spacing:12) {
             Label(value.title,systemImage:kind == .audio ? "waveform":"play.rectangle").font(.headline)
             Text(URL(string:value.url)?.host ?? "Media").font(.caption).foregroundStyle(theme.muted)
-            if requested && playback == nil {
+            if let playback {
+                InlineGeneratedPlayer(playback:playback,kind:kind,onUnload:clear)
+                    .accessibilityElement(children:.contain)
+                    .accessibilityIdentifier("inlineGeneratedMedia")
+            } else if requested {
                 HStack { ProgressView("Loading \(kind.rawValue)…"); Button("Cancel") { requested = false } }
             } else {
                 Button("Load " + kind.rawValue,systemImage:"play.circle") { failed = false; requested = true }.frame(minHeight:44)
@@ -46,16 +50,13 @@ struct GeneratedMedia:View {
                 if !Task.isCancelled { requested = false; failed = true }
             }
         }
-        .sheet(item:$playback,onDismiss:{ requested = false }) { item in
-            GeneratedPlayerScreen(playback:item,title:value.title,kind:kind)
-        }
         .onChange(of:phase) { _,new in if new != .active { clear() } }
         .onDisappear { clear() }
     }
     private func clear() { playback?.stop(); playback = nil; requested = false }
 }
 
-@MainActor @Observable final class GeneratedPlayback:Identifiable {
+@MainActor @Observable final class GeneratedPlayback:Identifiable,NativeAudioParticipant {
     let id = UUID()
     let player:AVPlayer
     private let file:MediaFile?
@@ -93,23 +94,28 @@ struct GeneratedMedia:View {
         }
     }
     func toggle() {
-        if player.rate > 0 { player.pause() }
+        if player.rate > 0 { player.pause(); playing = false }
         else {
             do {
                 try activateAudio()
                 if position >= duration - 0.1 { seek(0) }
                 player.play()
+                playing = true
             } catch { failed = true }
         }
     }
     private func activateAudio() throws {
-        guard !audioSessionActive else { return }
-        try AVAudioSession.sharedInstance().setCategory(.playback,mode:.default)
-        try AVAudioSession.sharedInstance().setActive(true)
-        audioSessionActive = true
+        guard !audioSessionActive || !NativeAudioOwnership.owns(self) else { return }
+        NativeAudioOwnership.claim(self)
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback,mode:.default)
+            try AVAudioSession.sharedInstance().setActive(true)
+            audioSessionActive = true
+        } catch { deactivateAudio(); throw error }
     }
-    func rateChanged(_ rate:Float) {
-        playing = rate > 0
+    func rateChanged(_:Float) {
+        // KVO can deliver an older positive rate after another card has paused us.
+        playing = player.rate > 0
         if playing {
             do { try activateAudio() } catch { failed = true; player.pause() }
         }
@@ -121,55 +127,74 @@ struct GeneratedMedia:View {
     func seek(_ seconds:Double) { player.seek(to:CMTime(seconds:seconds,preferredTimescale:600),toleranceBefore:.zero,toleranceAfter:.zero) }
     func stop() {
         player.pause(); player.replaceCurrentItem(with:nil)
-        if audioSessionActive { try? AVAudioSession.sharedInstance().setActive(false,options:.notifyOthersOnDeactivation) }; audioSessionActive = false
+        deactivateAudio()
         playing = false
+    }
+    func relinquishAudio() {
+        player.pause(); playing = false
+        deactivateAudio()
+    }
+    private func deactivateAudio() {
+        let owns = NativeAudioOwnership.release(self)
+        if owns && audioSessionActive { try? AVAudioSession.sharedInstance().setActive(false,options:.notifyOthersOnDeactivation) }
+        audioSessionActive = false
+    }
+    func interrupted() {
+        player.pause(); playing = false
+        NativeAudioOwnership.release(self); audioSessionActive = false
     }
     deinit { if let fixtureURL { try? FileManager.default.removeItem(at:fixtureURL) } }
 }
 
-private struct GeneratedPlayerScreen:View {
-    @Environment(\.dismiss) private var dismiss
+private struct InlineGeneratedPlayer:View {
     @Environment(\.a0Theme) private var theme
     let playback:GeneratedPlayback
-    let title:String
     let kind:MediaKind
+    let onUnload:()->Void
     @State private var seeking = false
     private func timeLabel(_ seconds:Double)->String {
         let total = Int(max(0,min(seconds,8640000)))
         return String(format:"%d:%02d",total / 60,total % 60)
     }
     var body:some View {
-        NavigationStack {
-            VStack(spacing:20) {
-                if kind == .video { NativeMediaController(player:playback.player).accessibilityIdentifier("generatedVideoPlayer").frame(maxHeight:.infinity) }
-                else { Image(systemName:"waveform.circle.fill").font(.system(size:80)).foregroundStyle(theme.tint).accessibilityHidden(true) }
-                Text(playback.failed ? "Media unavailable" : playback.playing ? "Playing":"Ready to play").font(.headline)
-                HStack {
-                    Button(playback.playing ? "Pause media":"Play media",systemImage:playback.playing ? "pause.fill":"play.fill") { playback.toggle() }
-                        .buttonStyle(.bordered).disabled(playback.failed)
-                    Text(timeLabel(playback.position) + " / " + timeLabel(playback.duration))
-                        .font(.caption).monospacedDigit()
+        VStack(alignment:.leading,spacing:12) {
+                if kind == .video {
+                    Color.black.aspectRatio(16.0/9.0,contentMode:.fit)
+                        .overlay { NativeMediaController(player:playback.player).accessibilityIdentifier("generatedVideoPlayer") }
+                        .clipShape(RoundedRectangle(cornerRadius:12))
+                }
+                Text(playback.failed ? "Media unavailable" : playback.playing ? "Playing":"Ready to play").font(.subheadline)
+                ViewThatFits(in:.horizontal) {
+                    HStack {
+                        playbackButton
+                        Spacer(minLength:12)
+                        elapsedTime
+                    }
+                    VStack(alignment:.leading,spacing:8) { playbackButton; elapsedTime }
                 }
                 Slider(value:Binding(get:{playback.position},set:{playback.position = $0; playback.seek($0)}),in:0...max(1,playback.duration),onEditingChanged:{ seeking = $0 })
                     .accessibilityLabel("Playback position").accessibilityValue(timeLabel(playback.position) + " of " + timeLabel(playback.duration)).disabled(playback.failed)
-                if !playback.captionOptions.isEmpty {
-                    Menu("Captions") {
-                        Button("Off") { playback.selectCaption(nil) }
-                        ForEach(Array(playback.captionOptions.enumerated()),id:\.offset) { _,option in
-                            Button(option.displayName) { playback.selectCaption(option) }
-                        }
-                    }.frame(minHeight:44)
+                HStack {
+                    if !playback.captionOptions.isEmpty {
+                        Menu("Captions") {
+                            Button("Off") { playback.selectCaption(nil) }
+                            ForEach(Array(playback.captionOptions.enumerated()),id:\.offset) { _,option in
+                                Button(option.displayName) { playback.selectCaption(option) }
+                            }
+                        }.frame(minHeight:44)
+                    }
+                    Spacer(minLength:0)
+                    Button("Unload " + kind.rawValue,systemImage:"xmark.circle",action:onUnload)
+                        .frame(minHeight:44)
+                        .accessibilityIdentifier(kind == .audio ? "unloadGeneratedAudio":"unloadGeneratedVideo")
                 }
-            }.padding(20).frame(maxWidth:.infinity,maxHeight:.infinity).background(theme.canvas).foregroundStyle(theme.text)
-                .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
-                .modifier(ThemeNavigationChrome())
-                .toolbar { ToolbarItem(placement:.confirmationAction) { Button("Done") { playback.stop(); dismiss() }.accessibilityIdentifier("closeGeneratedMedia") } }
-        }
+        }.padding(12).frame(maxWidth:.infinity,alignment:.leading)
+            .background(theme.panel,in:RoundedRectangle(cornerRadius:14)).foregroundStyle(theme.text)
         .onReceive(playback.player.publisher(for:\.rate)) { rate in playback.rateChanged(rate) }
         .onReceive(NotificationCenter.default.publisher(for:.AVPlayerItemFailedToPlayToEndTime)) { note in
             if let item = note.object as? AVPlayerItem, item === playback.player.currentItem { playback.failed = true; playback.player.pause() }
         }
-        .onReceive(NotificationCenter.default.publisher(for:AVAudioSession.interruptionNotification)) { _ in playback.player.pause() }
+        .onReceive(NotificationCenter.default.publisher(for:AVAudioSession.interruptionNotification)) { _ in playback.interrupted() }
         .task {
             while !Task.isCancelled {
                 let seconds = playback.player.currentTime().seconds
@@ -179,6 +204,14 @@ private struct GeneratedPlayerScreen:View {
             }
         }
         .onDisappear { playback.stop() }
+    }
+    private var playbackButton:some View {
+                    Button(playback.playing ? "Pause media":"Play media",systemImage:playback.playing ? "pause.fill":"play.fill") { playback.toggle() }
+                        .buttonStyle(.bordered).frame(minHeight:44).disabled(playback.failed)
+                        .accessibilityIdentifier(kind == .audio ? "playGeneratedAudio":"playGeneratedVideo")
+    }
+    private var elapsedTime:some View {
+        Text(timeLabel(playback.position) + " / " + timeLabel(playback.duration)).font(.caption).monospacedDigit()
     }
 }
 private struct NativeMediaController:UIViewControllerRepresentable {

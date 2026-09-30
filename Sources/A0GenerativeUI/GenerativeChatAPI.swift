@@ -15,13 +15,15 @@ public struct GenerativeChatAPI: ChatAPI {
         try await base.sendAttachments(context:context,text:enabled ? text + (jev ? Self.jevSuffix : Self.suffix) : text,messageID:messageID,queued:queued,attachments:attachments)
     }
     public static var suffix:String { "\n\n<agent-zero-ios-presentation>\n" + GenerativeGuide.capabilities + "\n</agent-zero-ios-presentation>" }
+    public static var priorMediaSuffix:String { "\n\n<agent-zero-ios-presentation>\n" + GenerativeGuide.priorMediaCapabilities + "\n</agent-zero-ios-presentation>" }
     public static var legacySuffix:String { "\n\n<agent-zero-ios-presentation>\n" + GenerativeGuide.legacyCapabilities + "\n</agent-zero-ios-presentation>" }
     public static var jevSuffix:String { "\n\n<agent-zero-ios-presentation>\n" + GenerativeGuide.capabilities + "\n" + JevGuide.capabilities + "\n</agent-zero-ios-presentation>" }
     public static func visibleText(_ text:String) -> String {
         // Only collapse our exact known suffix, never arbitrary tag-like user content.
         let previous = "\n\n<agent-zero-ios-presentation>\n" + GenerativeGuide.previousCapabilities
         let previousSuffixes = [previous + "\n</agent-zero-ios-presentation>", previous + "\n" + JevGuide.capabilities + "\n</agent-zero-ios-presentation>"]
-        for known in [jevSuffix,suffix,legacySuffix] + previousSuffixes where text.hasSuffix(known) { return String(text.dropLast(known.count)) }
+        let priorJev = "\n\n<agent-zero-ios-presentation>\n" + GenerativeGuide.priorMediaCapabilities + "\n" + JevGuide.capabilities + "\n</agent-zero-ios-presentation>"
+        for known in [jevSuffix,suffix,legacySuffix,priorMediaSuffix,priorJev] + previousSuffixes where text.hasSuffix(known) { return String(text.dropLast(known.count)) }
         return text
     }
 }

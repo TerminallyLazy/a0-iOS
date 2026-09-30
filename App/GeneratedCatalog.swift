@@ -5,9 +5,10 @@ import A2UISwiftCore
 import A0GenerativeUI
 
 struct GeneratedCatalog: CustomComponentCatalog {
+    var allowsDraft = true
     @ViewBuilder func build(typeName:String,node:ComponentNode,surface:SurfaceModel) -> some View {
         switch typeName {
-        case "A0TextField": NativeGeneratedInput(node:node,surface:surface)
+        case "A0TextField": NativeGeneratedInput(node:node,surface:surface).disabled(!allowsDraft)
         case "Forecast":
             if let value = decode(ForecastContent.self,node) { ForecastView(value:value) }
         case "ImageCarousel":

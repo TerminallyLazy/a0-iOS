@@ -42,7 +42,7 @@ extension GeneratedPlayback {
                 return GeneratedPlayback(fixtureURL:url)
             }
             if kind == .audio {
-                let count = 16000 * 8
+                let count = 16000 * (ProcessInfo.processInfo.arguments.contains("--synthetic-media-handoff") ? 32:8)
                 var data = Data()
                 func text(_ s:String) { data.append(contentsOf:s.utf8) }
                 func number<T:FixedWidthInteger>(_ n:T) { var little = n.littleEndian; withUnsafeBytes(of:&little) { data.append(contentsOf:$0) } }
@@ -53,7 +53,8 @@ extension GeneratedPlayback {
                 let input = AVAssetWriterInput(mediaType:.video,outputSettings:[AVVideoCodecKey:AVVideoCodecType.h264,AVVideoWidthKey:320,AVVideoHeightKey:180])
                 let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput:input,sourcePixelBufferAttributes:[kCVPixelBufferPixelFormatTypeKey as String:kCVPixelFormatType_32ARGB,kCVPixelBufferWidthKey as String:320,kCVPixelBufferHeightKey as String:180])
                 writer.add(input); writer.startWriting(); writer.startSession(atSourceTime:.zero)
-                for frame in 0..<16 {
+                let frames = ProcessInfo.processInfo.arguments.contains("--synthetic-media-handoff") ? 64:16
+                for frame in 0..<frames {
                     while !input.isReadyForMoreMediaData { try await Task.sleep(for:.milliseconds(10)) }
                     var buffer:CVPixelBuffer?
                     CVPixelBufferPoolCreatePixelBuffer(nil,adaptor.pixelBufferPool!,&buffer)

@@ -4,7 +4,7 @@
 Adapt explicit Agent Zero response payloads to the pinned A2UI Swift SDK and the local mobile catalog.
 
 ## Ownership
-- GeneratedContent recognizes explicit response fences or kvps metadata and preserves prose.
+- GeneratedContent recognizes explicit response fences or kvps metadata and preserves prose. ReplyMediaPreview discovers up to four unique supported public HTTPS file links in bounded ordinary response prose, without any request or generated action.
 - GeneratedDocument validates the complete snapshot, including intermediate graphs, before SDK processing.
 - GeneratedSession owns surface replacement/disposal and reviewed action envelopes.
 - RichComponents owns forecast/carousel DTOs and public-URL policy. ChartContent owns bounded chart semantics; MediaContent and MediaDownloads own native audio/video validation and isolated temporary-file downloads.
@@ -23,6 +23,8 @@ Adapt explicit Agent Zero response payloads to the pinned A2UI Swift SDK and the
 - Forecast/chart data and image URLs come from the agent. Never infer live values from the synthetic examples.
 - Carousel images and explicitly loaded AudioPlayer/Video files use separate ephemeral sessions with no cookies, credentials, redirects or persistent cache, allowlisted raster/audio/video MIME types, size limits and bounded thumbnails/files. Media never autoplays; AVKit receives a local file with external references forbidden, and stops/releases on background, disappearance or source change. DNS preflight is not a network sandbox.
 - Remap AudioPlayer/Video to local A0-prefixed custom components before SDK processing; built-in SDK players must never receive these requests.
+- Plain reply media previews accept at most 128 KiB of response text and 2,048 bytes per URL. Explicit A2UI/candidate presence takes precedence even when incomplete or invalid. Exclude raw JSON, code, quotes, HTML, images and reference definitions. MP3/M4A/AAC/WAV/MP4/MOV path extensions only identify an invitation to Load; existing MIME, size, DNS and playable-track checks still decide acceptance. Preserve source prose and confirmed links.
+- Read-only generated views disable form inputs and event buttons individually, retaining explicit media loading and passive inspection. The draft-action callback remains independently guarded; never enable server actions or automatic draft insertion.
 - Capability instructions ride on the same explicit send, preserving context/message IDs and queued status. Collapse only the exact client-owned suffix in presentation.
 
 - Optional Jev only selects original locally validated candidates. Markdown remains available; provider output cannot add data or actions. Keep keys in the dedicated device-only credential service, separate from server auth. Persist a minimal attempt before POST and never replay interrupted attempts. Do not log candidate descriptions or provider bodies.

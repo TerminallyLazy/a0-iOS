@@ -12,7 +12,7 @@ The microphone changes to Stop voice during permission requests, recording or re
 
 Voice options contains Continuous listening, Read reply and supported on-device cleanup. Continuous listening is a local `continuousVoice` preference in DisplayPreferences.store, default off, with isolated test storage. It survives relaunch but never starts capture automatically. Changing it is disabled while voice is active. Continuous mode rolls recognition segments at 45 seconds, stops after five minutes in the foreground and retains the existing 12,000-character transcript bound.
 
-Read reply uses Apple's system speech synthesizer and the latest assistant prose, excluding code. Reading and recording are mutually exclusive. It starts only from the menu, and stops on background or leaving/changing the conversation.
+Read reply uses Apple's system speech synthesizer and the latest assistant prose, excluding code. Reading, recording and inline media playback share `NativeAudioOwnership`. Starting voice pauses a playing clip; starting a clip synchronously stops dictation/read-aloud and invalidates pending permission callbacks while retaining the draft. Only the current owner can deactivate the shared audio session. No prior activity resumes automatically. It starts only from the menu, and stops on background or leaving/changing the conversation.
 
 Polish draft on device uses FoundationModels only on eligible iOS 26 devices and accepts up to 1,500 characters. It works on the current draft, including typed and dictated text. Review suggestion shows Original and Suggested edit with Keep original and an explicit Use suggestion action. Any intervening draft change invalidates the proposal. Applying never sends; unavailable cleanup leaves the draft unchanged. No cloud fallback, supplied model asset or third-party speech runtime is added.
 
@@ -20,6 +20,7 @@ Normal saving/saved text no longer occupies the composer. Draft options retains 
 
 ## Ownership and validation
 
+- `App/NativeAudioOwnership.swift`: weak, synchronous foreground audio handoff between voice and inline media.
 - `App/VoiceController.swift`: generation-fenced recognizer/audio lifecycle, foreground limits and speech output.
 - `App/ChatComposer.swift`: recording ownership, scoped snapshot insertion, direct draft integration and persisted continuous preference.
 - `App/VoiceControls.swift`: inline microphone/stop action, options and draft-cleanup review.

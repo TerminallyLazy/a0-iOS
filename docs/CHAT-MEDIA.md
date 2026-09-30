@@ -6,6 +6,16 @@ Explicit browser tool metadata (`browser_snapshot` or legacy `Screenshot` image 
 
 Collapsed activity shows the latest three capture cards; earlier captures remain inside tool details. A tap opens a larger bounded popover, with an explicit Close action, while preserving the conversation. Capture loading and explicit Retry are visible; unavailable/expired captures do not block reading the rest of the message.
 
+## Direct audio and video replies
+
+Ordinary assistant prose containing a supported direct public HTTPS audio/video link offers a native **Load audio/video** card beneath the unchanged message. Recognition is local and bounded; it performs no lookup or download. Code, quotations, HTML, user/tool entries and explicit or candidate generated payloads are excluded. Explicit A2UI retains precedence. Files still pass the existing credential-free media policy after Load; playback requires Play. Playback stays inline with compact audio controls or a bounded video frame, keeping the conversation and composer accessible. Unload releases the player; starting another clip pauses the previous one. See [the generated-media contract](GENERATIVE-UI.md#audio-and-video).
+
+## Related subagent chats
+
+A compact **Subagents** control below conversation status shows verified child chats and a New count. It opens the themed Agents inspector with related conversation cards; opening a child marks it seen and exposes **Return to parent**. Navigation uses existing chat selection, retaining each chat's draft and attachments. Arrival never changes the selected chat. Same-chat recorded agent steps remain separate from related chats.
+
+Relationships require server-reported subordinate metadata between visible contexts; names and tool prose never create links. Missing, deleted, ambiguous or cyclic relations are discarded. Only positive Working/Paused evidence produces a status; false or missing running does not mean Complete. Initial historical data establishes a baseline. Newness survives background/foreground in the same authenticated session and resets on disconnect/profile replacement. Incomplete sync disables navigation and defers discovery reconciliation.
+
 ## Attachments
 
 The composer plus opens Tools → Attach images or files. Photo Library and Choose Files use native pickers. Selection stages data on this device; it does not upload or send. The removable tray shows filenames and sizes. Limits are five files per message, 10 MiB per file and 20 MiB total.

@@ -4,7 +4,7 @@ import SwiftUI
 import A0Core
 
 /// Foreground-only microphone ownership; no audio files, network client or Send callback.
-@MainActor @Observable final class VoiceController: NSObject, AVSpeechSynthesizerDelegate {
+@MainActor @Observable final class VoiceController: NSObject, AVSpeechSynthesizerDelegate,NativeAudioParticipant {
     private(set) var buffer = VoiceDraftBuffer()
     private(set) var listening = false
     private(set) var requestingPermission = false
@@ -29,6 +29,8 @@ import A0Core
     func start(continuous: Bool) async {
         stop()
         let token = UUID(); generation = token
+        NativeAudioOwnership.claim(self)
+        defer { if token == generation && !listening { deactivateAudio() } }
         requestingPermission = true
         status = "Checking microphone and speech access…"
         let authorized = await VoicePermissionBridge.request { @Sendable completion in
@@ -62,6 +64,7 @@ import A0Core
     /// Synthetic recognition snapshots for UI verification; no permission or audio API.
     func previewTranscription(holdsFirstSnapshot: Bool = false) async {
         stop()
+        NativeAudioOwnership.claim(self)
         let token = UUID(); generation = token
         buffer = VoiceDraftBuffer(); listening = true
         status = "Listening · synthetic preview"
@@ -79,6 +82,7 @@ import A0Core
         guard let recognizer else { return }
         do {
             if !ownedAudioActive {
+                NativeAudioOwnership.claim(self)
                 let audio = AVAudioSession.sharedInstance()
                 try audio.setCategory(.record, mode: .measurement, options: [.duckOthers])
                 try audio.setActive(true)
@@ -151,11 +155,13 @@ import A0Core
         status = buffer.text.isEmpty ? "Ready to listen on this device" : "Dictation ready in Message"
     }
     func clearTranscript() { stop(); buffer = VoiceDraftBuffer(); status = "Ready to listen on this device" }
+    func relinquishAudio() { stop() }
     func interrupted() { stop(); status = "Audio paused. Tap the microphone when you’re ready." }
     func read(_ text: String) {
         stop()
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         do {
+            NativeAudioOwnership.claim(self)
             let audio = AVAudioSession.sharedInstance()
             try audio.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
             try audio.setActive(true)
@@ -164,12 +170,14 @@ import A0Core
             utterance.voice = AVSpeechSynthesisVoice(language: Locale.current.identifier)
             currentUtterance = utterance; speaking = true; status = "Reading reply aloud"
             synthesizer.speak(utterance)
-        } catch { status = "Speech playback is unavailable. You can still read the reply." }
+        } catch { deactivateAudio(); status = "Speech playback is unavailable. You can still read the reply." }
     }
     private func deactivateAudio() {
         // Passive navigation/permission cancellation must not change shared audio state.
-        guard ownedAudioActive else { return }
+        let owns = NativeAudioOwnership.release(self)
+        let wasActive = ownedAudioActive
         ownedAudioActive = false
+        guard owns && wasActive else { return }
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {

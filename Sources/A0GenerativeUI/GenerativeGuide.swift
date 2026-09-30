@@ -17,7 +17,7 @@ public enum GenerativeGuide {
     ]
     """#
     public static var instructions:String {
-        capabilities + "\n\nExample form:\n```a2ui\n" + example + "\n```\n\nExample forecast, chart and images:\n```a2ui\n" + richExample + "\n```"
+        capabilities + "\n\nExample form:\n```a2ui\n" + example + "\n```\n\nExample forecast, chart and images:\n```a2ui\n" + richExample + "\n```\n\nSynthetic media structure (replace URLs with retrieved files):\n```a2ui\n" + mediaExample + "\n```"
     }
 
 }
@@ -52,7 +52,8 @@ extension GenerativeGuide {
 
 extension GenerativeGuide {
     public static let previousCapabilities = legacyCapabilities + "\n" + expandedCapabilities
-    public static let capabilities = previousCapabilities.replacingOccurrences(of:"No Video/AudioPlayer.",with:"Audio/video use the explicit native media contract below.") + "\n" + chartMediaCapabilities
+    public static let priorMediaCapabilities = previousCapabilities.replacingOccurrences(of:"No Video/AudioPlayer.",with:"Audio/video use the explicit native media contract below.") + "\n" + chartMediaCapabilities
+    public static let capabilities = priorMediaCapabilities + "\n" + directMediaGuidance
     public static let expandedCapabilities = """
     Additional native components under agent-zero:mobile:v1:
     Metric: title:string(max160),value:string(max80),unit:optional string(max40),change:optional string(max160),trend:optional up/down/neutral,sourceURL:optional public HTTPS. Display actual source values; a trend is descriptive, not a success judgement.

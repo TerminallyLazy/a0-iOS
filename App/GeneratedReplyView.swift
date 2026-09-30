@@ -27,7 +27,7 @@ struct GeneratedReplyView: View {
                 if let vm = session.viewModel {
                     VStack(alignment:.leading,spacing:12) {
                         Label("Interactive reply",systemImage:"rectangle.and.hand.point.up.left").font(.caption.weight(.medium)).foregroundStyle(theme.muted)
-                        A2UISurfaceView(viewModel:vm,catalog:GeneratedCatalog(),scrolls:false) { action in
+                        A2UISurfaceView(viewModel:vm,catalog:GeneratedCatalog(allowsDraft:onDraft != nil),scrolls:false) { action in
                             Task { @MainActor in
                                 guard loadedSource == content.source, onDraft != nil else { return }
                                 onInteract()
@@ -37,7 +37,8 @@ struct GeneratedReplyView: View {
                                 } catch { failed = true; session.reset() }
                             }
                         }
-                        .disabled(onDraft == nil)
+                        .a2uiCatalogItems(readOnlyControlOverrides)
+                        .id(content.source)
                         if added { Label("Added to your draft",systemImage:"text.badge.checkmark").font(.caption).foregroundStyle(theme.muted) }
                     }.padding(12).background(theme.panel,in:RoundedRectangle(cornerRadius:16))
                     .simultaneousGesture(TapGesture().onEnded { onInteract() })
@@ -96,6 +97,15 @@ struct GeneratedReplyView: View {
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),to:nil,from:nil,for:nil)
             }.accessibilityIdentifier("hideGeneratedKeyboard")
         } }
+    }
+    // Keep passive content usable in Agents while every form/action control is
+    // read-only. The action callback above independently checks draft authority.
+    private var readOnlyControlOverrides:[CatalogItem] {
+        [BuiltinComponentType.button,.checkBox,.choicePicker,.slider].map { type in
+            CatalogItem(name:type) { context in
+                AnyView(context.buildDefaultView().disabled(onDraft == nil))
+            }
+        }
     }
     private static func display(_ value: AnyCodable) -> String {
         if let string = value.stringValue { return string }
