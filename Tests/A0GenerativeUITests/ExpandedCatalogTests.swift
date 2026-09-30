@@ -40,6 +40,14 @@ import A2UISwiftCore
         #expect(draft.contains("packed"))
         #expect(throws:(any Error).self) { try GeneratedDocument.validate(payload(#"{"id":"root","component":"Checklist","title":"Tasks","children":["text"]},{"id":"text","component":"Text","text":"Not a task"}"#)) }
     }
+    @Test func checklistRejectsMoreThanTwentyTasks() throws {
+        let ids = (0..<21).map { "task\($0)" }
+        var nodes:[[String:Any]] = [["id":"root","component":"Checklist","title":"Tasks","children":ids]]
+        nodes += ids.map { ["id":$0,"component":"CheckBox","label":"Task","value":false] }
+        let json = String(decoding:try JSONSerialization.data(withJSONObject:nodes),as:UTF8.self)
+        let source = payload(String(json.dropFirst().dropLast()))
+        #expect(throws:(any Error).self) { try GeneratedDocument.validate(source) }
+    }
     @Test func tableAndTimelineCountLimitsAndBasicCatalogStayBounded() throws {
         let rows = Array(repeating:["cell"],count:51)
         let component:[String:Any] = ["id":"root","component":"DataTable","title":"Large","columns":["One"],"rows":rows]
