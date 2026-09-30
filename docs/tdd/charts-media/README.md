@@ -17,3 +17,6 @@ The simulator executed `ChartMediaUITests/testLargeTextChart` and failed its `Vi
 
 ## Media routing RED
 Native testing exposed that the SDK reserves `AudioPlayer`/`Video` names and bypasses the custom catalog for those built-ins. Added `mediaAlwaysUsesTrustedLocalPlayerInsteadOfSDKBuiltins`; `swift test --filter mediaAlwaysUsesTrustedLocalPlayerInsteadOfSDKBuiltins` executed one test with two intended routing failures. The fix must remap both types before any SDK processing, preserving the bounded local-file-only player.
+
+## Routing GREEN and expanded coverage
+`swift test --enable-code-coverage` now passes 57 generative tests plus 208 core tests (265 total), including trusted SDK remapping, media candidate privacy, all MIME mappings, chunked disk writes and extended chart bounds. ChartContent/MediaContent/MediaDownloads combined coverage is 91.89% lines, 91.84% regions; the transport's real TLS challenge and redirect delegate are source-reviewed rather than exercised against a live server.

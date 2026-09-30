@@ -18,14 +18,14 @@ import A2UISwiftUI
         reset()
         let document = try GeneratedDocument.validate(source)
         // Reconstruct an atomic snapshot, not a delta accumulated from other replies.
-        let catalog = Catalog(id:document.catalogID,componentNames:GeneratedDocument.components.union(["A0TextField"]))
+        let catalog = Catalog(id:document.catalogID,componentNames:GeneratedDocument.components.union(["A0TextField","A0AudioPlayer","A0Video"]))
         let surface = SurfaceModel(id:document.surfaceID,catalog:catalog)
         let candidate = SurfaceViewModel(surface:surface)
         let localMessages = document.messages.map { message -> A2uiMessage in
             guard case .updateComponents(var update) = message else { return message }
             update.components = update.components.map { component in
                 var local = component
-                if local.component == "TextField" { local.component = "A0TextField" }
+                if ["TextField","AudioPlayer","Video"].contains(local.component) { local.component = "A0" + local.component }
                 return local
             }
             return .updateComponents(update)
