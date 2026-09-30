@@ -10,17 +10,17 @@ A native companion for your own Agent Zero server. Continue conversations, follo
 
 ## Get the app
 
-> **Public beta: awaiting Apple review.** Build **0.1.0 (2)** is submitted and marked **Waiting for Review**. The invitation link is ready, but Apple does not allow testers to join until the group has an approved build.
+> **Public beta available.** Join the existing Public Beta through the invitation below. See [release status](docs/TESTFLIGHT.md) for the latest build and distribution receipt.
 
 ### [Open the TestFlight invitation](https://testflight.apple.com/join/xqAFS5er)
 
 1. Install [Apple TestFlight](https://apps.apple.com/app/testflight/id899247664) on your iPhone or iPad.
-2. Open the invitation above. Once Apple approves the beta, accept it and tap **Install**.
+2. Open the invitation above, accept it and tap **Install**.
 3. Open **Agent Zero** and connect to your authenticated HTTPS server.
 
-While review is pending, the invitation may show Apple's general TestFlight page instead of an install button. No Xcode or cable is needed for the TestFlight route once approved.
+No Xcode or cable is needed for the TestFlight route. Open the invitation on your iPhone or iPad, then accept it in TestFlight.
 
-**GitHub release:** [Download source and view installation options](https://github.com/TerminallyLazy/a0-iOS/releases/tag/v0.1.0-beta.4).
+**GitHub release:** [Download source and view installation options](https://github.com/TerminallyLazy/a0-iOS/releases/tag/v0.1.0-beta.5).
 
 **Want to try it today?** [Build and run with Xcode](docs/INSTALL.md#build-from-source) on your Mac, or read the [installation guide](docs/INSTALL.md) for the complete setup. An App Store-signed IPA cannot be installed directly from a GitHub download.
 
@@ -131,7 +131,7 @@ Browser tool captures now appear as native thumbnail cards with contained previe
 
 ## Plugins in the current source
 
-Open **Plugins** from the conversation sidebar to browse **Custom**, **Built-in**, and **Plugin Hub** with plugin thumbnails, install/update community plugins, change scoped activation, or delete a custom plugin. Plugin settings and main screens open inside the app using the connected server's WebUI. See [plugin behavior and verification boundaries](docs/PLUGINS.md). This source change has not been distributed to TestFlight.
+Open **Plugins** from the conversation sidebar to browse **Custom**, **Built-in**, and **Plugin Hub** with plugin thumbnails, install/update community plugins, change scoped activation, or delete a custom plugin. Plugin settings and main screens open inside the app using the connected server's WebUI. See [plugin behavior and verification boundaries](docs/PLUGINS.md). Available in TestFlight 0.1.0 (5).
 
 A floating right-edge tab and the sidebar menu expose [Workspace](docs/WORKSPACE.md), preserving the server canvas, siderail and plugin-registered File Browser/Browser/Desktop/Editor surfaces inside the authenticated app.
 

@@ -130,3 +130,14 @@ Cleanup removed **2.15 GiB** of regenerated project-owned SwiftPM and Xcode Deri
 Build 5 packages native Custom/Built-in/Plugin Hub management, thumbnails and journaled lifecycle commands; isolated embedded plugin settings/main screens; the draggable A0 Workspace tab and registered tool tiles; panel-only plugin support; and native Selectable Theme matching with themed controls and sheet safe areas. DEBUG-only screenshot fixtures and synthetic verification evidence are included in source, not activated in production.
 
 Release preflight on September 30 passed 208 package tests and six WebUI adapter tests. Focused iPhone/iPad UI and direct iPhone installation receipts are recorded in ACCEPTANCE.md. App Store Connect was checked live before choosing build 5: build 4 is Testing for Internal Testers and Public Beta, with no build 5 present. The plugin API-key configuration is absent; use its archive/export/upload workflow with the existing Xcode account and the authenticated App Store Connect browser for notes and group verification. Publication receipts will be recorded after upload.
+
+
+## Build 5 distribution — September 30, 2026
+
+[PR #1](https://github.com/TerminallyLazy/a0-iOS/pull/1) merged plugin, Workspace and theme work plus release metadata into `main`. Archive source is exactly `f7c28c8a72384a8228cf7a76e825ad8f1ab2cdf8`. The signed **0.1.0 (5)** archive passed `scripts/verify-release.py`, including identity/build, all four iPad orientations, exempt-encryption declaration, privacy/notices resources, dSYM and code signature. Both bundled WebUI adapters match source.
+
+The Codex TestFlight Release archive/export workflow used the existing Xcode signing account because its API-key configuration is absent. Upload returned `Uploaded package is processing`, `Upload succeeded` and `EXPORT SUCCEEDED`. The authenticated App Store Connect browser independently confirmed **Complete** and then **Testing**, with **Internal Testers** and **Public Beta** attached and two invitations shown. English (U.S.) What to Test notes were saved. Build 4 remains available; no existing build was expired and no new tester or access grant was created. This is TestFlight distribution, not App Store production submission or installation acceptance for build 5.
+
+The [build-5 GitHub prerelease](https://github.com/TerminallyLazy/a0-iOS/releases/tag/v0.1.0-beta.5) targets that exact merge revision. README and INSTALL now describe the available public beta rather than the historical build-2 review wait.
+
+Local retained artifacts: `build/AgentZero-0.1.0-5.xcarchive` with dSYMs, `build/testflight-archive-5.log`, `build/testflight-upload-5.log`, `build/build-5-source.txt`, and `build/build-5-upload-receipt.json`. Local plans, owner environment/signing configuration, old archives and credentials were not added to Git. The release check ran 208 package tests and six JavaScript adapter tests; earlier focused UI/device evidence remains in ACCEPTANCE.md.

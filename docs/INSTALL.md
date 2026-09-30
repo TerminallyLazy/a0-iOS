@@ -4,16 +4,16 @@ Agent Zero Mobile is a native companion for your own Agent Zero server. It runs 
 
 ## TestFlight beta
 
-**Public beta: awaiting Apple review.** Build **0.1.0 (2)** is submitted and marked **Waiting for Review**. The [public invitation](https://testflight.apple.com/join/xqAFS5er) exists, but testers cannot join until Apple approves a build. There is no confirmed availability date.
+**Public beta available.** Use the [public invitation](https://testflight.apple.com/join/xqAFS5er) to join Public Beta. See [release status](TESTFLIGHT.md) for the latest build and distribution receipt.
 
-When the beta is ready:
+To install the beta:
 
 1. Install [Apple TestFlight](https://apps.apple.com/app/testflight/id899247664) on your iPhone or iPad.
 2. Open the [Agent Zero Mobile invitation](https://testflight.apple.com/join/xqAFS5er) on your device.
 3. Accept the invitation in TestFlight, tap **Install**, then open Agent Zero.
 4. [Connect to your server](#connect-to-your-server).
 
-Installing TestFlight alone does not add the app. A source ZIP is for building on a Mac, and an App Store-signed IPA is not a direct-install download. While Apple review is pending, the invitation may show Apple's general TestFlight page. The source-build route below is available now.
+Installing TestFlight alone does not add the app. A source ZIP is for building on a Mac, and an App Store-signed IPA is not a direct-install download. Open the invitation on your iPhone or iPad and accept it in TestFlight. The source-build route below is also available.
 
 ## Build from source
 
@@ -31,7 +31,7 @@ To run on your own device instead of Simulator:
 3. Use a unique bundle identifier for your personal build if your team cannot sign `com.terminallylazy.a0-ios`, for example `com.yourname.agentzero`. Keep these personal signing changes local.
 4. Select your device in the toolbar and click **Run**. Follow any device-trust or Developer Mode prompts from Xcode and iOS.
 
-Development signing may require periodic reinstallation. TestFlight will be the simpler route once Apple approves the beta. Changing the bundle identifier creates a separate installation with separate local drafts and Keychain access.
+Development signing may require periodic reinstallation. TestFlight is the simpler route for the public beta. Changing the bundle identifier creates a separate installation with separate local drafts and Keychain access.
 
 ## Connect to your server
 
@@ -48,7 +48,7 @@ The app requires authenticated HTTPS even when a tunnel is used. `localhost` on 
 
 | What you see | What to do |
 | --- | --- |
-| No Agent Zero app in TestFlight | Apple review may still be pending. After approval, open and accept the invitation. Check the README's beta status. |
+| No Agent Zero app in TestFlight | Open and accept the invitation on your device. Check the README and release status for current availability. |
 | Server cannot be reached | Open its URL in Safari on the same device; confirm the server and tunnel are running. |
 | Sign-in or HTTPS error | Use the HTTPS origin and Agent Zero credentials. Check that server login is enabled and its certificate is valid. |
 | Polling connection status | Polling is a supported connection mode. Tap the composer status dot for details. |
