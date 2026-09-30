@@ -16,3 +16,9 @@ RED command: `swift test --enable-code-coverage --filter Jev` exited 1 because t
 Native UI RED command: `xcodebuild -project AgentZeroSpike.xcodeproj -scheme AgentZeroSpike -destination 'platform=iOS Simulator,id=0758A3EE-44E9-4645-AEC3-8CA818DBF74C' -derivedDataPath /tmp/a0-jev-derived -only-testing:A0UITests/JevUITests test`. Result pending; UI test registration is included in this checkpoint and does not claim runtime RED yet.
 
 Coverage, live API checks and physical-device acceptance remain unverified. Only synthetic credentials are in tests. Local checkpoints are retained on codex/jev-ios; no push or release is included.
+
+## Core GREEN checkpoint
+
+`swift test --enable-code-coverage --filter Jev` passed 14 tests in five suites. The same missing implementations now compile and exercise candidate validation, credential storage, transport failures, durable deduplication and coordinator isolation. Raw output: `/tmp/a0-jev-green.log`. Coverage measurement follows integration.
+
+The iPhone JevUITests runtime RED reached Settings / Generative UI, then failed because secure field `jevAPIKey` did not exist. This validates the missing Settings behavior before App implementation. Raw output: `/tmp/a0-jev-ui-red.log`.

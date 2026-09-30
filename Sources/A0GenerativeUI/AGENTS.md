@@ -10,6 +10,7 @@ Adapt explicit Agent Zero response payloads to the pinned A2UI Swift SDK and the
 - RichComponents owns forecast, chart, carousel DTOs and public-URL policy.
 - ImageDownloads owns isolated, bounded raster downloads and DNS preflight.
 - GenerativeGuide and GenerativeChatAPI own opt-in capability guidance on ordinary explicit sends.
+- JevCandidates owns explicit candidate-envelope recognition, local eligibility and minimized provider projection. JevClient owns isolated bounded TypeSafe Choice transport. JevSettingsStore owns profile-scoped consent/key operations through a dedicated credential backend. JevAttemptJournal and JevCoordinator own durable one-attempt admission and stale-result rejection.
 - App owns trusted rendering, review, draft insertion, Settings and image decoding.
 
 ## Local Contracts
@@ -21,6 +22,8 @@ Adapt explicit Agent Zero response payloads to the pinned A2UI Swift SDK and the
 - Forecast/chart data and image URLs come from the agent. Never infer live values from the synthetic examples.
 - Only the carousel downloads media. Use a separate ephemeral session with no cookies, credentials, redirects or persistent cache, raster MIME/size limits and bounded thumbnails. DNS preflight is not a network sandbox.
 - Capability instructions ride on the same explicit send, preserving context/message IDs and queued status. Collapse only the exact client-owned suffix in presentation.
+
+- Optional Jev only selects original locally validated candidates. Markdown remains available; provider output cannot add data or actions. Keep keys in the dedicated device-only credential service, separate from server auth. Persist a minimal attempt before POST and never replay interrupted attempts. Do not log candidate descriptions or provider bodies.
 
 ## Work Guidance
 Keep native catalog properties synchronized with GenerativeGuide, tests, App/GeneratedCatalog.swift and docs/GENERATIVE-UI.md. Maintain Markdown fallbacks and inspectable rejected data. Never log payloads or form values.
