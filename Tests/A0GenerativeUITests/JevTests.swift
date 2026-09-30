@@ -33,6 +33,22 @@ struct JevContractTests {
         #expect(wire.contains("Markdown"))
         for excluded in ["Bloomington","weather.gov","temperature","images.example.com","72"] { #expect(!wire.contains(excluded)) }
     }
+    @Test func invisibleComponentsCannotQualifyRichCandidates() throws {
+        for root in [
+            ["id":"root","component":"Text","text":"Only prose"] as [String:Any],
+            ["id":"root","component":"Dashboard","children":["first"]] as [String:Any]
+        ] {
+            let nodes:[Any] = [root,
+                ["id":"first","component":"Metric","title":"First","value":"1"],
+                ["id":"orphan","component":"Metric","title":"Invisible","value":"2"]]
+            let surface:[[String:Any]] = [
+                ["version":"v0.9","createSurface":["surfaceId":"visible","catalogId":"agent-zero:mobile:v1"]],
+                ["version":"v0.9","updateComponents":["surfaceId":"visible","components":nodes]]]
+            let source = String(decoding:try JSONSerialization.data(withJSONObject:surface),as:UTF8.self)
+            let reply = try #require(JevCandidates.extract(try jevEntry(jevEnvelope(surface:source))))
+            #expect(throws:(any Error).self) { try reply.validated() }
+        }
+    }
     @Test func userToolAndNestedExamplesDoNotOptIn() throws {
         for type in ["user","tool","util"] { #expect(JevCandidates.extract(try jevEntry(jevEnvelope(),type:type)) == nil) }
         #expect(JevCandidates.extract(try jevEntry("````markdown\n" + jevEnvelope() + "\n````")) == nil)
