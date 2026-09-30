@@ -52,3 +52,7 @@ The final layout fix preserves lazy message rows and moves `DeliveryContent` plu
 ## Visible-candidate eligibility RED
 
 `swift test --enable-code-coverage --filter JevContractTests` executed eight tests; the new `invisibleComponentsCannotQualifyRichCandidates` failed both assertions. A text-only root with orphan Metric definitions and a Dashboard containing only one reachable Metric incorrectly qualified. `/tmp/a0-jev-visible-red.log` records this intended runtime RED before the graph-reachability fix.
+
+## Final package GREEN
+
+After restricting candidate summaries and Dashboard eligibility to the reachable graph, `swift test --enable-code-coverage` passed **252 tests** (44 generated-UI tests plus 208 core tests), including both previously failing orphan-component cases. Output: `/tmp/a0-jev-package-final-reviewed.log`. This supersedes the earlier package totals above. Updated six-file coverage in `coverage.txt` is **97.27% lines (321/330), 91.70% regions and 90.91% functions**. The same owned-source coverage command now reports **91.52% lines (2,905/3,174)** across the two package test binaries.

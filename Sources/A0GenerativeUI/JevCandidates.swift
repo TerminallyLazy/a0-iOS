@@ -48,9 +48,23 @@ public struct JevCandidates: Equatable, Sendable {
                     for node in components { if let id = node["id"] as? String { nodes[id] = node } }
                 }
             }
-            let kinds = Set(nodes.values.compactMap { $0["component"] as? String })
-            let rich = nodes.values.filter { ["Forecast","Chart","ImageCarousel","Metric","DataTable","Timeline","Checklist"].contains($0["component"] as? String ?? "") }
-            guard !rich.isEmpty, !kinds.contains("Dashboard") || rich.count >= 2 else { continue }
+            func reachable(from root:String)->[[String:Any]] {
+                var pending = [root], visited:Set<String> = [], result:[[String:Any]] = []
+                while let id = pending.popLast() {
+                    guard visited.insert(id).inserted, let node = nodes[id] else { continue }
+                    result.append(node)
+                    pending += node["children"] as? [String] ?? []
+                    if let child = node["child"] as? String { pending.append(child) }
+                }
+                return result
+            }
+            let visible = reachable(from:"root")
+            let kinds = Set(visible.compactMap { $0["component"] as? String })
+            let richKinds:Set<String> = ["Forecast","Chart","ImageCarousel","Metric","DataTable","Timeline","Checklist"]
+            let dashboards = visible.filter { $0["component"] as? String == "Dashboard" }
+            guard !kinds.isDisjoint(with:richKinds), dashboards.allSatisfy({ dashboard in
+                reachable(from:dashboard["id"] as? String ?? "").filter { richKinds.contains($0["component"] as? String ?? "") }.count >= 2
+            }) else { continue }
             valid.append(.init(id:id,description:description,source:source,components:kinds.sorted()))
         }
         guard !valid.isEmpty else { throw JevError.invalid }
