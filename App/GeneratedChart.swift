@@ -11,7 +11,7 @@ struct GeneratedChart:View {
         VStack(alignment:.leading,spacing:12) {
             Text(value.title).font(.headline)
             Text(value.yLabel).font(.caption).foregroundStyle(theme.muted)
-            if let x = value.xLabel { Text("Horizontal axis: " + (value.kind == "horizontalBar" ? value.yLabel : x)).font(.caption).foregroundStyle(theme.muted) }
+            if let x = value.xLabel, !value.isCircular { Text("Horizontal axis: " + (value.kind == "horizontalBar" ? value.yLabel : x)).font(.caption).foregroundStyle(theme.muted) }
             if value.kind == "bubble" { Text("Bubble area: " + (value.sizeLabel ?? "Size")).font(.caption).foregroundStyle(theme.muted) }
             plot
                 .chartXAxis { AxisMarks { AxisGridLine().foregroundStyle(theme.muted.opacity(0.25)); AxisValueLabel().foregroundStyle(theme.muted) } }
@@ -42,7 +42,7 @@ struct GeneratedChart:View {
                 RectangleMark(x:.value(value.xLabel ?? "Column",p.label),y:.value("Row",p.row ?? ""))
                     .foregroundStyle(by:.value(value.yLabel,p.value))
                     .accessibilityLabel(p.name).accessibilityValue(p.value.formatted())
-            }.chartForegroundStyleScale(range:Gradient(colors:[theme.panel,theme.tint]))
+            }.chartForegroundStyleScale(range:Gradient(colors:[theme.tint.opacity(0.3),theme.tint]))
         } else {
             Chart(Array(value.points.enumerated()),id:\.offset) { _,p in
                 marks(p).accessibilityLabel(p.name).accessibilityValue(p.detail)

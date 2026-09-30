@@ -33,6 +33,7 @@ import XCTest
     }
     func testComparisonAndTrendCharts() { checkCharts(["line","bar","area","horizontalBar","groupedBar","stackedBar","stackedArea"]) }
     func testCompositionAndNumericCharts() { checkCharts(["pie","donut","scatter","bubble","histogram","range","heatmap"]) }
+    func testHeatmapContrast() { checkCharts(["heatmap"]) }
     func testDenseChart() { checkCharts(["denseScatter"]) }
     func testLargeTextChart() { checkCharts(["donut"],large:true) }
     func testAudioAndVideoRequireExplicitLoadingAndStopOnBackground() {
