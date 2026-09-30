@@ -205,3 +205,54 @@ actor JevTestChooser: JevChoosing {
         #expect(await chooser.count() == 1)
     }
 }
+
+extension JevContractTests {
+    @Test func eachRichPresentationAndDashboardEligibility() throws {
+        let raw = try #require(JSONSerialization.jsonObject(with:Data(GenerativeGuide.richExample.utf8)) as? [[String:Any]])
+        let update = try #require(raw[1]["updateComponents"] as? [String:Any])
+        let components = try #require(update["components"] as? [[String:Any]])
+        for type in ["Forecast","ImageCarousel","Chart"] {
+            var node = try #require(components.first { $0["component"] as? String == type }); node["id"] = "root"
+            let surface:[[String:Any]] = [raw[0],["version":"v0.9","updateComponents":["surfaceId":"overview","components":[node]]]]
+            let source = String(decoding:try JSONSerialization.data(withJSONObject:surface),as:UTF8.self)
+            let batch = try #require(JevCandidates.extract(try jevEntry(jevEnvelope(surface:source)))).validated()
+            #expect(batch.candidates.first?.components == [type])
+        }
+    }
+    @Test func mixedValidAndInvalidCandidatesRetainOnlyEligibleIDs() throws {
+        let surface = try JSONSerialization.jsonObject(with:Data(GenerativeGuide.richExample.utf8))
+        let raw:[String:Any] = ["version":1,"intent":"Overview","candidates":[["id":"valid","description":"A complete overview","surface":surface],["id":"invalid","description":"Empty","surface":[]]]]
+        let text = "Fallback\n```a2ui-candidates\n" + String(decoding:try JSONSerialization.data(withJSONObject:raw),as:UTF8.self) + "\n```"
+        let batch = try #require(JevCandidates.extract(try jevEntry(text))).validated()
+        #expect(batch.ids == ["valid","Markdown"])
+        #expect(!String(decoding:try batch.requestData(),as:UTF8.self).contains("invalid"))
+    }
+}
+
+extension JevCoordinatorTests {
+    @Test func journalRejectionReleasesCapacityForLaterReplies() async throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at:dir) }
+        let journal = JevAttemptJournal(directory:dir), chooser = JevTestChooser()
+        _ = try await journal.begin(identity:"scope|1",payload:Data())
+        let coordinator = JevCoordinator(chooser:chooser,journal:journal)
+        coordinator.arm(scope:"scope",baseline:[],key:"synthetic")
+        coordinator.observe([try jevEntry(jevEnvelope())],scope:"scope")
+        await coordinator.waitForPending()
+        let entries = try (1...5).map { try jevEntry(jevEnvelope(),no:$0) }
+        coordinator.observe(entries,scope:"scope")
+        await coordinator.waitForPending()
+        #expect(await chooser.count() == 4)
+    }
+    @Test func inFlightProviderIgnoringCancellationCannotCrossScope() async throws {
+        let chooser = JevTestChooser(slow:true), (coordinator,dir) = make(chooser)
+        defer { try? FileManager.default.removeItem(at:dir) }
+        coordinator.arm(scope:"old-profile",baseline:[],key:"synthetic")
+        coordinator.observe([try jevEntry(jevEnvelope())],scope:"old-profile")
+        for _ in 0..<100 { if await chooser.count() > 0 { break }; try await Task.sleep(for:.milliseconds(1)) }
+        #expect(await chooser.count() == 1)
+        coordinator.arm(scope:"new-profile",baseline:[],key:"other")
+        try await Task.sleep(for:.milliseconds(100))
+        #expect(coordinator.selected.isEmpty)
+    }
+}

@@ -26,3 +26,7 @@ The iPhone JevUITests runtime RED reached Settings / Generative UI, then failed 
 ## Expanded catalog RED
 
 The user expanded scope to Metric, DataTable, Timeline and Checklist during implementation. `swift test --enable-code-coverage --filter ExpandedCatalogTests` failed because the tested `GenerativeGuide.expandedExample` and catalog behavior are missing. Native metric/table/timeline eligibility, malformed data rejection and persistent local checklist binding are explicit guarantees in the new test target. Raw output: `/tmp/a0-jev-catalog-red.log`.
+
+## Admission-capacity regression RED
+
+`swift test --enable-code-coverage --filter JevCoordinatorTests` ran five tests and failed the new `journalRejectionReleasesCapacityForLaterReplies` assertion: a previously journaled attempt occupied an in-memory pending slot after its early return, reducing later selection capacity. The in-flight provider cancellation regression passed. Raw output: `/tmp/a0-jev-capacity-red.log`.
