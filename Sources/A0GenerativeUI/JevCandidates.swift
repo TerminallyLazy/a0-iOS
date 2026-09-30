@@ -60,7 +60,7 @@ public struct JevCandidates: Equatable, Sendable {
             }
             let visible = reachable(from:"root")
             let kinds = Set(visible.compactMap { $0["component"] as? String })
-            let richKinds:Set<String> = ["Forecast","Chart","ImageCarousel","Metric","DataTable","Timeline","Checklist"]
+            let richKinds:Set<String> = ["Forecast","Chart","ImageCarousel","Metric","DataTable","Timeline","Checklist","AudioPlayer","Video"]
             let dashboards = visible.filter { $0["component"] as? String == "Dashboard" }
             guard !kinds.isDisjoint(with:richKinds), dashboards.allSatisfy({ dashboard in
                 reachable(from:dashboard["id"] as? String ?? "").filter { richKinds.contains($0["component"] as? String ?? "") }.count >= 2

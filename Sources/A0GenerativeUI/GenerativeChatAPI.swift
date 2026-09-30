@@ -19,7 +19,9 @@ public struct GenerativeChatAPI: ChatAPI {
     public static var jevSuffix:String { "\n\n<agent-zero-ios-presentation>\n" + GenerativeGuide.capabilities + "\n" + JevGuide.capabilities + "\n</agent-zero-ios-presentation>" }
     public static func visibleText(_ text:String) -> String {
         // Only collapse our exact known suffix, never arbitrary tag-like user content.
-        for known in [jevSuffix,suffix,legacySuffix] where text.hasSuffix(known) { return String(text.dropLast(known.count)) }
+        let previous = "\n\n<agent-zero-ios-presentation>\n" + GenerativeGuide.previousCapabilities
+        let previousSuffixes = [previous + "\n</agent-zero-ios-presentation>", previous + "\n" + JevGuide.capabilities + "\n</agent-zero-ios-presentation>"]
+        for known in [jevSuffix,suffix,legacySuffix] + previousSuffixes where text.hasSuffix(known) { return String(text.dropLast(known.count)) }
         return text
     }
 }

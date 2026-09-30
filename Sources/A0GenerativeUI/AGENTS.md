@@ -7,7 +7,7 @@ Adapt explicit Agent Zero response payloads to the pinned A2UI Swift SDK and the
 - GeneratedContent recognizes explicit response fences or kvps metadata and preserves prose.
 - GeneratedDocument validates the complete snapshot, including intermediate graphs, before SDK processing.
 - GeneratedSession owns surface replacement/disposal and reviewed action envelopes.
-- RichComponents owns forecast, chart, carousel DTOs and public-URL policy.
+- RichComponents owns forecast/carousel DTOs and public-URL policy. ChartContent owns bounded chart semantics; MediaContent and MediaDownloads own native audio/video validation and isolated temporary-file downloads.
 - ExpandedComponents owns Metric, DataTable, Timeline and Checklist DTOs and bounds; Checklist reuses reviewed native form actions.
 - ImageDownloads owns isolated, bounded raster downloads and DNS preflight.
 - GenerativeGuide and GenerativeChatAPI own opt-in capability guidance on ordinary explicit sends.
@@ -21,7 +21,7 @@ Adapt explicit Agent Zero response payloads to the pinned A2UI Swift SDK and the
 - A replacement invalidates previous actionable state; identical snapshots preserve local form edits. No surface crosses chat/profile/log-epoch boundaries.
 - Actions expose only declared context, require local review, then append without sending or replacing the draft.
 - Forecast/chart data and image URLs come from the agent. Never infer live values from the synthetic examples.
-- Only the carousel downloads media. Use a separate ephemeral session with no cookies, credentials, redirects or persistent cache, raster MIME/size limits and bounded thumbnails. DNS preflight is not a network sandbox.
+- Carousel images and explicitly loaded AudioPlayer/Video files use separate ephemeral sessions with no cookies, credentials, redirects or persistent cache, raster MIME/size limits and bounded thumbnails/files. Media never autoplays; AVKit receives a local file with external references forbidden, and stops/releases on background, disappearance or source change. DNS preflight is not a network sandbox.
 - Capability instructions ride on the same explicit send, preserving context/message IDs and queued status. Collapse only the exact client-owned suffix in presentation.
 
 - Optional Jev only selects original locally validated candidates. Markdown remains available; provider output cannot add data or actions. Keep keys in the dedicated device-only credential service, separate from server auth. Persist a minimal attempt before POST and never replay interrupted attempts. Do not log candidate descriptions or provider bodies.

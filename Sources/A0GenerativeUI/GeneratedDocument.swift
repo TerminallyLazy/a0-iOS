@@ -6,7 +6,7 @@ public enum GeneratedUIError: Error { case unsupported, invalid, tooLarge }
 /// A bounded, network-free subset of the SDK basic catalog. Validate the entire
 /// self-contained reply before feeding anything to the renderer.
 public struct GeneratedDocument {
-    public static let components: Set<String> = ["Text","Row","Column","Card","Divider","Button","TextField","CheckBox","ChoicePicker","Slider","Forecast","ImageCarousel","Chart","Dashboard","Metric","DataTable","Timeline","Checklist"]
+    public static let components: Set<String> = ["Text","Row","Column","Card","Divider","Button","TextField","CheckBox","ChoicePicker","Slider","Forecast","ImageCarousel","Chart","Dashboard","Metric","DataTable","Timeline","Checklist","AudioPlayer","Video"]
     public static let richCatalogID = "agent-zero:mobile:v1"
     public let catalogID: String
     public let surfaceID: String
@@ -36,7 +36,7 @@ public struct GeneratedDocument {
                 for component in update.components {
                     guard validID(component.id), components.contains(component.component),
                           component.weight == nil || (component.weight! > 0 && component.weight! <= 100) else { throw GeneratedUIError.unsupported }
-                    if ["Forecast","ImageCarousel","Chart","Dashboard","Metric","DataTable","Timeline","Checklist"].contains(component.component), create.catalogId != richCatalogID { throw GeneratedUIError.unsupported }
+                    if ["Forecast","ImageCarousel","Chart","Dashboard","Metric","DataTable","Timeline","Checklist","AudioPlayer","Video"].contains(component.component), create.catalogId != richCatalogID { throw GeneratedUIError.unsupported }
                     try validateComponent(component)
                     nodes[component.id] = component
                 }
@@ -89,6 +89,7 @@ public struct GeneratedDocument {
             let p = try c.typedProperties(ButtonProperties.self)
             guard case .event(let name,_) = p.action, validID(name) else { throw GeneratedUIError.unsupported }
         case "Forecast","ImageCarousel","Chart": try validateRich(c)
+        case "AudioPlayer","Video": try decodeRich(MediaContent.self,component:c).validate()
         case "Dashboard": _ = try children(c)
         case "Metric","DataTable","Timeline","Checklist": try validateExpanded(c)
         default: throw GeneratedUIError.unsupported
