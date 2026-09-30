@@ -46,7 +46,7 @@ actor PreviewHTTPTransport: HTTPTransport {
             return HTTPResponse(data:Data("/* Synthetic custom palette */".utf8),status:200,headers:["Content-Type":"text/css"])
         case "/api/plugins":
             let action = payload["action"] as? String ?? ""
-            if action == "get_config", payload["plugin_name"] as? String == "selectable_theme", ProcessInfo.processInfo.arguments.contains("--synthetic-expanded-ui") {
+            if action == "get_config", payload["plugin_name"] as? String == "selectable_theme", (ProcessInfo.processInfo.arguments.contains("--synthetic-expanded-ui") || ProcessInfo.processInfo.arguments.contains("--synthetic-expanded-theme")) {
                 func colors(_ light:Bool)->[String:String] {
                     var colors = Dictionary(uniqueKeysWithValues:ServerTheme.keys.map { ($0,light ? "#edf8ff":"#102737") })
                     for key in ["text","message-text"] { colors[key] = light ? "#102737":"#edf8ff" }
@@ -233,6 +233,9 @@ actor PreviewHTTPTransport: HTTPTransport {
             }
             if args.contains("--synthetic-expanded-ui"), !context.isEmpty {
                 entries = [["no":0,"type":"response","content":"Synthetic planning overview.\n```a2ui\n" + GenerativeGuide.expandedExample + "\n```"]]
+            }
+            if let index = args.firstIndex(of:"--synthetic-charts-media"), index+1 < args.count, !context.isEmpty {
+                entries = [["no":0,"type":"response","content":"Synthetic chart and media example.\n```a2ui\n" + (try ChartMediaPreview.surface(kind:args[index+1])) + "\n```"]]
             }
             if args.contains("--synthetic-jev"), let count = jevReplies[context], count > 0 {
                 let surface = try JSONSerialization.jsonObject(with:Data(GenerativeGuide.expandedExample.utf8))
