@@ -50,3 +50,19 @@ private actor RecordingChat: ChatAPI {
     func createChat(id:String) async throws -> String { id }
     func sendText(context:String,text:String,messageID:String,queued:Bool) async throws { call = Call(context:context,text:text,id:messageID,queued:queued) }
 }
+
+extension RichReplyTests {
+    @Test func jevGuidanceIsOptInAndLegacyMessagesStillCollapse() async throws {
+        let base = RecordingChat()
+        let api = GenerativeChatAPI(base:base,enabled:true,jev:true)
+        try await api.sendText(context:"a",text:"Useful overview",messageID:"same",queued:true)
+        let call = try #require(await base.call)
+        #expect(call.text.contains("a2ui-candidates"))
+        #expect(call.id == "same" && call.queued)
+        #expect(GenerativeChatAPI.visibleText(call.text) == "Useful overview")
+        #expect(GenerativeChatAPI.visibleText("Old" + GenerativeChatAPI.suffix) == "Old")
+        #expect(!call.text.contains("TYPESAFE_API_KEY"))
+        try await GenerativeChatAPI(base:base,enabled:false,jev:true).sendText(context:"a",text:"Plain",messageID:"b",queued:false)
+        #expect(await base.call?.text == "Plain")
+    }
+}
