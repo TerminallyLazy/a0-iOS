@@ -10,6 +10,7 @@ import XCTest
         app.buttons["conversationOptions"].tap(); app.buttons["Settings"].tap()
         let setup = app.buttons["generativeUISetup"]
         if !setup.isHittable { app.swipeUp() }
+        XCTAssertTrue(setup.label.contains("Jev API key"), "Settings must name the credential destination before opening it")
         setup.tap()
         let field = app.secureTextFields["jevAPIKey"]
         for _ in 0..<5 where !field.isHittable { app.swipeUp() }
