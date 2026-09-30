@@ -44,6 +44,7 @@
 		8B29F7F3B4E2F3BC5C5F641E /* VoiceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6118B081098752C9C5F2BA22 /* VoiceUITests.swift */; };
 		923537C031540A6938B9B840 /* PluginWorkspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64C8C32281E20BCD47F3265C /* PluginWorkspace.swift */; };
 		93BBB26063916D0DF3A9DC27 /* KeychainSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BC7F86991CA826FDE2F9F7 /* KeychainSessionStore.swift */; };
+		985ECDD6ED3A463C57248436 /* JevUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670B615E8A873AAD591C8D5D /* JevUITests.swift */; };
 		9B2F3FD279DA0B82018F304C /* KeychainCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD33172B0F3D68F8095043F /* KeychainCredentialStore.swift */; };
 		9B31308EFB6EC393F9EADFFE /* ChatInterfaceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5847BCBB57636E82A2FDCC9 /* ChatInterfaceUITests.swift */; };
 		9B5F6F16C341FBE693E0041D /* ProjectEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52976F326D1C18ADA3CA18B6 /* ProjectEditor.swift */; };
@@ -137,6 +138,7 @@
 		64CD9DF354EF252A40AB731D /* SpikeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeModel.swift; sourceTree = "<group>"; };
 		65E0DA9CB2CD311CCE42BED5 /* VoiceTranscriptAssistant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceTranscriptAssistant.swift; sourceTree = "<group>"; };
 		66F8C56027802B88F43229E0 /* ContextUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextUsageView.swift; sourceTree = "<group>"; };
+		670B615E8A873AAD591C8D5D /* JevUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JevUITests.swift; sourceTree = "<group>"; };
 		67B4AED32DF369EC65A87790 /* SendModeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendModeUITests.swift; sourceTree = "<group>"; };
 		6BF5A020E44ABA1290753CB2 /* QRCodeScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeScanner.swift; sourceTree = "<group>"; };
 		6C30F9E73FBD7CB691D04F77 /* ThirdPartyNotices.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = ThirdPartyNotices.txt; sourceTree = "<group>"; };
@@ -301,6 +303,7 @@
 				6DDD3B7CE491E6E55C9EFF11 /* ConversationUITests.swift */,
 				B695BBB115781128ADF574DC /* DrawerUITests.swift */,
 				E4BDF3540709EC01BDA818D7 /* GenerativeUITests.swift */,
+				670B615E8A873AAD591C8D5D /* JevUITests.swift */,
 				28515287E4E3E8C221D486DA /* ModelPresetUITests.swift */,
 				B238376F596EFB3DDDD95D4A /* PersistenceUITests.swift */,
 				E74D97838FAEA995BD2F9A24 /* PluginUITests.swift */,
@@ -488,6 +491,7 @@
 				CF44EAD33CA5908ABF1B46C1 /* ConversationUITests.swift in Sources */,
 				4BD912544CBD1C69E3F4A1D3 /* DrawerUITests.swift in Sources */,
 				EFE205A313318B3D2F8F6062 /* GenerativeUITests.swift in Sources */,
+				985ECDD6ED3A463C57248436 /* JevUITests.swift in Sources */,
 				7AC9C01C6F3859535CD49A5F /* ModelPresetUITests.swift in Sources */,
 				BEBBB77417E94EB60C7CE8C3 /* PersistenceUITests.swift in Sources */,
 				EE7AEAC07210C31288A1C8FA /* PluginUITests.swift in Sources */,
