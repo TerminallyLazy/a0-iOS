@@ -11,3 +11,6 @@ Media transport tests specify bounded credential-free file downloads, rejection 
 
 ## Core GREEN
 `swift test --enable-code-coverage`: 51 generative tests plus 208 core tests passed. All 4 catalog/guidance regressions and all 3 media transport tests passed. Coverage and native results follow below when verified.
+
+## Native RED
+The simulator executed `ChartMediaUITests/testLargeTextChart` and failed its `View values` assertion for the absent donut fixture/rendering. Command: `xcodebuild -project AgentZeroSpike.xcodeproj -scheme AgentZeroSpike -destination 'platform=iOS Simulator,id=0758A3EE-44E9-4645-AEC3-8CA818DBF74C' -derivedDataPath /tmp/a0-charts-derived -disableAutomaticPackageResolution -skipPackageUpdates -only-testing:A0UITests/ChartMediaUITests/testLargeTextChart test`.

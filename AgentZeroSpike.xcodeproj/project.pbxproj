@@ -11,6 +11,7 @@
 		07A9C7776BE729391BB38678 /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D18329C86C269CF39733C9 /* MarkdownView.swift */; };
 		0AB82F9C62C46DA06F19B7F9 /* AgentZeroSpikeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB37937956301309992A77B4 /* AgentZeroSpikeApp.swift */; };
 		194D3B646F61EBF542952289 /* ServerConnectionSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08164EC4890049795779D7B8 /* ServerConnectionSection.swift */; };
+		1B7E3C4FFC68244DE06B72EE /* ChartMediaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 284C8E7F6E40829B299B366E /* ChartMediaUITests.swift */; };
 		23A8D060D90468817E4C55F9 /* VoiceTranscriptAssistant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65E0DA9CB2CD311CCE42BED5 /* VoiceTranscriptAssistant.swift */; };
 		27FBE5740F7BF98D99639FFA /* ConnectionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 034AA5798F8652A7997B53D4 /* ConnectionUITests.swift */; };
 		2C8F9271DC773F56C2F94213 /* BrowserScreenshotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E24FFD80863FAB60FCE2F4 /* BrowserScreenshotView.swift */; };
@@ -124,6 +125,7 @@
 		1DFC0A6E78112CE39479957D /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
 		213CCDE31834D0B94C64ECAE /* PluginThumbnailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginThumbnailView.swift; sourceTree = "<group>"; };
 		25E55FC326915D42F675A8B6 /* ChatSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSidebarView.swift; sourceTree = "<group>"; };
+		284C8E7F6E40829B299B366E /* ChartMediaUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartMediaUITests.swift; sourceTree = "<group>"; };
 		28515287E4E3E8C221D486DA /* ModelPresetUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelPresetUITests.swift; sourceTree = "<group>"; };
 		289648C762E3CB8363C2580B /* BrowserScreenshotUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserScreenshotUITests.swift; sourceTree = "<group>"; };
 		2B8C0247AD74E4A096075C55 /* PluginWebAdapter.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = PluginWebAdapter.js; sourceTree = "<group>"; };
@@ -302,6 +304,7 @@
 				A4ABD99C1AEC011377FA2262 /* AppStoreScreenshotUITests.swift */,
 				E83FD73E9A74017278428F87 /* AttachmentUITests.swift */,
 				289648C762E3CB8363C2580B /* BrowserScreenshotUITests.swift */,
+				284C8E7F6E40829B299B366E /* ChartMediaUITests.swift */,
 				A5847BCBB57636E82A2FDCC9 /* ChatInterfaceUITests.swift */,
 				03D98A64473888E1F26E9F00 /* ChatUITests.swift */,
 				5050405858249708B8911888 /* ComposerMediaUITests.swift */,
@@ -490,6 +493,7 @@
 				A7ABEB022CDA6BBBE0D153FD /* AppStoreScreenshotUITests.swift in Sources */,
 				F45266B5D4CC36FAC90A822F /* AttachmentUITests.swift in Sources */,
 				39AE7F349A88BF29A2010254 /* BrowserScreenshotUITests.swift in Sources */,
+				1B7E3C4FFC68244DE06B72EE /* ChartMediaUITests.swift in Sources */,
 				9B31308EFB6EC393F9EADFFE /* ChatInterfaceUITests.swift in Sources */,
 				C910A0E83C4148A3D0F303D6 /* ChatUITests.swift in Sources */,
 				351CCF714D1B1679EF498820 /* ComposerMediaUITests.swift in Sources */,
