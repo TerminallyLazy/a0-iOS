@@ -14,7 +14,10 @@ actor PreviewHTTPTransport: HTTPTransport {
     private var pluginOverride = true
     private var stoppedContexts = Set<String>()
     private var contexts: [String] = []
+    private var jevReplies: [String:Int] = [:]
     private var polls = 0
+    private var teamParentSelectedAt:Date?
+    private var mediaResponseSelectedAt:Date?
     private var pollFailures = 0
     private var recoveredFullSnapshot = false
     private var modelPresets: [[String:Any]] = [
@@ -41,9 +44,21 @@ actor PreviewHTTPTransport: HTTPTransport {
             if !pluginRemoved { rows.append(["name":"fixture-plugin","display_name":"Fixture Plugin","thumbnail_url":"/plugins/fixture-plugin/webui/thumbnail.png","description":"Synthetic plugin for lifecycle verification.","is_custom":true,"has_main_screen":true,"has_config_screen":true,"per_project_config":true,"per_agent_config":true,"toggle_state":pluginEnabled ? "enabled":"disabled","version":"1.0","current_commit":pluginUpdated ? "new":"old","current_commit_timestamp":"2026-09-29T00:00:00Z"]) }
             if hubInstalled { rows.append(["name":"hub-fixture","display_name":"Hub Fixture","thumbnail_url":"/plugins/hub-fixture/webui/thumbnail.png","description":"Installed from the synthetic Hub.","is_custom":true,"toggle_state":"enabled"]) }
             data = ["ok":true,"plugins":rows]
+        case "/plugins/selectable_theme/webui/themes.css":
+            return HTTPResponse(data:Data("/* Synthetic custom palette */".utf8),status:200,headers:["Content-Type":"text/css"])
         case "/api/plugins":
             let action = payload["action"] as? String ?? ""
-            if action == "get_toggle_status" {
+            if action == "get_config", payload["plugin_name"] as? String == "selectable_theme", (ProcessInfo.processInfo.arguments.contains("--synthetic-expanded-ui") || ProcessInfo.processInfo.arguments.contains("--synthetic-expanded-theme")) {
+                func colors(_ light:Bool)->[String:String] {
+                    var colors = Dictionary(uniqueKeysWithValues:ServerTheme.keys.map { ($0,light ? "#edf8ff":"#102737") })
+                    for key in ["text","message-text"] { colors[key] = light ? "#102737":"#edf8ff" }
+                    colors["text-muted"] = light ? "#365a72":"#abc9dc"
+                    colors["primary"] = light ? "#245e8c":"#83c9fa"
+                    colors["background"] = light ? "#d9edf9":"#071c28"
+                    return colors
+                }
+                data = ["ok":true,"data":["theme":"custom-catalog","custom_themes":[["id":"custom-catalog","name":"Catalog Ocean","dark":colors(false),"light":colors(true)]]]]
+            } else if action == "get_toggle_status" {
                 data = ["ok":true,"status":pluginEnabled ? "enabled":"disabled","loaded_project_name":"","loaded_agent_profile":"","loaded_path":pluginOverride ? "usr/plugins/fixture-plugin/.toggle-1":""]
             } else {
                 if ProcessInfo.processInfo.arguments.contains("--synthetic-plugin-uncertain") { throw ClientError.disconnected }
@@ -155,11 +170,14 @@ actor PreviewHTTPTransport: HTTPTransport {
             let names = raw.components(separatedBy: "filename=\"").dropFirst().compactMap { $0.components(separatedBy: "\"").first }
             data = ["filenames": names]
         case "/api/message_async":
+            if let context = payload["context"] as? String, let text = payload["text"] as? String, text.contains("a2ui-candidates") { jevReplies[context,default:0] += 1 }
             if ProcessInfo.processInfo.arguments.contains("--synthetic-send-timeout") { throw URLError(.timedOut) }
             let raw = String(decoding: request.httpBody ?? Data(), as: UTF8.self)
             let multipartContext = raw.components(separatedBy: "name=\"context\"\r\n\r\n").dropFirst().first?.components(separatedBy: "\r\n").first
             data = ["context": payload["context"] as? String ?? multipartContext ?? ""]
-        case "/api/message_queue_add": data = ["ok": true, "item_id": payload["item_id"] as? String ?? ""]
+        case "/api/message_queue_add":
+            if let context = payload["context"] as? String, let text = payload["text"] as? String, text.contains("a2ui-candidates") { jevReplies[context,default:0] += 1 }
+            data = ["ok": true, "item_id": payload["item_id"] as? String ?? ""]
         case "/api/poll":
             polls += 1
             let args = ProcessInfo.processInfo.arguments
@@ -180,6 +198,11 @@ actor PreviewHTTPTransport: HTTPTransport {
             }
             let recoveryFixture = args.contains("--synthetic-poll-recovery") || args.contains("--synthetic-poll-exhaust")
             let context = payload["context"] as? String ?? ""
+            if args.contains("--synthetic-agent-team") {
+                if !contexts.contains("chat-existing") { contexts.append("chat-existing") }
+                if context == "chat-alpha", teamParentSelectedAt == nil { teamParentSelectedAt = Date() }
+                if let began = teamParentSelectedAt, Date().timeIntervalSince(began) >= 8, !contexts.contains("chat-new") { contexts.append("chat-new") }
+            }
             if conversationFixture, !context.isEmpty { try await Task.sleep(for: .milliseconds(500)) }
             var entries: [[String: Any]] = conversationFixture && !context.isEmpty && context != "chat-empty"
                 ? [["no": 0, "type": "response", "content": "Conversation content for " + context]] : []
@@ -215,6 +238,42 @@ actor PreviewHTTPTransport: HTTPTransport {
             if args.contains("--synthetic-rich-ui"), !context.isEmpty {
                 entries = [["no":0,"type":"response","heading":"icon://chat A0: Responding","content":"Synthetic dashboard example.\n```a2ui\n" + GenerativeGuide.richExample + "\n```"]]
             }
+            if args.contains("--synthetic-expanded-ui"), !context.isEmpty {
+                entries = [["no":0,"type":"response","content":"Synthetic planning overview.\n```a2ui\n" + GenerativeGuide.expandedExample + "\n```"]]
+            }
+            if let index = args.firstIndex(of:"--synthetic-charts-media"), index+1 < args.count, !context.isEmpty {
+                entries = [["no":0,"type":"response","content":"Synthetic chart and media example.\n```a2ui\n" + (try ChartMediaPreview.surface(kind:args[index+1])) + "\n```"]]
+            }
+            if args.contains("--synthetic-direct-media"), !context.isEmpty {
+                entries = [["no":0,"type":"response","agentno":1,"content":"MP4 direct URL:\nhttps://media.example.com/flower.mp4\n\nMP3 direct URL:\nhttps://media.example.com/song.mp3\n\nBoth source links remain readable."]]
+            }
+            if args.contains("--synthetic-readonly-media"), !context.isEmpty {
+                if mediaResponseSelectedAt == nil { mediaResponseSelectedAt = Date() }
+                var surface = try JSONSerialization.jsonObject(with:Data(ChartMediaPreview.surface(kind:"audio").utf8)) as! [[String:Any]]
+                var update = surface[1]["updateComponents"] as! [String:Any]
+                var media = (update["components"] as! [[String:Any]])[0]; media["id"] = "audio"
+                if args.contains("--synthetic-media-replacement"), let started = mediaResponseSelectedAt, Date().timeIntervalSince(started) >= 25 {
+                    media["title"] = "Revised synthetic audio"
+                }
+                update["components"] = [
+                    ["id":"root","component":"Column","children":["review","audio"]],
+                    ["id":"review","component":"Button","child":"reviewLabel","action":["event":["name":"review_fixture","context":[:]]]],
+                    ["id":"reviewLabel","component":"Text","text":"Review fixture action"], media
+                ]
+                surface[1]["updateComponents"] = update
+                let payload = String(decoding:try JSONSerialization.data(withJSONObject:surface,options:.sortedKeys),as:UTF8.self)
+                entries = [["no":0,"type":"response","agentno":1,"content":"Synthetic subordinate audio.\n```a2ui\n" + payload + "\n```"]]
+            }
+            if args.contains("--synthetic-agent-team"), !context.isEmpty {
+                entries = [["no":0,"type":"response","agentno":0,"content":context == "chat-new" ? "New child conversation content":"Parent conversation stays here."],
+                           ["no":1,"type":"tool","agentno":1,"heading":"Local agent activity","content":"An agent number alone is not a child chat."]]
+            }
+            if args.contains("--synthetic-jev"), let count = jevReplies[context], count > 0 {
+                let surface = try JSONSerialization.jsonObject(with:Data(GenerativeGuide.expandedExample.utf8))
+                let envelope:[String:Any] = ["version":1,"intent":"A useful overview","candidates":[["id":"overview","description":"Metrics, comparisons, events and tasks","surface":surface]]]
+                let json = String(decoding:try JSONSerialization.data(withJSONObject:envelope,options:.sortedKeys),as:UTF8.self)
+                entries.append(["no":count,"type":"response","content":"Your readable overview is ready.\n```a2ui-candidates\n" + json + "\n```"])
+            }
             if args.contains("--synthetic-scroll-transcript"), !context.isEmpty {
                 entries = (0..<20).map { ["no":$0,"type":"response","content":"History item \($0)\n\n" + String(repeating:"A readable conversation entry. ",count:10)] }
                 if polls >= 5 { entries.append(["no":20,"type":"response","content":"Newest update"]) }
@@ -228,14 +287,21 @@ actor PreviewHTTPTransport: HTTPTransport {
                     ]
                 }
             }
+            let replacedMedia = args.contains("--synthetic-media-replacement") && mediaResponseSelectedAt.map { Date().timeIntervalSince($0) >= 25 } == true
             data = ["context": context, "deselect_chat": false,
                     "contexts": contexts.map { id -> [String:Any] in
                         var row: [String:Any] = ["id": id, "name": conversationFixture ? id : "HTTP fixture chat", "running": false]
+                        if args.contains("--synthetic-agent-team"), ["chat-existing","chat-new"].contains(id) {
+                            row["name"] = id == "chat-new" ? "Media researcher":"Earlier researcher"
+                            row["parent_context_id"] = "chat-alpha"; row["parent_agent_number"] = 0
+                            row["parent_context_kind"] = "subordinate"; row["parent_context_label"] = "Agent Zero"
+                            row["subordinate_slot"] = id == "chat-new" ? 2:1
+                        }
                         if args.contains("--synthetic-app-store") { row["name"] = id == "chat-alpha" ? "Your afternoon":"Ideas for the weekend" }
                         if args.contains("--synthetic-projects"),let name = contextProjects[id],let project = projectDocuments[name] { row["project"] = project }
                         return row
                     }, "tasks": [],
-                    "logs": entries, "log_guid": conversationFixture ? "fixture-log-" + context : "fixture-log", "log_version": recoveryFixture ? 1 : entries.count,
+                    "logs": entries, "log_guid": conversationFixture ? "fixture-log-" + context : "fixture-log", "log_version": recoveryFixture ? 1 : entries.count + (replacedMedia ? 1:0),
                     "log_progress": args.contains("--synthetic-agent-work") && !stoppedContexts.contains(context) ? "icon://psychology A1: Reviewing sources" : "", "log_progress_active": args.contains("--synthetic-agent-work") && !stoppedContexts.contains(context), "paused": false,
                     "notifications": [], "notifications_guid": "fixture-notices", "notifications_version": recoveryFixture ? 1 : 0]
         default: throw ClientError.unexpectedResponse

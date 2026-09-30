@@ -42,24 +42,29 @@ struct ConversationView: View {
             if model.state.progressActive || model.state.paused || (model.state.needsFullSync && !model.state.logs.isEmpty) {
                 workStatus
             }
+            subagentNavigation
             Divider()
             GeometryReader { viewport in
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(alignment:.leading,spacing:24) {
-                            if model.state.logs.isEmpty {
-                                emptyConversation
-                            }
-                            ForEach(TranscriptGroup.make(model.state.logs)) { group in
-                                if groupActivity && group.isActivity && group.entries.count > 1 {
-                                    ActivityGroupView(group:group,browserMedia:BrowserMediaScope(model:model)) { follow.beginReading() }
-                                        .id("\(model.state.logGUID ?? "pending")-activity-\(group.id)")
-                                } else {
-                                    ForEach(group.entries,id:\.no) { entry in
-                                        MessageRow(entry:entry,browserMedia:BrowserMediaScope(model:model),onExpand:{ follow.beginReading() },onGeneratedDraft:{ text in
-                                            guard let chat = model.chat else { return }
-                                            chat.draft = chat.draft.isEmpty ? text : chat.draft + "\n\n" + text
-                                        }).id("\(model.state.logGUID ?? "pending")-\(entry.no)")
+                        // Keep the bottom anchor outside lazy estimation. Tall replies can
+                        // otherwise trap scrolling in repeated placement updates.
+                        VStack(alignment:.leading,spacing:24) {
+                            LazyVStack(alignment:.leading,spacing:24) {
+                                if model.state.logs.isEmpty {
+                                    emptyConversation
+                                }
+                                ForEach(TranscriptGroup.make(model.state.logs)) { group in
+                                    if groupActivity && group.isActivity && group.entries.count > 1 {
+                                        ActivityGroupView(group:group,browserMedia:BrowserMediaScope(model:model)) { follow.beginReading() }
+                                            .id("\(model.state.logGUID ?? "pending")-activity-\(group.id)")
+                                    } else {
+                                        ForEach(group.entries,id:\.no) { entry in
+                                            MessageRow(entry:entry,jevSelected:model.jevCoordinator?.selected[entry.no],browserMedia:BrowserMediaScope(model:model),onExpand:{ follow.beginReading() },onGeneratedDraft:{ text in
+                                                guard let chat = model.chat else { return }
+                                                chat.draft = chat.draft.isEmpty ? text : chat.draft + "\n\n" + text
+                                            }).id("\(model.state.logGUID ?? "pending")-\(entry.no)")
+                                        }
                                     }
                                 }
                             }
@@ -112,7 +117,12 @@ struct ConversationView: View {
         }
         .background { ThemeBackdrop() }
         .sheet(isPresented:$showingSettings) { SettingsView(model:model) }
-        .sheet(isPresented:$showingAgents) { AgentActivitySheet(logs:model.state.logs,browserMedia:BrowserMediaScope(model:model)) }
+        .sheet(isPresented:$showingAgents) {
+            AgentActivitySheet(model:model,onSelectChat:onSelectChat == nil ? nil : { id in
+                showingAgents = false
+                onSelectChat?(id)
+            })
+        }
         .sheet(isPresented:$showingProjects) { ProjectsView(model:model,onOpenChat:{ id in showingProjects = false; onSelectChat?(id) }) }
         .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
         .modifier(ThemeNavigationChrome())
@@ -155,10 +165,54 @@ struct ConversationView: View {
             }
         }
     }
+    @ViewBuilder private var subagentNavigation: some View {
+        if let context = model.chat?.selectedContext {
+            let children = model.subagentRelationships.children(of:context)
+            let unseen = model.newSubagents(in:context)
+            VStack(alignment:.leading,spacing:8) {
+                if let parent = model.subagentRelationships.parent(of:context) {
+                    Button {
+                        guard let current = model.chat?.selectedContext,
+                              let destination = model.subagentRelationships.parent(of:current) else { return }
+                        onSelectChat?(destination.id)
+                    } label: {
+                        HStack(alignment:.center,spacing:10) {
+                            Image(systemName:"arrow.turn.up.left").foregroundStyle(theme.tint)
+                            VStack(alignment:.leading,spacing:2) {
+                                Text("Return to parent").font(.caption).foregroundStyle(theme.muted)
+                                Text(parent.name).font(.subheadline.weight(.medium)).foregroundStyle(theme.text).lineLimit(2)
+                            }
+                            Spacer(minLength:0)
+                        }.frame(minHeight:44).contentShape(Rectangle())
+                    }.buttonStyle(.plain).disabled(onSelectChat == nil || model.state.needsFullSync)
+                        .accessibilityIdentifier("parentConversation")
+                }
+                if !children.isEmpty {
+                    Button { showingAgents = true } label: {
+                        HStack(alignment:.center,spacing:10) {
+                            Image(systemName:"person.2").foregroundStyle(theme.tint)
+                            VStack(alignment:.leading,spacing:3) {
+                                Text("Subagents · \(children.count) \(children.count == 1 ? "chat" : "chats")")
+                                    .font(.subheadline.weight(.medium)).foregroundStyle(theme.text)
+                                if !unseen.isEmpty {
+                                    Text("\(unseen.count) new").font(.caption.weight(.semibold)).foregroundStyle(theme.tint)
+                                        .accessibilityIdentifier("agentTeamNew")
+                                }
+                            }
+                            Spacer(minLength:0)
+                            Image(systemName:"chevron.right").font(.caption.weight(.semibold)).foregroundStyle(theme.muted)
+                        }.padding(.horizontal,12).padding(.vertical,6).frame(minHeight:44)
+                            .background(theme.panel,in:RoundedRectangle(cornerRadius:12))
+                            .contentShape(Rectangle())
+                    }.buttonStyle(.plain).accessibilityIdentifier("agentTeam")
+                }
+            }.padding(.horizontal,20).padding(.bottom,children.isEmpty && model.subagentRelationships.parent(of:context) == nil ? 0 : 10)
+        }
+    }
     private var currentProject:ProjectSummary? { model.chatSummaries.first(where:{$0.id == model.chat?.selectedContext})?.project }
     private var latestReply: String? {
         guard let entry = model.state.logs.last(where: { $0.type == "response" }) else { return nil }
-        let prose = GeneratedContent.extract(entry)?.prose ?? entry.content ?? ""
+        let prose = JevCandidates.extract(entry)?.prose ?? GeneratedContent.extract(entry)?.prose ?? entry.content ?? ""
         return MarkdownDocument.parse(prose).compactMap { block -> String? in
             let text: String
             switch block {

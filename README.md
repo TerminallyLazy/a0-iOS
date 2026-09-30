@@ -136,3 +136,5 @@ Open **Plugins** from the conversation sidebar to browse **Custom**, **Built-in*
 A floating right-edge tab and the sidebar menu expose [Workspace](docs/WORKSPACE.md), preserving the server canvas, siderail and plugin-registered File Browser/Browser/Desktop/Editor surfaces inside the authenticated app.
 
 Native appearance can follow the connected server’s Selectable Theme plugin, including custom palettes and linear gradients. Settings → Match server theme controls this locally; Light/Dark/System remains independent. See [theme behavior](docs/THEMES.md).
+
+[Agents, media and theme verification](docs/tdd/agents-media-theme/README.md) covers themed inspection, direct-file media previews and related subagent chat navigation.

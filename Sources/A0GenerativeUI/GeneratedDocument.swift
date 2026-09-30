@@ -6,7 +6,7 @@ public enum GeneratedUIError: Error { case unsupported, invalid, tooLarge }
 /// A bounded, network-free subset of the SDK basic catalog. Validate the entire
 /// self-contained reply before feeding anything to the renderer.
 public struct GeneratedDocument {
-    public static let components: Set<String> = ["Text","Row","Column","Card","Divider","Button","TextField","CheckBox","ChoicePicker","Slider","Forecast","ImageCarousel","Chart","Dashboard"]
+    public static let components: Set<String> = ["Text","Row","Column","Card","Divider","Button","TextField","CheckBox","ChoicePicker","Slider","Forecast","ImageCarousel","Chart","Dashboard","Metric","DataTable","Timeline","Checklist","AudioPlayer","Video"]
     public static let richCatalogID = "agent-zero:mobile:v1"
     public let catalogID: String
     public let surfaceID: String
@@ -36,7 +36,7 @@ public struct GeneratedDocument {
                 for component in update.components {
                     guard validID(component.id), components.contains(component.component),
                           component.weight == nil || (component.weight! > 0 && component.weight! <= 100) else { throw GeneratedUIError.unsupported }
-                    if ["Forecast","ImageCarousel","Chart","Dashboard"].contains(component.component), create.catalogId != richCatalogID { throw GeneratedUIError.unsupported }
+                    if ["Forecast","ImageCarousel","Chart","Dashboard","Metric","DataTable","Timeline","Checklist","AudioPlayer","Video"].contains(component.component), create.catalogId != richCatalogID { throw GeneratedUIError.unsupported }
                     try validateComponent(component)
                     nodes[component.id] = component
                 }
@@ -59,6 +59,11 @@ public struct GeneratedDocument {
         for key in nodes.keys {
             var count = 0
             try walk(key,nodes:nodes,ancestors:[],depth:0,count:&count)
+        }
+        for node in nodes.values where node.component == "Checklist" {
+            let items = try children(node).compactMap { nodes[$0] }
+            guard (1...20).contains(items.filter({$0.component == "CheckBox"}).count), items.filter({$0.component == "Button"}).count <= 1,
+                  items.allSatisfy({["CheckBox","Button"].contains($0.component)}) else { throw GeneratedUIError.invalid }
         }
         guard deleted || nodes["root"] != nil else { throw GeneratedUIError.invalid }
         return Self(catalogID:create.catalogId,surfaceID:create.surfaceId,messages:messages,deleted:deleted)
@@ -84,13 +89,15 @@ public struct GeneratedDocument {
             let p = try c.typedProperties(ButtonProperties.self)
             guard case .event(let name,_) = p.action, validID(name) else { throw GeneratedUIError.unsupported }
         case "Forecast","ImageCarousel","Chart": try validateRich(c)
+        case "AudioPlayer","Video": try decodeRich(MediaContent.self,component:c).validate()
         case "Dashboard": _ = try children(c)
+        case "Metric","DataTable","Timeline","Checklist": try validateExpanded(c)
         default: throw GeneratedUIError.unsupported
         }
     }
     private static func children(_ c: RawComponent) throws -> [String] {
         switch c.component {
-        case "Row","Column","Dashboard":
+        case "Row","Column","Dashboard","Checklist":
             guard case .array(let items) = c.properties["children"] else { throw GeneratedUIError.unsupported }
             return try items.map { item in
                 guard let id = item.stringValue, validID(id) else { throw GeneratedUIError.invalid }

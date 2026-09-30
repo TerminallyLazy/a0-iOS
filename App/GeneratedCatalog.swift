@@ -5,16 +5,23 @@ import A2UISwiftCore
 import A0GenerativeUI
 
 struct GeneratedCatalog: CustomComponentCatalog {
+    var allowsDraft = true
     @ViewBuilder func build(typeName:String,node:ComponentNode,surface:SurfaceModel) -> some View {
         switch typeName {
-        case "A0TextField": NativeGeneratedInput(node:node,surface:surface)
+        case "A0TextField": NativeGeneratedInput(node:node,surface:surface).disabled(!allowsDraft)
         case "Forecast":
             if let value = decode(ForecastContent.self,node) { ForecastView(value:value) }
         case "ImageCarousel":
             if let value = decode(CarouselContent.self,node) { GeneratedCarousel(value:value) }
         case "Chart":
             if let value = decode(A0GenerativeUI.ChartContent.self,node) { GeneratedChart(value:value) }
+        case "A0AudioPlayer","A0Video":
+            if let value = decode(MediaContent.self,node) { GeneratedMedia(value:value,kind:typeName == "A0AudioPlayer" ? .audio : .video).id(node.id + value.url) }
         case "Dashboard": GeneratedDashboard(node:node,surface:surface)
+        case "Metric": if let value = decode(MetricContent.self,node) { GeneratedMetric(value:value) }
+        case "DataTable": if let value = decode(DataTableContent.self,node) { GeneratedDataTable(value:value) }
+        case "Timeline": if let value = decode(TimelineContent.self,node) { GeneratedTimeline(value:value) }
+        case "Checklist": GeneratedChecklist(node:node,surface:surface)
         default: EmptyView()
         }
     }
@@ -83,37 +90,6 @@ private struct ForecastView: View {
         ["sun":"sun.max","cloud":"cloud.sun","rain":"cloud.rain","snow":"cloud.snow","storm":"cloud.bolt.rain","wind":"wind","fog":"cloud.fog"][icon] ?? "cloud"
     }
 }
-private struct GeneratedChart: View {
-    @Environment(\.a0Theme) private var theme
-    let value:A0GenerativeUI.ChartContent
-    var body: some View {
-        VStack(alignment:.leading,spacing:12) {
-            Text(value.title).font(.headline)
-            Text(value.yLabel).font(.caption).foregroundStyle(theme.muted)
-            Chart(Array(value.points.enumerated()),id:\.offset) { _,point in
-                if value.kind == "bar" {
-                    BarMark(x:.value("Label",point.label),y:.value(value.yLabel,point.value))
-                        .foregroundStyle(by:.value("Series",point.series ?? value.title))
-                } else if value.kind == "area" {
-                    AreaMark(x:.value("Label",point.label),y:.value(value.yLabel,point.value),series:.value("Series",point.series ?? value.title))
-                        .foregroundStyle(by:.value("Series",point.series ?? value.title)).opacity(0.25)
-                    LineMark(x:.value("Label",point.label),y:.value(value.yLabel,point.value),series:.value("Series",point.series ?? value.title))
-                        .foregroundStyle(by:.value("Series",point.series ?? value.title))
-                } else {
-                    LineMark(x:.value("Label",point.label),y:.value(value.yLabel,point.value),series:.value("Series",point.series ?? value.title))
-                        .foregroundStyle(by:.value("Series",point.series ?? value.title)).symbol(.circle)
-                }
-            }.chartLegend(value.points.contains(where:{$0.series != nil}) ? .visible : .hidden)
-                .frame(height:220).accessibilityLabel(value.title)
-            DisclosureGroup("View values") {
-                ForEach(Array(value.points.enumerated()),id:\.offset) { _,point in
-                    LabeledContent(point.label + (point.series.map { " · " + $0 } ?? ""),value:point.value.formatted())
-                }
-            }.font(.subheadline)
-            if let url = value.sourceURL { sourceLink(url) }
-        }.padding(.vertical,12)
-    }
-}
 private struct GeneratedCarousel: View {
     @Environment(\.a0Theme) private var theme
     let value:CarouselContent
@@ -156,7 +132,7 @@ private struct GeneratedDashboard: View {
         }
     }
 }
-@MainActor @ViewBuilder private func sourceLink(_ string:String) -> some View {
+@MainActor @ViewBuilder func sourceLink(_ string:String) -> some View {
     if let url = URL(string:string) {
         Link(destination:url) { Label("Source · " + (url.host ?? "Website"),systemImage:"arrow.up.right.square").font(.caption).frame(minHeight:44) }.accessibilityIdentifier("generatedSource-" + (url.host ?? "website"))
     }

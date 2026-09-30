@@ -10,9 +10,11 @@ The [json-render Jev approach](https://json-render.dev/docs/jev) is applicable t
 
 The [swift-jev CLI](https://github.com/d-date/swift-jev) was built from revision `d5d2280c01a33b08888958bbeb866ae7ca50f883`. It was invoked with `--input request.json --api-key-file PATH`; the temporary credential file was outside both repositories, mode 0600, and removed immediately afterwards. The owner-managed `.env` was unchanged. Only synthetic state went to TypeSafe.
 
-## Production integration boundary
+## Historical integration proposal
 
-A future optional Agent Zero server-side integration should:
+This experiment preceded the user-approved device-key implementation documented in [native generated replies](../../GENERATIVE-UI.md). Its original server-side proposal below is historical, not the current app contract.
+
+The original proposal was:
 
 1. Build complete Forecast, ImageCarousel, Chart or Dashboard candidates from retrieved data. Exclude candidates with absent values, units, sources or invalid media URLs before calling Jev. Markdown is always eligible.
 2. Send minimal candidate descriptions and the requested presentation intent, not full chat history, provider credentials, private tool output or generated form input. Keep TypeSafe authentication server-side.
@@ -20,4 +22,4 @@ A future optional Agent Zero server-side integration should:
 4. On timeout, unsupported choice, missing answer or uncertain judgement, preserve the ordinary Markdown response. Do not delay a usable answer indefinitely or retry a user mutation. Any confidence threshold needs representative evaluation before release.
 5. Emit the existing self-contained `a2ui` response envelope. The iOS `GeneratedDocument` validator, media policy, reviewed action flow and profile/context isolation remain authoritative.
 
-This experiment does not add a second on-device network call, transmit user chats to TypeSafe, modify the Agent Zero backend or change existing generation behavior. The current app's catalog guidance continues to choose the presentation through the main agent.
+This experiment does not add a second on-device network call, transmit user chats to TypeSafe, modify the Agent Zero backend or change existing generation behavior. Current optional app behavior is documented in the linked native generated replies contract.

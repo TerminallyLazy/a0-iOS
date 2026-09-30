@@ -141,3 +141,10 @@ The Codex TestFlight Release archive/export workflow used the existing Xcode sig
 The [build-5 GitHub prerelease](https://github.com/TerminallyLazy/a0-iOS/releases/tag/v0.1.0-beta.5) targets that exact merge revision. README and INSTALL now describe the available public beta rather than the historical build-2 review wait.
 
 Local retained artifacts: `build/AgentZero-0.1.0-5.xcarchive` with dSYMs, `build/testflight-archive-5.log`, `build/testflight-upload-5.log`, `build/build-5-source.txt`, and `build/build-5-upload-receipt.json`. Local plans, owner environment/signing configuration, old archives and credentials were not added to Git. The release check ran 208 package tests and six JavaScript adapter tests; earlier focused UI/device evidence remains in ACCEPTANCE.md.
+
+
+## Build 6 preparation — Jev, rich replies and inline media
+
+Build 6 packages optional per-profile Jev setup, the expanded native A2UI and chart catalog, inline audio/video with shared foreground audio ownership, discoverable subagent chats, themed Agents surfaces and combined Send/Stop composer controls. Implementation and focused iPhone/iPad evidence are recorded in `docs/tdd/jev`, `docs/tdd/charts-media`, `docs/tdd/composer-jev` and `docs/tdd/agents-media-theme`.
+
+Release preflight passed 286 package tests (219 core, 67 generated UI). App Store Connect was checked live before choosing build 6: build 5 was the newest upload and was Testing for Internal Testers and Public Beta. Archive and distribution receipts follow separately; synthetic media/speech checks do not establish live provider or physical-device audio acceptance.

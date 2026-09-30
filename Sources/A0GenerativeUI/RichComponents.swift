@@ -17,14 +17,6 @@ public struct CarouselContent: Decodable, Sendable {
     public let title:String
     public let images:[Item]
 }
-public struct ChartContent: Decodable, Sendable {
-    public struct Point: Decodable, Sendable { public let label:String; public let value:Double; public let series:String? }
-    public let title:String
-    public let kind:String
-    public let yLabel:String
-    public let points:[Point]
-    public let sourceURL:String?
-}
 public enum RichImagePolicy {
     public static func url(_ string:String) -> URL? {
         guard string.utf8.count <= 4096, let c = URLComponents(string:string), c.scheme == "https", c.user == nil, c.password == nil,
@@ -50,10 +42,7 @@ extension GeneratedDocument {
             let p = try decodeRich(CarouselContent.self,component:c)
             guard (1...10).contains(p.images.count), p.images.allSatisfy({ !$0.title.isEmpty && RichImagePolicy.url($0.url) != nil && RichImagePolicy.url($0.sourceURL) != nil }) else { throw GeneratedUIError.invalid }
         case "Chart":
-            let p = try decodeRich(ChartContent.self,component:c)
-            guard ["line","bar","area"].contains(p.kind), (1...128).contains(p.points.count),
-                  p.sourceURL == nil || RichImagePolicy.url(p.sourceURL!) != nil,
-                  p.points.allSatisfy({!$0.label.isEmpty && $0.value.isFinite && abs($0.value) < 1e12}) else { throw GeneratedUIError.invalid }
+            try decodeRich(ChartContent.self,component:c).validate()
         default: break
         }
     }

@@ -29,6 +29,12 @@ import XCTest
         app.launch(); openChat(app)
         let draft = app.descendants(matching:.any)["messageDraft"].firstMatch
         draft.tap(); draft.typeText("Keep this unsent draft")
+        XCTAssertFalse(app.buttons["stopAgent"].exists)
+        let actions = app.buttons["composerSendActions"]
+        guard actions.waitForExistence(timeout:5) else { XCTFail("Stop must share the send control while drafting"); return }
+        let combined = XCTAttachment(screenshot:app.screenshot())
+        combined.name = "Combined send and stop menu"; combined.lifetime = .keepAlways; add(combined)
+        actions.tap()
         let stop = app.buttons["stopAgent"]
         XCTAssertTrue(stop.waitForExistence(timeout:5)); stop.tap()
         XCTAssertTrue(app.staticTexts["Agent stopped. Queued follow-ups cleared."].waitForExistence(timeout:8))
@@ -47,6 +53,59 @@ import XCTest
         XCTAssertEqual(XCTWaiter.wait(for:[XCTNSPredicateExpectation(predicate:NSPredicate(format:"enabled == true"),object:app.buttons["stopAgent"])],timeout:8),.completed)
         app.buttons["stopAgent"].tap()
         XCTAssertTrue(app.staticTexts["Stop was not sent. Check saved actions in Chat tools and try again."].waitForExistence(timeout:8), app.debugDescription)
+    }
+    func testEmptyWorkingComposerHasOnePrimaryStopThenReturnsToSend() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-http-preview", "--synthetic-chat-selection", "--synthetic-agent-work", "--persistence-test-id", UUID().uuidString]
+        app.launch(); openChat(app)
+        XCTAssertTrue(app.buttons["stopAgent"].waitForExistence(timeout:5))
+        XCTAssertFalse(app.buttons["sendMessage"].exists, "Empty working composer must have a single Stop control")
+        XCTAssertFalse(app.buttons["composerSendActions"].exists)
+        let primary = XCTAttachment(screenshot:app.screenshot())
+        primary.name = "Primary stop while working"; primary.lifetime = .keepAlways; add(primary)
+        app.buttons["stopAgent"].tap()
+        XCTAssertTrue(app.staticTexts["Agent stopped. Queued follow-ups cleared."].waitForExistence(timeout:8))
+        XCTAssertTrue(app.buttons["sendMessage"].waitForExistence(timeout:8))
+        XCTAssertFalse(app.buttons["sendMessage"].isEnabled)
+        XCTAssertFalse(app.buttons["stopAgent"].exists)
+    }
+    func testAttachmentOnlyFollowUpStillQueuesAndReturnsToStop() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-http-preview", "--synthetic-chat-selection", "--synthetic-agent-work", "--synthetic-attachments", "--persistence-test-id", UUID().uuidString]
+        app.launch(); openChat(app)
+        app.buttons["chatTools"].tap()
+        app.buttons["attachFiles"].tap()
+        app.buttons.matching(identifier:"attachSyntheticFile").firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["sample.txt"].waitForExistence(timeout:5))
+        XCTAssertTrue(app.buttons["sendMessage"].isEnabled)
+        XCTAssertTrue(app.buttons["composerSendActions"].exists)
+        XCTAssertFalse(app.buttons["stopAgent"].exists)
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["Queued on server"].firstMatch.waitForExistence(timeout:8))
+        XCTAssertTrue(app.buttons["stopAgent"].waitForExistence(timeout:8))
+        XCTAssertFalse(app.buttons["sendMessage"].exists)
+    }
+    func testJevSetupAndCombinedControlAtLargeText() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-http-preview", "--synthetic-chat-selection", "--synthetic-agent-work", "--persistence-test-id", UUID().uuidString, "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch(); openChat(app)
+        let draft = app.descendants(matching:.any)["messageDraft"].firstMatch
+        draft.tap(); draft.typeText("   ")
+        XCTAssertTrue(app.buttons["stopAgent"].exists, "Whitespace does not hide Stop")
+        XCTAssertFalse(app.buttons["sendMessage"].exists)
+        draft.typeText("Keep this note")
+        XCTAssertTrue(app.buttons["sendMessage"].isHittable)
+        XCTAssertTrue(app.buttons["composerSendActions"].isHittable)
+        app.buttons["dismissKeyboard"].tap()
+        let composer = XCTAttachment(screenshot:app.screenshot()); composer.name = "Combined control at maximum text"; composer.lifetime = .keepAlways; add(composer)
+        app.buttons["conversationOptions"].tap(); app.buttons["Settings"].tap()
+        let setup = app.buttons["generativeUISetup"]
+        for _ in 0..<8 where !setup.isHittable { app.swipeUp() }
+        XCTAssertTrue(setup.isHittable)
+        XCTAssertTrue(setup.label.contains("Jev API key"))
+        let settings = XCTAttachment(screenshot:app.screenshot()); settings.name = "Discoverable Jev API key at maximum text"; settings.lifetime = .keepAlways; add(settings)
+        setup.tap()
+        XCTAssertTrue(app.secureTextFields["jevAPIKey"].waitForExistence(timeout:5))
     }
     private func openChat(_ app: XCUIApplication) {
         XCTAssertTrue(app.buttons["chat-alpha"].waitForExistence(timeout: 10))

@@ -27,7 +27,7 @@ struct GeneratedReplyView: View {
                 if let vm = session.viewModel {
                     VStack(alignment:.leading,spacing:12) {
                         Label("Interactive reply",systemImage:"rectangle.and.hand.point.up.left").font(.caption.weight(.medium)).foregroundStyle(theme.muted)
-                        A2UISurfaceView(viewModel:vm,catalog:GeneratedCatalog(),scrolls:false) { action in
+                        A2UISurfaceView(viewModel:vm,catalog:GeneratedCatalog(allowsDraft:onDraft != nil),scrolls:false) { action in
                             Task { @MainActor in
                                 guard loadedSource == content.source, onDraft != nil else { return }
                                 onInteract()
@@ -37,7 +37,8 @@ struct GeneratedReplyView: View {
                                 } catch { failed = true; session.reset() }
                             }
                         }
-                        .disabled(onDraft == nil)
+                        .a2uiCatalogItems(readOnlyControlOverrides)
+                        .id(content.source)
                         if added { Label("Added to your draft",systemImage:"text.badge.checkmark").font(.caption).foregroundStyle(theme.muted) }
                     }.padding(12).background(theme.panel,in:RoundedRectangle(cornerRadius:16))
                     .simultaneousGesture(TapGesture().onEnded { onInteract() })
@@ -97,6 +98,15 @@ struct GeneratedReplyView: View {
             }.accessibilityIdentifier("hideGeneratedKeyboard")
         } }
     }
+    // Keep passive content usable in Agents while every form/action control is
+    // read-only. The action callback above independently checks draft authority.
+    private var readOnlyControlOverrides:[CatalogItem] {
+        [BuiltinComponentType.button,.checkBox,.choicePicker,.slider].map { type in
+            CatalogItem(name:type) { context in
+                AnyView(context.buildDefaultView().disabled(onDraft == nil))
+            }
+        }
+    }
     private static func display(_ value: AnyCodable) -> String {
         if let string = value.stringValue { return string }
         let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted,.sortedKeys]
@@ -111,13 +121,15 @@ struct GeneratedReplyView: View {
 }
 
 struct GenerativeSetupView: View {
+    let model: SpikeModel
     @Environment(\.a0Theme) private var theme
     @State private var copied = false
     var body: some View {
         ScrollView {
             VStack(alignment:.leading,spacing:20) {
+                JevSettingsSection(model:model)
                 Label("Interactive replies",systemImage:"rectangle.and.hand.point.up.left").font(.title2.weight(.semibold))
-                Text("Agent Zero can present forecasts, image carousels, charts, dashboards and forms. Rich replies advertise the supported format with each message you send. You can also copy the full instructions for a server profile.")
+                Text("Agent Zero can present forecasts, image carousels, charts, metrics, tables, timelines, checklists, dashboards and forms. Rich replies advertise the supported format with each message you send. You can also copy the full instructions for a server profile.")
                 Text("Form edits stay here until you review an action, add it to your draft and send. Unsubmitted form values aren’t saved when you leave the conversation.").font(.subheadline).foregroundStyle(theme.muted)
                 Button(copied ? "Copied" : "Copy agent instructions",systemImage:copied ? "checkmark" : "doc.on.doc") {
                     UIPasteboard.general.string = GenerativeGuide.instructions; copied = true
@@ -125,6 +137,6 @@ struct GenerativeSetupView: View {
                 DisclosureGroup("Agent instructions") { Text(GenerativeGuide.instructions).font(.callout).textSelection(.enabled) }
                 Text("Renderer: A2UI-Swift · A2UI v0.9 / v0.9.1").font(.caption).foregroundStyle(theme.muted)
             }.padding(20).frame(maxWidth:760).frame(maxWidth:.infinity)
-        }.background { ThemeBackdrop() }.navigationTitle("Generative UI").navigationBarTitleDisplayMode(.inline)
+        }.background { ThemeBackdrop() }.navigationTitle("Jev & rich replies").navigationBarTitleDisplayMode(.inline)
     }
 }

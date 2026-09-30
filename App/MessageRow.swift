@@ -5,6 +5,7 @@ import A0GenerativeUI
 struct MessageRow: View {
     @Environment(\.a0Theme) private var theme
     let entry: LogEntry
+    var jevSelected: GeneratedContent? = nil
     var browserMedia: BrowserMediaScope? = nil
     var onExpand: () -> Void = {}
     var embedded = false
@@ -26,6 +27,7 @@ struct MessageRow: View {
         let presentation = ActivityPresentation(entry)
         let heading = LogHeading(entry.heading ?? "")
         let subtitle = activity ? presentation.subtitle : heading.text
+        let mediaPreviews = ReplyMediaPreview.extract(entry)
         return VStack(alignment:.leading,spacing:12) {
             HStack(spacing:8) {
                 if entry.type == "response" {
@@ -57,7 +59,13 @@ struct MessageRow: View {
             if let browserMedia, let screenshot = BrowserScreenshot.extract(entry,context:browserMedia.context) {
                 BrowserScreenshotView(screenshot:screenshot,scope:browserMedia,onOpen:onExpand)
             }
-            if let generated = GeneratedContent.extract(entry) {
+            if let candidates = JevCandidates.extract(entry) {
+                if let selected = jevSelected {
+                    GeneratedReplyView(content:selected,onInteract:onExpand,onDraft:onGeneratedDraft)
+                } else {
+                    MarkdownView(source:candidates.prose.isEmpty ? "This reply has no readable fallback. Ask Agent Zero to resend it as Markdown." : candidates.prose)
+                }
+            } else if let generated = GeneratedContent.extract(entry) {
                 GeneratedReplyView(content:generated,onInteract:onExpand,onDraft:onGeneratedDraft)
             } else if collapsible && !expanded {
                 if activity {
@@ -98,6 +106,13 @@ struct MessageRow: View {
                     }
                         .accessibilityIdentifier("collapseMessage-\(entry.no)")
                 }
+            }
+            if !mediaPreviews.isEmpty {
+                VStack(alignment:.leading,spacing:12) {
+                    ForEach(mediaPreviews) { media in
+                        GeneratedMedia(value:media.content,kind:media.kind).id(media.id)
+                    }
+                }.id(entry.content ?? "")
             }
         }
         .padding(!embedded && (entry.type == "user" || activity) ? 16 : 0)
@@ -187,7 +202,7 @@ struct ActivityGroupView: View {
 }
 
 /// A compact entry keeps tool arguments out of the reading path until requested.
-private struct ActivityTimelineRow: View {
+struct ActivityTimelineRow: View {
     @Environment(\.a0Theme) private var theme
     let entry: LogEntry
     var browserMedia: BrowserMediaScope?
@@ -314,50 +329,3 @@ private struct ActivityStepHeading: View {
 }
 
 /// A read-only view of server-reported agent activity, with no inferred completion.
-struct AgentActivitySheet: View {
-    @Environment(\.a0Theme) private var theme
-    let logs: [LogEntry]
-    var browserMedia: BrowserMediaScope? = nil
-    @Environment(\.dismiss) private var dismiss
-    @State private var selectedAgent: Int?
-    private var agents: [AgentActivitySummary] { AgentActivitySummary.make(logs) }
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment:.leading,spacing:20) {
-                    if agents.isEmpty {
-                        ContentUnavailableView("No agent activity yet",systemImage:"person.2",description:Text("Agent steps will appear here when the server reports them."))
-                    } else {
-                        Text("Latest recorded steps").font(.subheadline).foregroundStyle(theme.muted)
-                        ForEach(agents) { agent in
-                            let step = ActivityPresentation(agent.latest)
-                            DisclosureGroup(isExpanded:Binding(get:{ selectedAgent == agent.agentNumber },set:{ selectedAgent = $0 ? agent.agentNumber : nil })) {
-                                ForEach(logs.filter { ActivityPresentation.agentNumber(for:$0) == agent.agentNumber },id:\.no) { entry in
-                                    if MessagePresentation.isActivity(entry.type) {
-                                        ActivityTimelineRow(entry:entry,browserMedia:browserMedia)
-                                    } else {
-                                        MessageRow(entry:entry,browserMedia:browserMedia,embedded:true).padding(.vertical,8)
-                                    }
-                                    Divider()
-                                }
-                            } label: {
-                                HStack(alignment:.top,spacing:12) {
-                                    Image(systemName:agent.agentNumber == 0 ? "person.crop.circle" : "person.2").foregroundStyle(theme.muted)
-                                    VStack(alignment:.leading,spacing:5) {
-                                        Text(agent.agentNumber == 0 ? "Agent Zero" : "Agent \(agent.agentNumber)").font(.headline)
-                                        Label(step.title,systemImage:step.symbol).font(.subheadline)
-                                        Text(step.summary == "Expand to inspect this step" ? "\(agent.count) recorded steps" : step.summary)
-                                            .font(.caption).foregroundStyle(theme.muted).lineLimit(3)
-                                    }
-                                }.padding(.vertical,8)
-                            }.accessibilityIdentifier("agentDetails-\(agent.agentNumber)")
-                            Divider()
-                        }
-                    }
-                }.padding(20).frame(maxWidth:760).frame(maxWidth:.infinity)
-            }.background { ThemeBackdrop() }
-                .navigationTitle("Agents").navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement:.confirmationAction) { Button("Done") { dismiss() } } }
-        }
-    }
-}
