@@ -14,6 +14,7 @@ actor PreviewHTTPTransport: HTTPTransport {
     private var pluginOverride = true
     private var stoppedContexts = Set<String>()
     private var contexts: [String] = []
+    private var jevReplies: [String:Int] = [:]
     private var polls = 0
     private var pollFailures = 0
     private var recoveredFullSnapshot = false
@@ -41,9 +42,21 @@ actor PreviewHTTPTransport: HTTPTransport {
             if !pluginRemoved { rows.append(["name":"fixture-plugin","display_name":"Fixture Plugin","thumbnail_url":"/plugins/fixture-plugin/webui/thumbnail.png","description":"Synthetic plugin for lifecycle verification.","is_custom":true,"has_main_screen":true,"has_config_screen":true,"per_project_config":true,"per_agent_config":true,"toggle_state":pluginEnabled ? "enabled":"disabled","version":"1.0","current_commit":pluginUpdated ? "new":"old","current_commit_timestamp":"2026-09-29T00:00:00Z"]) }
             if hubInstalled { rows.append(["name":"hub-fixture","display_name":"Hub Fixture","thumbnail_url":"/plugins/hub-fixture/webui/thumbnail.png","description":"Installed from the synthetic Hub.","is_custom":true,"toggle_state":"enabled"]) }
             data = ["ok":true,"plugins":rows]
+        case "/plugins/selectable_theme/webui/themes.css":
+            return HTTPResponse(data:Data("/* Synthetic custom palette */".utf8),status:200,headers:["Content-Type":"text/css"])
         case "/api/plugins":
             let action = payload["action"] as? String ?? ""
-            if action == "get_toggle_status" {
+            if action == "get_config", payload["plugin_name"] as? String == "selectable_theme", ProcessInfo.processInfo.arguments.contains("--synthetic-expanded-ui") {
+                func colors(_ light:Bool)->[String:String] {
+                    var colors = Dictionary(uniqueKeysWithValues:ServerTheme.keys.map { ($0,light ? "#edf8ff":"#102737") })
+                    for key in ["text","message-text"] { colors[key] = light ? "#102737":"#edf8ff" }
+                    colors["text-muted"] = light ? "#365a72":"#abc9dc"
+                    colors["primary"] = light ? "#245e8c":"#83c9fa"
+                    colors["background"] = light ? "#d9edf9":"#071c28"
+                    return colors
+                }
+                data = ["ok":true,"data":["theme":"custom-catalog","custom_themes":[["id":"custom-catalog","name":"Catalog Ocean","dark":colors(false),"light":colors(true)]]]]
+            } else if action == "get_toggle_status" {
                 data = ["ok":true,"status":pluginEnabled ? "enabled":"disabled","loaded_project_name":"","loaded_agent_profile":"","loaded_path":pluginOverride ? "usr/plugins/fixture-plugin/.toggle-1":""]
             } else {
                 if ProcessInfo.processInfo.arguments.contains("--synthetic-plugin-uncertain") { throw ClientError.disconnected }
@@ -155,11 +168,14 @@ actor PreviewHTTPTransport: HTTPTransport {
             let names = raw.components(separatedBy: "filename=\"").dropFirst().compactMap { $0.components(separatedBy: "\"").first }
             data = ["filenames": names]
         case "/api/message_async":
+            if let context = payload["context"] as? String, let text = payload["text"] as? String, text.contains("a2ui-candidates") { jevReplies[context,default:0] += 1 }
             if ProcessInfo.processInfo.arguments.contains("--synthetic-send-timeout") { throw URLError(.timedOut) }
             let raw = String(decoding: request.httpBody ?? Data(), as: UTF8.self)
             let multipartContext = raw.components(separatedBy: "name=\"context\"\r\n\r\n").dropFirst().first?.components(separatedBy: "\r\n").first
             data = ["context": payload["context"] as? String ?? multipartContext ?? ""]
-        case "/api/message_queue_add": data = ["ok": true, "item_id": payload["item_id"] as? String ?? ""]
+        case "/api/message_queue_add":
+            if let context = payload["context"] as? String, let text = payload["text"] as? String, text.contains("a2ui-candidates") { jevReplies[context,default:0] += 1 }
+            data = ["ok": true, "item_id": payload["item_id"] as? String ?? ""]
         case "/api/poll":
             polls += 1
             let args = ProcessInfo.processInfo.arguments
@@ -214,6 +230,15 @@ actor PreviewHTTPTransport: HTTPTransport {
             }
             if args.contains("--synthetic-rich-ui"), !context.isEmpty {
                 entries = [["no":0,"type":"response","heading":"icon://chat A0: Responding","content":"Synthetic dashboard example.\n```a2ui\n" + GenerativeGuide.richExample + "\n```"]]
+            }
+            if args.contains("--synthetic-expanded-ui"), !context.isEmpty {
+                entries = [["no":0,"type":"response","content":"Synthetic planning overview.\n```a2ui\n" + GenerativeGuide.expandedExample + "\n```"]]
+            }
+            if args.contains("--synthetic-jev"), let count = jevReplies[context], count > 0 {
+                let surface = try JSONSerialization.jsonObject(with:Data(GenerativeGuide.expandedExample.utf8))
+                let envelope:[String:Any] = ["version":1,"intent":"A useful overview","candidates":[["id":"overview","description":"Metrics, comparisons, events and tasks","surface":surface]]]
+                let json = String(decoding:try JSONSerialization.data(withJSONObject:envelope,options:.sortedKeys),as:UTF8.self)
+                entries.append(["no":count,"type":"response","content":"Your readable overview is ready.\n```a2ui-candidates\n" + json + "\n```"])
             }
             if args.contains("--synthetic-scroll-transcript"), !context.isEmpty {
                 entries = (0..<20).map { ["no":$0,"type":"response","content":"History item \($0)\n\n" + String(repeating:"A readable conversation entry. ",count:10)] }

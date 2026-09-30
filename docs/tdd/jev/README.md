@@ -6,16 +6,16 @@ Source: [approved Jev plan](../../JEV-PLAN.md). User approved in chat after canv
 
 | Plan task | Test target | RED evidence | GREEN evidence |
 | --- | --- | --- | --- |
-| Candidate contract and fallback | JevContractTests | Swift compile-time RED: missing JevClient, JevChoosing, JevChoice, JevBatch and JevCoordinator; underlying contract types also not implemented | Pending |
-| Secure profile credentials | JevCredentialTests; JevUITests | Same compile-time missing implementation; UI run pending | Pending |
-| Bounded choice transport and durable attempts | JevTransportTests; JevReceiptTests | Same compile-time missing implementation | Pending |
-| One-attempt lifecycle and stale reply rejection | JevCoordinatorTests | Same compile-time missing implementation | Pending |
+| Candidate contract and fallback | JevContractTests | Swift compile-time RED: missing JevClient, JevChoosing, JevChoice, JevBatch and JevCoordinator; underlying contract types also not implemented | PASS: final package run |
+| Secure profile credentials | JevCredentialTests; JevUITests | Same compile-time missing implementation; native missing-field RED | PASS: final package run |
+| Bounded choice transport and durable attempts | JevTransportTests; JevReceiptTests | Same compile-time missing implementation | PASS: final package run |
+| One-attempt lifecycle and stale reply rejection | JevCoordinatorTests | Same compile-time missing implementation | PASS: final package run |
 
 RED command: `swift test --enable-code-coverage --filter Jev` exited 1 because the new tests reference missing Jev types. Existing pinned dependencies resolved successfully. No production Jev code existed at this checkpoint. Raw regenerable output: `/tmp/a0-jev-red.log`.
 
-Native UI RED command: `xcodebuild -project AgentZeroSpike.xcodeproj -scheme AgentZeroSpike -destination 'platform=iOS Simulator,id=0758A3EE-44E9-4645-AEC3-8CA818DBF74C' -derivedDataPath /tmp/a0-jev-derived -only-testing:A0UITests/JevUITests test`. Result pending; UI test registration is included in this checkpoint and does not claim runtime RED yet.
+Native UI RED command: `xcodebuild -project AgentZeroSpike.xcodeproj -scheme AgentZeroSpike -destination 'platform=iOS Simulator,id=0758A3EE-44E9-4645-AEC3-8CA818DBF74C' -derivedDataPath /tmp/a0-jev-derived -only-testing:A0UITests/JevUITests test`. Result: the new secure-field assertion failed because the control was absent; see the Core GREEN section below.
 
-Coverage, live API checks and physical-device acceptance remain unverified. Only synthetic credentials are in tests. Local checkpoints are retained on codex/jev-ios; no push or release is included.
+Live API checks and physical-device acceptance remain unverified. Coverage is recorded below. Only synthetic credentials are in tests. Local checkpoints are retained on codex/jev-ios; no push or release is included.
 
 ## Core GREEN checkpoint
 
@@ -36,3 +36,11 @@ The user expanded scope to Metric, DataTable, Timeline and Checklist during impl
 `swift test --enable-code-coverage` passed 251 tests: 43 generated-UI tests and 208 core tests. This includes the five coordinator regressions (early-return capacity is now released) and five expanded-catalog tests. A further runtime RED (`de8754d`, `/tmp/a0-jev-checklist-red.log`) proved that 21 checkboxes incorrectly passed the documented 20-task bound; validation now rejects that input. Final package output is `/tmp/a0-jev-package-complete.log`.
 
 New Jev/expanded DTO logic has 97.34% line coverage (293/301 lines), 92.24% regions and 91.58% functions. `coverage.txt` records the exact six-file scope; this is not whole-app or Keychain/UI coverage. The command uses `xcrun llvm-cov report .build/out/Products/Debug/A0GenerativeUITests.xctest/Contents/MacOS/A0GenerativeUITests -instr-profile=.build/out/Products/Debug/codecov/default.profdata` with the six files listed in that report.
+
+Owned source coverage across both package test binaries (excluding dependency checkouts, tests and DerivedSources) is 91.48% lines (2,877/3,145). Command: `xcrun llvm-cov report .build/out/Products/Debug/A0GenerativeUITests.xctest/Contents/MacOS/A0GenerativeUITests -object=.build/out/Products/Debug/A0CoreTests.xctest/Contents/MacOS/A0CoreTests -instr-profile=.build/out/Products/Debug/codecov/default.profdata -ignore-filename-regex='checkouts|/Tests/|DerivedSources'`. App and A0Realtime are outside these test binaries.
+
+Initial native integration diagnostics are not business-logic RED evidence: one invocation selected zero tests, another lacked the candidate fixture, and the first complete fixture changed JSON field order between identical polls. Deterministic fixture serialization corrected the latter. Scrolling assertions also needed to account for initial bottom-follow position. None of these runs is counted as a pass.
+
+## Native scroll regression
+
+The executed `testNewReplyChoosesExpandedSurfaceAndChecklistReviewKeepsDraft` reached the newly rendered surface, then became unresponsive after scrolling toward the table. XCTest reported `App event loop idle notification not received` and entered failure triage after repeated snapshot timeouts (`/tmp/a0-jev-phone-scroll.log`). A two-second sample of that synthetic app showed its main thread continuously updating SwiftUI lazy layout, with approximately 100% CPU. The test runner also stalled while collecting the inaccessible view hierarchy; this is a reproduced UI hang, not a completed test-suite result. The scroll reproducer is retained before the layout correction.
