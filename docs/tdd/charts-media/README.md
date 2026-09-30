@@ -20,3 +20,8 @@ Native testing exposed that the SDK reserves `AudioPlayer`/`Video` names and byp
 
 ## Routing GREEN and expanded coverage
 `swift test --enable-code-coverage` now passes 57 generative tests plus 208 core tests (265 total), including trusted SDK remapping, media candidate privacy, all MIME mappings, chunked disk writes and extended chart bounds. ChartContent/MediaContent/MediaDownloads combined coverage is 91.89% lines, 91.84% regions; the transport's real TLS challenge and redirect delegate are source-reviewed rather than exercised against a live server.
+
+## Native playback iteration
+All14 chart kinds, large text,128-point scatter, the legacy rich-reply flow and transcript-following checks passed on the simulator. Initial chart assertions needed the combined accessible values row identifier. Native video exposed unreliable visibility of embedded AVKit transport controls, so both media types now use consistently accessible themed play/pause/seek controls around AVKit rendering, plus embedded caption selection where available. Audio/video both play; a new pre-play seek assertion found the short synthetic video remained at zero with AVPlayer's default keyframe tolerance (`ChartMediaUITests` line50). This runtime RED is retained before tightening seek tolerance.
+
+Xcode's failed-run `simctl diagnose` processes exceeded several minutes after tests completed. Only the three task-owned diagnostic subprocesses were terminated so their failed bundles could finalize; this is not counted as successful test completion.
