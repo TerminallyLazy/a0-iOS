@@ -148,3 +148,14 @@ Local retained artifacts: `build/AgentZero-0.1.0-5.xcarchive` with dSYMs, `build
 Build 6 packages optional per-profile Jev setup, the expanded native A2UI and chart catalog, inline audio/video with shared foreground audio ownership, discoverable subagent chats, themed Agents surfaces and combined Send/Stop composer controls. Implementation and focused iPhone/iPad evidence are recorded in `docs/tdd/jev`, `docs/tdd/charts-media`, `docs/tdd/composer-jev` and `docs/tdd/agents-media-theme`.
 
 Release preflight passed 286 package tests (219 core, 67 generated UI). App Store Connect was checked live before choosing build 6: build 5 was the newest upload and was Testing for Internal Testers and Public Beta. Archive and distribution receipts follow separately; synthetic media/speech checks do not establish live provider or physical-device audio acceptance.
+
+
+## Build 6 distribution — September 30, 2026
+
+[PR #2](https://github.com/TerminallyLazy/a0-iOS/pull/2) merged the Jev, A2UI, composer, inline media, subagent and theme changes into `main`. Archive source is exactly `62c2f502453a1b396cbfc2eaf07461ebb2d23333`. Local release checks passed 286 package tests and six WebUI adapter tests. Recurse's hosted analysis returned a service error, CodeRabbit skipped automatic review, and Qodo was unavailable; these are not counted as successful hosted review. The PR had no required checks and was merged normally after the recorded local code/security reviews and verification.
+
+The signed **0.1.0 (6)** archive passed `scripts/verify-release.py`. The Codex TestFlight Release workflow used the existing Xcode signing account because its API-key configuration is absent. Upload reported `Uploaded package is processing`, `Upload succeeded` and `EXPORT SUCCEEDED`. App Store Connect independently confirmed **Complete** and then **Testing**, with **Internal Testers** and **Public Beta** attached and three invitations shown. English (U.S.) What to Test notes were saved. Build 5 remains Testing; this release did not expire an existing build or add testers. This is TestFlight distribution, not App Store production submission or physical-device acceptance of the distributed build.
+
+Retained local artifacts: `build/AgentZero-0.1.0-6.xcarchive` with dSYMs, `build/testflight-archive-6.log`, `build/testflight-upload-6.log`, `build/build-6-source.txt` and `build/build-6-upload-receipt.json`. Task-owned temporary DerivedData and upload configuration were removed; the signed archive passed verification again afterward. Owner configuration, credentials, other release archives and unrelated work were preserved.
+
+The merged feature branch was removed locally and remotely after release. Final distribution evidence is retained in ignored `build/asc-release/build-6-testing.jpg`.
