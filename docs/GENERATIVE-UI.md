@@ -4,7 +4,7 @@ Agent Zero iOS uses [A2UI-Swift](https://github.com/BBC6BAE9/a2ui-swift) for nat
 
 ## Using it
 
-Rich replies is enabled by default in Settings. Each explicit Send includes the native catalog guidance with the same request, preserving queue/message IDs and delivery handling. No extra bootstrap message is submitted. The user’s message stays separate from the exact client-owned suffix in the native transcript, with a Rich reply instructions disclosure. Turn Rich replies off for future plain requests. The setting does not erase previous instructions already in server conversation history. Settings → Generative UI also provides copyable instructions for manual server configuration; copying never sends or changes the server. `GenerativeGuide.instructions` is the exact in-app producer contract and `GenerativeGuide.example` is an executable synthetic example.
+Rich replies is enabled by default in Settings. Each explicit Send includes the native catalog guidance with the same request, preserving queue/message IDs and delivery handling. No extra bootstrap message is submitted. The user’s message stays separate from the exact client-owned suffix in the native transcript, with a Rich reply instructions disclosure. Turn Rich replies off for future plain requests. The setting does not erase previous instructions already in server conversation history. Settings → Jev API key & rich replies also provides copyable instructions for manual server configuration; copying never sends or changes the server. `GenerativeGuide.instructions` is the exact in-app producer contract and `GenerativeGuide.example` is an executable synthetic example.
 
 An assistant response carries one self-contained array of v0.9/v0.9.1 messages in a fenced `a2ui` block. An integration may instead put the array in `LogEntry.kvps.a2ui`. Only response entries opt in. Prose stays visible, user/tool JSON stays ordinary text, and code examples nested inside other fences do not activate a renderer. No new endpoint, A2A service, provider key or backend patch is required. Existing authenticated poll and Socket.IO snapshots carry these logs unchanged.
 
@@ -39,7 +39,7 @@ Optional source links use the existing public HTTPS validation and destination c
 
 ## Optional Jev selection
 
-Settings → Generative UI accepts a masked `TYPESAFE_API_KEY`. Save stores it in a dedicated device-only, when-unlocked Keychain service for the active server profile. Saving or replacing a key leaves Jev off; enable Use Jev separately. Removal deletes the record. No key enters Agent Zero messages, UserDefaults, WebViews or diagnostics.
+Settings → Jev API key & rich replies accepts a masked `TYPESAFE_API_KEY`. Save stores it in a dedicated device-only, when-unlocked Keychain service for the active server profile. Saving or replacing a key leaves Jev off; enable Use Jev separately. Removal deletes the record. No key enters Agent Zero messages, UserDefaults, WebViews or diagnostics.
 
 With Rich replies and Jev enabled, an explicit Send advertises a versioned `a2ui-candidates` envelope: readable prose outside the fence, bounded intent, and 1–4 candidates with unique IDs, short descriptions and complete native surfaces. The aggregate JSON limit is 64 KiB. Each candidate passes local validation before eligibility; Markdown is always an additional choice. Historical replies are not evaluated merely by opening a chat.
 

@@ -12,6 +12,7 @@ struct ChatComposer: View {
     var conversationID = "draft"
     var latestReply: String?
     let send: @MainActor () async -> Void
+    @AppStorage("sendMode", store: DisplayPreferences.store) private var sendMode = SendMode.queue.rawValue
     @State private var confirmsClear = false
     @FocusState private var composerFocused: Bool
     @AppStorage("continuousVoice", store: DisplayPreferences.store) private var continuousVoice = false
@@ -58,41 +59,9 @@ struct ChatComposer: View {
                             .frame(width: 44, height: 44)
                     }.accessibilityIdentifier("chatTools")
                     Spacer(minLength: 0)
-                    if let model = contextModel, chat.selectedContext != nil {
-                        Button {
-                            stopVoice(); composerFocused = false
-                            Task { await model.stopAgent() }
-                        } label: {
-                            Group {
-                                if model.stoppingAgent { ProgressView().tint(.red) }
-                                else { Image(systemName:"stop.fill").font(.system(size:15,weight:.semibold)) }
-                            }
-                            .frame(width:34,height:34)
-                            .background(Color.red.opacity(0.12),in:Circle())
-                            .frame(width:44,height:44)
-                        }
-                        .foregroundStyle(.red)
-                        .disabled(!connectionReady || model.demo || model.stoppingAgent || chat.deliveries.contains { $0.status == .sending || $0.status == .creating })
-                        .accessibilityLabel("Stop agent and clear queue")
-                        .accessibilityHint("Stops this chat and its subagents, clears queued follow-ups, and keeps your draft.")
-                        .accessibilityIdentifier("stopAgent")
-                    }
                     VoiceControls(controller: voice, draft: $chat.draft, continuous: $continuousVoice, reply: latestReply, toggleListening: toggleVoice)
                         .id(currentVoiceScope)
-                    Button { stopVoice(); composerFocused = false; Task { await send() } } label: {
-                        Label("Send", systemImage: "arrow.up")
-                            .labelStyle(.iconOnly).font(.system(size: 18, weight: .semibold))
-                            .frame(width: 36, height: 36)
-                            .foregroundStyle(canSend ? theme.onTint : theme.muted)
-                            .background(canSend ? theme.tint : Color.clear, in: Circle())
-                            .overlay {
-                                if contextModel?.agentIsRunning == true && contextModel?.state.paused != true { WorkingSendRing() }
-                            }
-                            .frame(width: 44, height: 44)
-                    }
-                    .disabled(!canSend)
-                    .accessibilityValue(contextModel?.agentIsRunning == true ? "Agent working" : "Ready")
-                    .accessibilityIdentifier("sendMessage")
+                    submissionControl
                 }.padding(.horizontal, 6).padding(.bottom, 4)
             }
             .background(composerFocused ? theme.inputFocus : theme.input, in: RoundedRectangle(cornerRadius: 16))
@@ -123,6 +92,84 @@ struct ChatComposer: View {
                AVAudioSession.RouteChangeReason(rawValue: raw) == .oldDeviceUnavailable {
                 stopVoice(); voice.interrupted()
             }
+        }
+    }
+
+    // A draft always keeps the ordinary Send path available, even while the agent works.
+    // Stop shares that control through its menu, so stopping never requires clearing a draft.
+    private var hasDraftContent: Bool {
+        !chat.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !chat.attachments.isEmpty
+    }
+    private var hasWorkToStop: Bool {
+        guard let model = contextModel, let context = chat.selectedContext else { return false }
+        let queued = model.state.contexts.first { $0["id"]?.string == context }?["message_queue"]
+        if case .array(let items) = queued, !items.isEmpty { return true }
+        return model.stoppingAgent || model.agentIsRunning || (model.state.context == context && model.state.paused)
+    }
+    private var canStop: Bool {
+        guard let model = contextModel else { return false }
+        return connectionReady && !model.demo && !model.stoppingAgent
+            && !chat.deliveries.contains { $0.status == .sending || $0.status == .creating }
+    }
+    private var isWorking: Bool {
+        contextModel?.agentIsRunning == true && contextModel?.state.paused != true
+    }
+    private func stopAgent() {
+        stopVoice(); composerFocused = false
+        Task { await contextModel?.stopAgent() }
+    }
+    @ViewBuilder private var submissionControl: some View {
+        if contextModel?.stoppingAgent == true || (hasWorkToStop && !hasDraftContent) {
+            Button(action: stopAgent) {
+                Group {
+                    if contextModel?.stoppingAgent == true { ProgressView().tint(theme.onTint) }
+                    else { Image(systemName: "stop.fill").font(.system(size: 15, weight: .semibold)) }
+                }
+                .frame(width: 36, height: 36)
+                .foregroundStyle(canStop ? theme.onTint : theme.muted)
+                .background(canStop ? theme.tint : theme.border, in: Circle())
+                .overlay { if isWorking { WorkingSendRing() } }
+                .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain).disabled(!canStop)
+            .accessibilityLabel("Stop agent and clear queue")
+            .accessibilityHint("Stops this chat and its subagents, clears queued follow-ups, and keeps your draft.")
+            .accessibilityIdentifier("stopAgent")
+        } else {
+            HStack(spacing: 0) {
+                Button { stopVoice(); composerFocused = false; Task { await send() } } label: {
+                    Image(systemName: "arrow.up").font(.system(size: 18, weight: .semibold))
+                        .frame(width: 36, height: 36)
+                        .foregroundStyle(canSend ? theme.onTint : theme.muted)
+                        .background(canSend ? theme.tint : Color.clear, in: Circle())
+                        .overlay { if isWorking { WorkingSendRing() } }
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .disabled(!canSend)
+                .accessibilityLabel(hasWorkToStop ? (sendMode == SendMode.steer.rawValue ? "Steer message" : "Queue message") : "Send")
+                .accessibilityHint(hasWorkToStop ? "Uses your follow-up preference. More actions includes Stop." : "Send your message.")
+                .accessibilityValue(contextModel?.agentIsRunning == true ? "Agent working" : "Ready")
+                .accessibilityIdentifier("sendMessage")
+                if hasWorkToStop {
+                    Rectangle().fill(theme.border).frame(width: 1, height: 22).accessibilityHidden(true)
+                    Menu {
+                        Button(role: .destructive, action: stopAgent) {
+                            Label("Stop agent and clear queue", systemImage: "stop.fill")
+                        }.disabled(!canStop).accessibilityIdentifier("stopAgent")
+                    } label: {
+                        Image(systemName: "chevron.down").font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(theme.text).frame(width: 44, height: 44).contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Send and stop actions")
+                    .accessibilityHint("Stop the agent without sending or clearing your draft.")
+                    .accessibilityIdentifier("composerSendActions")
+                }
+            }
+            .buttonStyle(.plain)
+            .background(hasWorkToStop ? theme.panel : Color.clear, in: Capsule())
+            .overlay { if hasWorkToStop { Capsule().strokeBorder(theme.border, lineWidth: 1).allowsHitTesting(false) } }
         }
     }
 

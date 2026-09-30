@@ -70,7 +70,13 @@ struct SettingsView: View {
                     Toggle(isOn:$richReplies) { Label("Rich replies",systemImage:"rectangle.3.group") }
                         .accessibilityIdentifier("richReplies")
                     NavigationLink { GenerativeSetupView(model:model) } label: {
-                        Label("Generative UI",systemImage:"rectangle.and.hand.point.up.left")
+                        Label {
+                            VStack(alignment:.leading,spacing:4) {
+                                Text("Jev API key & rich replies")
+                                Text("Add your TypeSafe key and configure Jev")
+                                    .font(.caption).foregroundStyle(theme.muted)
+                            }.fixedSize(horizontal:false,vertical:true)
+                        } icon: { Image(systemName:"key") }
                     }.accessibilityIdentifier("generativeUISetup")
                 }.listRowBackground(theme.panel)
                 Section {

@@ -127,6 +127,6 @@ struct GenerativeSetupView: View {
                 DisclosureGroup("Agent instructions") { Text(GenerativeGuide.instructions).font(.callout).textSelection(.enabled) }
                 Text("Renderer: A2UI-Swift · A2UI v0.9 / v0.9.1").font(.caption).foregroundStyle(theme.muted)
             }.padding(20).frame(maxWidth:760).frame(maxWidth:.infinity)
-        }.background { ThemeBackdrop() }.navigationTitle("Generative UI").navigationBarTitleDisplayMode(.inline)
+        }.background { ThemeBackdrop() }.navigationTitle("Jev & rich replies").navigationBarTitleDisplayMode(.inline)
     }
 }

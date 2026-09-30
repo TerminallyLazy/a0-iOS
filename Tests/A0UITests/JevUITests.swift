@@ -44,7 +44,7 @@ extension JevUITests {
         XCTAssertTrue(app.staticTexts["Key saved on this device"].waitForExistence(timeout:3))
         app.switches["jevEnabled"].coordinate(withNormalizedOffset:CGVector(dx:1,dy:0.5)).withOffset(CGVector(dx:-25,dy:0)).tap()
         XCTAssertEqual(app.switches["jevEnabled"].value as? String,"1")
-        app.navigationBars["Generative UI"].buttons.firstMatch.tap()
+        app.navigationBars["Jev & rich replies"].buttons.firstMatch.tap()
         XCTAssertTrue(app.buttons["settingsDone"].waitForExistence(timeout:3))
         app.buttons["settingsDone"].tap()
         return app

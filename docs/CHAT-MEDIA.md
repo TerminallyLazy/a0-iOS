@@ -18,7 +18,7 @@ The rounded message input contains a small status dot at its upper-right corner,
 
 ## Working and follow-up messages
 
-The Send button keeps a rotating progress ring while the selected agent is running (static with Reduce Motion), and stays usable for follow-ups. Settings → Send mode defaults to Queue: messages sent while the agent is busy or a queue already exists join the server queue. Steer submits immediately through the ordinary message endpoint. Changing mode affects future explicit sends only; it neither drains an existing queue nor replays uncertain delivery.
+The composer uses one trailing Send/Stop control. With an empty draft and running, paused or queued work, it shows Stop. Typing text or staging a file restores Send and an adjoining menu offers Stop agent and clear queue without discarding the draft. Idle empty chats show disabled Send. A Stop in progress disables submission. The active button keeps a rotating progress ring while the selected agent is running (static with Reduce Motion). Settings → Send mode defaults to Queue: messages sent while the agent is busy or a queue already exists join the server queue. Steer submits immediately through the ordinary message endpoint. Changing mode affects future explicit sends only; it neither drains an existing queue nor replays uncertain delivery.
 
 ## Acceptance boundary
 
