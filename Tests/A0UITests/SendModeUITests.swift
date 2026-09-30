@@ -85,6 +85,28 @@ import XCTest
         XCTAssertTrue(app.buttons["stopAgent"].waitForExistence(timeout:8))
         XCTAssertFalse(app.buttons["sendMessage"].exists)
     }
+    func testJevSetupAndCombinedControlAtLargeText() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-http-preview", "--synthetic-chat-selection", "--synthetic-agent-work", "--persistence-test-id", UUID().uuidString, "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch(); openChat(app)
+        let draft = app.descendants(matching:.any)["messageDraft"].firstMatch
+        draft.tap(); draft.typeText("   ")
+        XCTAssertTrue(app.buttons["stopAgent"].exists, "Whitespace does not hide Stop")
+        XCTAssertFalse(app.buttons["sendMessage"].exists)
+        draft.typeText("Keep this note")
+        XCTAssertTrue(app.buttons["sendMessage"].isHittable)
+        XCTAssertTrue(app.buttons["composerSendActions"].isHittable)
+        app.buttons["dismissKeyboard"].tap()
+        let composer = XCTAttachment(screenshot:app.screenshot()); composer.name = "Combined control at maximum text"; composer.lifetime = .keepAlways; add(composer)
+        app.buttons["conversationOptions"].tap(); app.buttons["Settings"].tap()
+        let setup = app.buttons["generativeUISetup"]
+        for _ in 0..<8 where !setup.isHittable { app.swipeUp() }
+        XCTAssertTrue(setup.isHittable)
+        XCTAssertTrue(setup.label.contains("Jev API key"))
+        let settings = XCTAttachment(screenshot:app.screenshot()); settings.name = "Discoverable Jev API key at maximum text"; settings.lifetime = .keepAlways; add(settings)
+        setup.tap()
+        XCTAssertTrue(app.secureTextFields["jevAPIKey"].waitForExistence(timeout:5))
+    }
     private func openChat(_ app: XCUIApplication) {
         XCTAssertTrue(app.buttons["chat-alpha"].waitForExistence(timeout: 10))
         app.buttons["chat-alpha"].tap(); app.waitForConversation()

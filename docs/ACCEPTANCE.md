@@ -303,3 +303,11 @@ The native A2UI catalog now supports 14 chart kinds plus AudioPlayer/Video. Prod
 Fixtures used local silent WAV and generated video, synthetic HTTP and fictional chart values. Live media hosts, caption tracks, hardware audio behavior, real server/Jev generation and distribution are not claimed.
 
 Device handoff: source `1fd0b93` passed the signed Release build and strict signature verification. Direct installation and ordinary launch succeeded on the paired physical iPhone 15 / iOS 27.2, using the existing app identity and version 0.1.0 (5), with no fixture launch arguments. This confirms delivery only; live charts, media playback and optional Jev generation still require owner acceptance. No TestFlight upload or distribution was performed. Task-owned device DerivedData was removed after the successful handoff.
+
+### Jev discovery and combined composer — September 30
+
+Settings now names **Jev API key & rich replies**, with a TypeSafe setup subtitle. The trailing composer control shows Stop for empty drafts with running, paused or queued work. Text or attachments restore Send with an adjoining Stop menu, preserving unsent content and existing Queue/Steer routing. Idle empty chats show disabled Send; in-flight cancellation blocks submission.
+
+265 package tests and seven distinct synthetic UI journeys on both iPhone 14 Plus and iPad Pro 13-inch / iOS 26.5 passed across the recorded runs. Checks cover secure key setup, queue/steer persistence, attachment-only follow-ups, primary Stop, draft preservation, uncertain cancellation and maximum text. TDD checkpoints, exact test selection, coverage and limitations are in `docs/tdd/composer-jev/README.md`; selected synthetic images are under `docs/evidence/composer-jev/`.
+
+Signed Release build, strict signature verification, direct installation and ordinary launch succeeded on the physical iPhone 15 / iOS 27.2, version 0.1.0 (5). This is device delivery evidence; live server and owner credential acceptance remain separate. No server code, dependency pins or version changed; no TestFlight upload. Temporary build and test artifacts were cleaned.

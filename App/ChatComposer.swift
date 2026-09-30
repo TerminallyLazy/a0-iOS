@@ -12,7 +12,6 @@ struct ChatComposer: View {
     var conversationID = "draft"
     var latestReply: String?
     let send: @MainActor () async -> Void
-    @AppStorage("sendMode", store: DisplayPreferences.store) private var sendMode = SendMode.queue.rawValue
     @State private var confirmsClear = false
     @FocusState private var composerFocused: Bool
     @AppStorage("continuousVoice", store: DisplayPreferences.store) private var continuousVoice = false
@@ -148,7 +147,7 @@ struct ChatComposer: View {
                         .contentShape(Rectangle())
                 }
                 .disabled(!canSend)
-                .accessibilityLabel(hasWorkToStop ? (sendMode == SendMode.steer.rawValue ? "Steer message" : "Queue message") : "Send")
+                .accessibilityLabel("Send")
                 .accessibilityHint(hasWorkToStop ? "Uses your follow-up preference. More actions includes Stop." : "Send your message.")
                 .accessibilityValue(contextModel?.agentIsRunning == true ? "Agent working" : "Ready")
                 .accessibilityIdentifier("sendMessage")
