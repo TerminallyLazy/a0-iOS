@@ -24,6 +24,34 @@ selecting build 8. Release checks passed 307 package tests, six WebUI adapter
 tests and four focused iPhone setup/viewer UI tests, including both appearance
 modes. Distribution and archive receipts are recorded separately.
 
+## Build 8 distribution — October 1, 2026
+
+[PR #5](https://github.com/TerminallyLazy/a0-iOS/pull/5) merged the build bump and
+beta notes. The signed **0.1.0 (8)** archive came from exact merge revision
+`558bfbdafcc50c8da80aa51b54742ddc2ee9f3b7`; `scripts/verify-release.py` passed.
+Xcode upload reported `Upload succeeded` and `EXPORT SUCCEEDED`. App Store
+Connect build `864fb560-1c9b-4d23-85c8-7fe33f3388f4` finished processing as
+`VALID` with `APP_STORE_ELIGIBLE` audience and exempt encryption. English test
+notes were saved and read back exactly. Both existing **Internal Testers** and
+**Public Beta** groups were assigned; after beta review submission, the API
+confirmed `IN_BETA_TESTING` for both internal and external distribution.
+No testers were added and no existing build was expired.
+
+The release passed 307 package tests, six WebUI adapter tests and four focused
+iPhone setup/viewer UI tests. Optional RecurseML analysis errored and CodeRabbit
+skipped review; neither is counted as completed hosted review. PR #5 merged
+normally without a branch-protection override. TestFlight availability is not
+physical-device installation acceptance of the distributed build. The separately
+installed Mac connector passed the live checks described above; broader desktop
+installer rollout still depends on the upstream companion PRs.
+
+Retained local evidence: `build/AgentZero-0.1.0-8.xcarchive` with dSYMs,
+`build/testflight-archive-8.log`, `build/testflight-upload-8.log`,
+`build/build-8-source.txt`, `build/build-8-upload-receipt.json`, and App Store
+Connect note/group/state receipts under `build/build-8-*`. Project-owned release
+caches were removed and the archive verified again. Owner configuration,
+credentials, older archives and unrelated work were preserved.
+
 ## App identity
 
 - GitHub: public `TerminallyLazy/a0-iOS`.
