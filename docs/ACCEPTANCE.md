@@ -49,6 +49,7 @@ live-viewer changes preserved. Core target: curious-bohr, 2.13/e3051fb5.
 - Launcher: 96 focused tests passed; fresh guided scopes, existing scopes,
   session/CSRF boundaries, base paths and gateway controls are covered.
 
+**Initial slice receipt (superseded by the release-candidate follow-up above):**
 The final Core reload expired the desktop login. Manual sign-in restored the
 development Launcher's WebUI session. Its host gateway remains disconnected
 with development scopes off; this is not live host-reconnection acceptance.

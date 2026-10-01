@@ -1,13 +1,9 @@
-Agent Zero 0.1.0 (6)
+Build 7: Browser and Computer control beta
 
-Inline media: audio and video now play directly in chat. Try explicit AudioPlayer/Video rich replies and direct public HTTPS MP3/MP4 links in assistant responses. Tap Load, then Play; test pause, seeking, Unload, multiple clips and background/foreground. Media never autoplays. Playback, dictation and read-aloud should hand off cleanly without losing drafts. Unsupported or failed media should preserve the original response.
+• Watch one live capture pane, expand it, take control, and Return to A0. Check typing, scrolling, takeover/recovery, and background/reconnect behavior.
+• Try Computer setup, setup codes, readiness checks, and contextual TipKit guidance. Setup continues on your computer in A0 Launcher.
+• Check theme matching, attached takeover tabs, capture edges, and the compact control tray.
 
-Subagents: watch for the Subagents chip and new-chat badges when your server exposes related child chats. Open a child, return to its parent and verify drafts and attachments remain separate. Same-chat agent activity stays in Agents. Check the Agents sheet header, content and bottom edge against your selected server theme.
+Host features require compatible Agent Zero server, a0-connector, and A0 Launcher updates; the companion changes are not yet in all public installers. Older installations retain ordinary chat and capture history. macOS/iPhone flows have been checked; Windows/Linux setup and packaged app-link dispatch remain beta validation areas. Computer permissions and sign-in must be completed locally.
 
-Jev and rich replies: open Settings > Jev API key & rich replies to optionally configure your own TYPESAFE_API_KEY. Review the consent before enabling. Test native cards, tables, metrics, timelines, checklists, image carousels and the expanded chart catalog. Generated actions must be reviewed into the draft and explicitly sent; failures should leave readable prose. Jev is optional and separate from Agent Zero model-provider credentials.
-
-Composer: with an empty draft during active work, the main button is Stop. With text or attachments it becomes Send, with Stop in the adjoining menu. Test Queue and Steer, keyboard dismissal, dictation, read-aloud, stopped work and uncertain network outcomes. Stop must preserve drafts and attachments.
-
-Regression checks: plugins and Plugin Hub, Workspace tools, server-theme matching, session restoration, existing chats, model presets, large text, VoiceOver, iPhone/iPad layouts and rotation. No always-running background connection is promised.
-
-Report device/iOS version, reproducible steps and sanitized status text. Never include API keys, passwords, session cookies or private conversation content. Live provider/media availability and server plugin behavior can vary.
+Also check normal chat, projects, voice, and reconnect behavior. Report device/iOS version and reproduction steps; do not include credentials.
