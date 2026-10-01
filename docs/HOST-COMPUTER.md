@@ -16,6 +16,14 @@ copies browser cookies, or grants host permissions.
    capture does not prove a preceding action succeeded.
 
 The initial release supports text-only tasks and one unambiguous Launcher host.
+Before a chat is selected, the Computer sheet reports explicit Launcher scope
+grants as Allowed/Off and merges Browser/Computer setup steps only when their
+opaque host ID matches that same gateway. Prepared and recently Tested come
+from `host_setup_v1`; unknown legacy fields are Not reported, never a failed
+verification. File/code grants do not imply those operations were tested.
+These informational states cannot enable a task: the existing per-chat
+`host_status` target and generation are still required. Opening the sheet
+refreshes its status, including after completing setup elsewhere.
 For browser work, the chat's effective Browser configuration must use
 `host_required`. Configuration is project/global scoped; the phone does not
 silently change it. A competing CLI or multiple hosts prevents explicit targeting.

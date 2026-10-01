@@ -54,14 +54,45 @@ public struct HostConnection: Sendable, Equatable {
         }
         capabilities = parsed
     }
-    public init(legacyData: Data? = nil) throws {
-        context = nil; targetID = nil; generation = nil; capabilities = [:]; bound = false; bindingCurrent = false
+    public init(legacyData: Data? = nil, setup: ComputerSetupSnapshot? = nil) throws {
+        context = nil; targetID = nil; generation = nil; bound = false; bindingCurrent = false
+        var reported: [String:String] = [:]
         if let legacyData {
             guard legacyData.count <= 65_536, let value = try? JSONDecoder().decode([String:JSONValue].self,from:legacyData) else { throw ClientError.incompatiblePayload }
             state = value["multiple_hosts"] == .bool(true) ? "ambiguous" : (value["connected"] == .bool(true) ? "presence_only" : "disconnected")
-            if case .object(let gateway) = value["gateway"] { hostLabel = Self.label(gateway["host_label"]?.string) }
+            if case .object(let gateway) = value["gateway"] {
+                hostLabel = Self.label(gateway["host_label"]?.string)
+                // Presence is not a chat target, but it can report explicit
+                // Launcher permissions. Never infer grants from connection alone.
+                if state == "presence_only", gateway["version"] == .number(1),
+                   gateway["kind"] == .string("launcher"),
+                   case .bool(let master) = gateway["master_enabled"],
+                   case .object(let scopes) = gateway["scopes"] {
+                    for key in ["browser","computer_use","files","file_write","code_execution"] {
+                        if case .bool(let allowed) = scopes[key] { reported[key] = master && allowed ? "allowed" : "off" }
+                    }
+                    // Reuse the server's bounded setup projection and match its
+                    // opaque host ID. Equal labels do not identify the same Mac.
+                    if let setup, setup.connected, let hostID = setup.hostID, !hostID.isEmpty,
+                       gateway["id"]?.string == hostID {
+                        for step in setup.steps where ["browser","computer_use"].contains(step.id) && reported[step.id] == "allowed" {
+                            switch (step.state, step.reason) {
+                            case ("ready", "verified"): reported[step.id] = "tested"
+                            case ("action_on_computer", "ready_to_test"): reported[step.id] = "prepared"
+                            case ("checking", _): reported[step.id] = "checking"
+                            case (_, "access_off"): reported[step.id] = "off"
+                            case (_, "unsupported"): reported[step.id] = "unsupported"
+                            case ("action_on_computer", _): reported[step.id] = "needs_attention"
+                            case ("unavailable", _), ("connection_lost", _): reported[step.id] = "unavailable"
+                            default: break
+                            }
+                        }
+                    }
+                }
+            }
             else { hostLabel = nil }
         } else { state = "unsupported"; hostLabel = nil }
+        capabilities = reported
     }
     private static func label(_ text: String?) -> String? {
         guard let text, !text.isEmpty, text.count <= 128,
@@ -86,7 +117,13 @@ extension APIClient {
         if features.contains(.string("host_tasks_v1")), let context {
             result = try HostConnection(data:await hostRequest("host_status",payload:["context":context]).data,context:context)
         } else if features.contains(.string("launcher_gateway")) {
-            result = try HostConnection(legacyData:await hostRequest("launcher_gateway_status",payload:[:]).data)
+            let presence = try await hostRequest("launcher_gateway_status",payload:[:]).data
+            var setup: ComputerSetupSnapshot?
+            if features.contains(.string("host_setup_v1")) {
+                let response = try await hostRequest("host_setup",payload:["action":"status"],allowMissing:true)
+                if response.status != 404 { setup = try ComputerSetupSnapshot(data:response.data) }
+            }
+            result = try HostConnection(legacyData:presence,setup:setup)
         } else { result = try HostConnection() }
         let current = try socketSession()
         // The request path fences account changes. A same-account cookie refresh
