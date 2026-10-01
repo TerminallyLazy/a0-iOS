@@ -56,7 +56,7 @@ struct MessageRow: View {
                     InlineMarkdown(source:subtitle).font(activity ? .caption : .headline).foregroundStyle(activity ? theme.muted : Color.primary)
                 }
             }
-            if let browserMedia, let screenshot = BrowserScreenshot.extract(entry,context:browserMedia.context) {
+            if let browserMedia, browserMedia.inlineCaptures, let screenshot = BrowserScreenshot.extract(entry,context:browserMedia.context) {
                 BrowserScreenshotView(screenshot:screenshot,scope:browserMedia,onOpen:onExpand)
             }
             if let candidates = JevCandidates.extract(entry) {
@@ -177,7 +177,7 @@ struct ActivityGroupView: View {
                     }
                 }.padding(.bottom,8)
             }
-            if !expanded, let browserMedia {
+            if !expanded, let browserMedia, browserMedia.inlineCaptures {
                 let captures = group.entries.compactMap { entry in BrowserScreenshot.extract(entry,context:browserMedia.context).map { (id:String(entry.no) + "|" + $0.id,screenshot:$0) } }
                 if !captures.isEmpty {
                     ForEach(Array(captures.suffix(3)),id:\.id) { capture in
@@ -240,7 +240,7 @@ struct ActivityTimelineRow: View {
                     .accessibilityIdentifier("\(expanded ? "collapseMessage" : "expandMessage")-\(entry.no)")
                     .accessibilityValue(expanded ? "Expanded" : "Collapsed")
                     .accessibilityHint(expanded ? "Hide step details" : "Show step details")
-                if let browserMedia, let screenshot = BrowserScreenshot.extract(entry,context:browserMedia.context) {
+                if let browserMedia, browserMedia.inlineCaptures, let screenshot = BrowserScreenshot.extract(entry,context:browserMedia.context) {
                     BrowserScreenshotView(screenshot:screenshot,scope:browserMedia,onOpen:onExpand).padding(.bottom,12)
                 }
                 if expanded {

@@ -19,10 +19,11 @@ public struct SessionArchive: Codable, Equatable, Sendable {
     public let drafts: [String: String]
     public let deliveries: [Delivery]
     public let attachments: [String: [StagedAttachment]]?
+    public let hostDrafts: [String: HostTaskSelection]?
     public init(profile: ProfileIdentity, revision: Int, selectedContext: String? = nil,
-                drafts: [String: String] = [:], deliveries: [Delivery] = [], attachments: [String: [StagedAttachment]]? = nil) {
+                drafts: [String: String] = [:], deliveries: [Delivery] = [], attachments: [String: [StagedAttachment]]? = nil, hostDrafts: [String: HostTaskSelection]? = nil) {
         self.profile = profile; self.revision = revision; self.selectedContext = selectedContext
-        self.drafts = drafts; self.deliveries = deliveries; self.attachments = attachments
+        self.drafts = drafts; self.deliveries = deliveries; self.attachments = attachments; self.hostDrafts = hostDrafts
     }
 }
 public protocol SessionStoring: Sendable {

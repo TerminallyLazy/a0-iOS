@@ -4,7 +4,7 @@
 
 Explicit browser tool metadata (`browser_snapshot` or legacy `Screenshot` image URI) opts into native screenshot rendering. Ordinary Markdown images do not trigger authenticated downloads. The app retrieves raster captures only through the current authenticated server's `/api/image_get` endpoint, with no redirects, no disk image cache, an 8 MiB response ceiling, bounded pixel dimensions and thumbnail decoding off the main actor. Account generation, selected context and log epoch fence the result. Leaving the view or backgrounding removes decoded images from view state.
 
-Collapsed activity shows the latest three capture cards; earlier captures remain inside tool details. A tap opens a larger bounded popover, with an explicit Close action, while preserving the conversation. Capture loading and explicit Retry are visible; unavailable/expired captures do not block reading the rest of the message.
+The conversation consolidates captures in one Browser/Computer pane and disables duplicate inline tool cards. Capture history selects one retained evidence image at a time. Historical images still use bounded popovers; negotiated live capture can expand into the dedicated takeover workspace. See [Live viewer](LIVE-VIEWER.md). Capture loading and explicit Retry are visible; unavailable/expired captures do not block reading the rest of the message.
 
 ## Direct audio and video replies
 

@@ -4,21 +4,36 @@ import Foundation
 public struct BrowserScreenshot: Sendable, Hashable, Identifiable {
     public let path: String
     public let revision: String
+    public var source: String = "browser"
+    public var hostLabel: String? = nil
+    public var capturedAt: Date? = nil
+    public var title: String { source == "computer" ? "Computer capture" : "Browser capture" }
     public var id: String { path + "|" + revision }
     public static let maximumBytes = 8 * 1024 * 1024
     private static let mimeTypes: Set<String> = ["image/png","image/jpeg","image/webp","image/gif","image/bmp"]
 
     public static func extract(_ entry: LogEntry, context: String) -> Self? {
         guard ["tool","browser","agent","code_exe"].contains(entry.type), let fields = entry.kvps else { return nil }
-        if let structured = fields["browser_snapshot"] {
+        if let structured = fields["computer_snapshot"] ?? fields["browser_snapshot"] {
             guard case .object(let snapshot) = structured,
                   snapshot["ephemeral"] != .bool(true),
                   snapshot["context_id"]?.string.map({ $0.isEmpty || $0 == context }) ?? true,
                   snapshot["mime"]?.string.map({ mimeTypes.contains($0.lowercased()) }) ?? true else { return nil }
+            if fields["computer_snapshot"] != nil {
+                guard snapshot["context_id"]?.string == context, snapshot["source"]?.string == "computer" else { return nil }
+            }
             let path = snapshot["path"]?.string ?? snapshot["a0_path"]?.string
             if let path, validPath(path) {
-                return Self(path:path,revision:snapshot["uri"]?.string ?? String(entry.no))
+                var result = Self(path:path,revision:snapshot["capture_id"]?.string ?? snapshot["uri"]?.string ?? String(entry.no))
+                if fields["computer_snapshot"] != nil {
+                    result.source = "computer"
+                }
+                if let label = snapshot["host_label"]?.string, label.count <= 128, !label.contains("§§secret("),
+                   !label.unicodeScalars.contains(where:{ CharacterSet.controlCharacters.contains($0) }) { result.hostLabel = label }
+                if case .number(let seconds) = snapshot["captured_at"], seconds.isFinite, seconds > 0 { result.capturedAt = Date(timeIntervalSince1970:seconds) }
+                return result
             }
+            guard fields["computer_snapshot"] == nil else { return nil }
             return snapshot["uri"]?.string.flatMap(parseURI)
         }
         return fields["Screenshot"]?.string.flatMap(parseURI)

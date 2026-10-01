@@ -14,6 +14,9 @@ public struct GenerativeChatAPI: ChatAPI {
     public func sendAttachments(context:String,text:String,messageID:String,queued:Bool,attachments:[ChatAttachment]) async throws {
         try await base.sendAttachments(context:context,text:enabled ? text + (jev ? Self.jevSuffix : Self.suffix) : text,messageID:messageID,queued:queued,attachments:attachments)
     }
+    public func sendHostTask(context:String,text:String,messageID:String,queued:Bool,selection:HostTaskSelection) async throws {
+        try await base.sendHostTask(context:context,text:enabled ? text + (jev ? Self.jevSuffix : Self.suffix) : text,messageID:messageID,queued:queued,selection:selection)
+    }
     public static var suffix:String { "\n\n<agent-zero-ios-presentation>\n" + GenerativeGuide.capabilities + "\n</agent-zero-ios-presentation>" }
     public static var priorMediaSuffix:String { "\n\n<agent-zero-ios-presentation>\n" + GenerativeGuide.priorMediaCapabilities + "\n</agent-zero-ios-presentation>" }
     public static var legacySuffix:String { "\n\n<agent-zero-ios-presentation>\n" + GenerativeGuide.legacyCapabilities + "\n</agent-zero-ios-presentation>" }

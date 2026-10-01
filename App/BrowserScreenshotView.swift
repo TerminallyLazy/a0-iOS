@@ -8,8 +8,10 @@ import A0Core
     let generation: UUID
     let context: String
     let logGUID: String?
-    init(model: SpikeModel) {
+    let inlineCaptures: Bool
+    init(model: SpikeModel, inlineCaptures: Bool = true) {
         self.model = model; generation = model.connectionGeneration
+        self.inlineCaptures = inlineCaptures
         context = model.state.context ?? ""; logGUID = model.state.logGUID
     }
     var id: String { generation.uuidString + "|" + context + "|" + (logGUID ?? "") }
@@ -32,6 +34,8 @@ struct BrowserScreenshotView: View {
     let screenshot: BrowserScreenshot
     let scope: BrowserMediaScope
     var onOpen: () -> Void = {}
+    var height: CGFloat? = 160
+    var showsDetails = true
     @State private var image: CGImage?
     @State private var failed = false
     @State private var preview = false
@@ -46,7 +50,7 @@ struct BrowserScreenshotView: View {
                 onOpen(); preview = true
             } label: {
                 ZStack {
-                    RoundedRectangle(cornerRadius:12).fill(theme.canvas)
+                    Rectangle().fill(theme.canvas)
                     if let image {
                         Image(decorative:image,scale:1).resizable().scaledToFit()
                     } else if failed {
@@ -55,16 +59,17 @@ struct BrowserScreenshotView: View {
                             Text("Screenshot unavailable").font(.caption)
                         }.foregroundStyle(theme.muted)
                     } else {
-                        ProgressView().accessibilityLabel("Loading browser screenshot")
+                        ProgressView().accessibilityLabel("Loading capture")
                     }
-                }.frame(height:160).frame(maxWidth:.infinity).clipped()
+                }.frame(height:height).frame(maxWidth:.infinity).contentShape(Rectangle()).clipped()
             }.buttonStyle(.plain).disabled(image == nil)
-                .accessibilityLabel("Browser screenshot")
+                .accessibilityLabel(screenshot.title)
                 .accessibilityHint("Opens a larger preview")
                 .accessibilityIdentifier("browserScreenshot")
+            if showsDetails {
             HStack(spacing:8) {
-                Image(systemName:"globe").foregroundStyle(theme.muted).accessibilityHidden(true)
-                Text("Browser capture").font(.caption.weight(.medium))
+                Image(systemName:screenshot.source == "computer" ? "desktopcomputer" : "globe").foregroundStyle(theme.muted).accessibilityHidden(true)
+                Text(screenshot.title).font(.caption.weight(.medium))
                 Spacer()
                 if failed {
                     Button { attempt += 1 } label: {
@@ -74,14 +79,24 @@ struct BrowserScreenshotView: View {
                     Image(systemName:"arrow.up.left.and.arrow.down.right").font(.caption).foregroundStyle(theme.muted).accessibilityHidden(true)
                 }
             }.padding(.horizontal,12).frame(minHeight:44)
+            if screenshot.hostLabel != nil || screenshot.capturedAt != nil {
+                VStack(alignment:.leading,spacing:4) {
+                    if let label = screenshot.hostLabel { Text(label) }
+                    if let date = screenshot.capturedAt { Text(date,style:.relative) }
+                    Text("Capture received · inspect it to verify the result")
+                }.font(.caption2).foregroundStyle(theme.muted).padding(.horizontal,12).padding(.bottom,10)
+            }
+            }
         }
-        .background(theme.canvas,in:RoundedRectangle(cornerRadius:12))
-        .clipShape(RoundedRectangle(cornerRadius:12))
-        .overlay(RoundedRectangle(cornerRadius:12).strokeBorder(theme.muted.opacity(0.2),lineWidth:0.5))
+        .background(theme.canvas)
+        .clipShape(RoundedRectangle(cornerRadius:showsDetails ? 12:0,style:.continuous))
+        .overlay {
+            if showsDetails { RoundedRectangle(cornerRadius:12,style:.continuous).strokeBorder(theme.muted.opacity(0.2),lineWidth:0.5) }
+        }
         .popover(isPresented:$preview) {
             VStack(spacing:12) {
                 HStack {
-                    Label("Browser capture",systemImage:"globe").font(.subheadline.weight(.semibold))
+                    Label(screenshot.title,systemImage:screenshot.source == "computer" ? "desktopcomputer" : "globe").font(.subheadline.weight(.semibold))
                     Spacer()
                     Button { preview = false } label: {
                         Image(systemName:"xmark").frame(width:44,height:44)

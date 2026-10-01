@@ -2,6 +2,33 @@ import XCTest
 
 /// Opt-in disposable HTTPS fixture; a missing fixture is a skip, never a live-server fallback.
 @MainActor final class PluginWebFixtureUITests:XCTestCase {
+    func testHostComputerReadinessAndExplicitDraft() async throws {
+        let app = try await connectFixture()
+        app.buttons["openSidebar"].tap()
+        let chat = app.buttons["sidebar-chat-synthetic-chat"]
+        guard chat.waitForExistence(timeout:10) else { throw XCTSkip("Start fixture with --host-fixture") }
+        chat.tap()
+        let computer = app.buttons["hostComputer"]
+        XCTAssertTrue(computer.waitForExistence(timeout:10)); computer.tap()
+        let useBrowser = app.buttons["Use my browser"]
+        let ready = XCTNSPredicateExpectation(predicate:NSPredicate(format:"enabled == true"),object:useBrowser)
+        XCTAssertEqual(XCTWaiter.wait(for:[ready],timeout:12),.completed)
+        XCTAssertFalse(app.buttons["Check my computer"].isEnabled)
+        XCTAssertTrue(app.staticTexts["Fixture Mac"].exists)
+        capture(app,"Host status with only Browser ready")
+        useBrowser.tap()
+        XCTAssertTrue(app.buttons["hostComputer"].label.contains("Fixture Mac"))
+        computer.tap()
+        app.swipeUp()
+        XCTAssertTrue(app.buttons["Remove target from this draft"].waitForExistence(timeout:5))
+        capture(app,"Explicit host draft prepared without submission")
+        app.buttons["Done"].tap()
+        XCUIDevice.shared.press(.home); app.activate()
+        XCTAssertTrue(computer.waitForExistence(timeout:10)); computer.tap()
+        capture(app,"Host review after foreground refresh")
+        app.swipeUp()
+        XCTAssertTrue(app.buttons["Remove target from this draft"].waitForExistence(timeout:5))
+    }
     func testRealWebUISettingsSaveMainActionAndCSRFRejection() async throws {
         let origin = "https://127.0.0.1:18447"
         let app = try await openDetails()

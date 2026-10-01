@@ -1,7 +1,9 @@
 import SwiftUI
 import A0Core
+import TipKit
 
 @main struct AgentZeroSpikeApp: App {
+    init() { try? Tips.configure([.displayFrequency(.daily)]) }
     @State private var model = SpikeModel()
     @State private var importingQR = false
     @State private var showingSettings = false

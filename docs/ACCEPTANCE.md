@@ -1,5 +1,67 @@
 # Milestone 0 acceptance — September 28, 2026
 
+## October 1 — Shared computer setup (local development)
+
+### Release-candidate follow-up
+
+The final Mac setup tests passed through the development Launcher: Browser
+verified typing and capture on its owned temporary page; Computer verified
+a fresh capture without sending desktop input. Both appeared as Tested in
+shared readiness. The original Launcher then reconnected using saved sign-in.
+On the physical iPhone, the explicitly reviewed old heartbeat receipt was
+cleared, the expired viewer lease recovered, and Return to A0 acknowledged.
+The viewer returned to Take over computer without replaying the old action.
+The development tab was closed, leaving the original host connection active.
+
+Fresh release checks: 237 Swift package tests, six WebUI adapter tests,
+52 Core targeting/viewer/setup tests in the selected framework runtime,
+29 connector ownership/viewer/setup/gateway tests and 183 Launcher tests passed
+(one Launcher platform test skipped). Earlier full connector/baseline failures
+below remain disclosed. The three iOS UI checks below cover unchanged UI source.
+
+Launcher now handles a fixed, payload-free setup app link with cold/warm-launch
+queuing and manual fallback. Packaged OS dispatch and Windows/Linux native
+installation/permission acceptance remain separate release gates. Tutorial
+videos remain optional; text guidance is complete without them. This is a beta
+candidate, not certification of every platform or unattended host use.
+
+Implemented themed native setup, a chat-independent protected Core API, shared
+help, owner-bound ten-minute continuation codes, and a Launcher assistant with
+separate local consent and explicit connection tests. Launcher source is based
+on upstream 1.8/b0333d8; connector source is based on 2.13/76e834f with the prior
+live-viewer changes preserved. Core target: curious-bohr, 2.13/e3051fb5.
+
+- Physical iPhone 15: signed Release built and installed. The existing HTTPS
+  profile showed server/host readiness with the selected theme. A code created
+  on the phone was claimed by the isolated development Launcher on this Mac;
+  confirming the host on the phone appeared in Launcher. No host scopes changed.
+- WebUI: Connect your computer opened from More options and showed shared
+  readiness/help using the active theme. Setup required no chat or model call.
+- iOS: 237 core tests passed; three UI tests passed, covering continuation and
+  existing takeover/handback plus light/dark viewer and Computer sheet colors.
+  Bundle: `/tmp/a0-live-derived/Logs/Test/Test-AgentZeroSpike-2026.10.01_06-53-00--0400.xcresult`.
+- Core: 13 focused tests passed in the named container's framework runtime.
+- Connector: 46 focused tests passed. Full suite: 972 passed, 75 failed,
+  11 skipped. Unchanged upstream under the same environment and Core source:
+  955 passed, the identical 75 failures, 11 skipped. This is not a green full
+  suite; failures include Core fake-module compatibility, macOS case-insensitive
+  paths and an RSS assertion. Failure-set comparison found no new failures.
+- Launcher: 96 focused tests passed; fresh guided scopes, existing scopes,
+  session/CSRF boundaries, base paths and gateway controls are covered.
+
+The final Core reload expired the desktop login. Manual sign-in restored the
+development Launcher's WebUI session. Its host gateway remains disconnected
+with development scopes off; this is not live host-reconnection acceptance.
+Fresh unauthenticated local and Dev Tunnel requests both redirect to `/login`;
+runtime UI Login and UI Password are configured (values were not disclosed).
+Actual connection-test capture/input acceptance is also pending: the existing
+uncertain host receipt and held state were preserved. Connection-test helpers
+were exercised with isolated fakes. Installed production Launcher/connector
+were not replaced; new desktop work remains in the isolated development source.
+At the initial slice receipt, app-link dispatch and tutorial clips were not
+included and nothing had been published. The release-candidate follow-up above
+supersedes that implementation status; distribution is recorded in TESTFLIGHT.md.
+
 **Current status: local interoperability and authenticated HTTPS/full Socket.IO state observed on a physical iPhone; full milestone security/recovery gates remain open. Historical slice results below retain their original scope.**
 
 ## Current acceptance map
@@ -327,3 +389,199 @@ The uncommitted working tree based on `555d30a` passed a signed Release build an
 At the user's request, audio/video now plays inline in the reply with compact controls, a bounded video frame and explicit Unload. The composer remains accessible. Native audio ownership coordinates media, dictation and read-aloud; switching activity stops the prior owner without losing drafts or automatically resuming it. Existing downloads and source/background cleanup remain unchanged.
 
 Eleven distinct phone UI cases passed across the two inline runs, including a final six-case run covering shared audio ownership and existing voice behavior. Four final iPad cases passed. Review approved the correction. See [inline TDD evidence](tdd/agents-media-theme/inline.md) for exact runs, RED outcomes, the large-text test-harness correction and limitations. Signed Release build, strict signature verification, direct installation and ordinary launch succeeded on the physical iPhone 15 / iOS 27.2 with version 0.1.0 (5). This is delivery evidence; live audio/microphone acceptance remains separate. Changes remain uncommitted, with no TestFlight upload. Temporary artifacts were cleaned after retaining concise evidence.
+
+## Host connector foundation — October 1, 2026
+
+The approved plan adds the native Computer sheet, optional `host_tasks_v1`
+discovery, explicit text-only host drafts, and authenticated browser/computer
+capture labels. Core owns durable session/context-bound routing; Launcher owns
+permissions. See [HOST-COMPUTER.md](HOST-COMPUTER.md).
+
+Verification on the final source:
+
+- 228 A0Core tests and 67 generative UI tests passed. Simulator build passed.
+- The focused Computer sheet UI test passed on the iPhone transport simulator
+  and iPad Air 11-inch (M4), covering per-capability gating, explicit draft
+  preparation and foreground draft preservation.
+- 85 focused backend checks passed against isolated local Core `6a6cecff`.
+  99 passed against a staged copy of live Core `e3051fb5`. The live framework
+  lacked pytest-asyncio; a temporary pytest hook executed its 11 existing async
+  test bodies with `asyncio.run`. No dependency was installed or test skipped.
+- Dynamic API-loader regressions verify the real authenticated/CSRF handler is
+  selected. Live requests without authentication returned 302; authenticated
+  requests without CSRF returned 403 for both new endpoints.
+- The development-signed Release app, version 0.1.0 (6), was installed and
+  launched on the paired iPhone 15. This is not a TestFlight upload or proof of
+  physical phone-to-host execution.
+
+Live target: `a0-inst-curious-bohr-mue3503n`, host port 49805, this Mac,
+Launcher 1.8.0 and installed `a0` 2.13. Eleven owning plugin files were adapted to
+that newer runtime rather than overwriting it with the older checkout. Originals
+and a manifest are in `/a0/usr/backups/ios-host-connector-20261001/`. Only the
+WebUI process was restarted. The user explicitly requested leaving all Launcher
+scopes enabled; file and code scopes were not exercised by the acceptance tasks.
+
+The isolated `iOS Host Acceptance` project uses `host_required` with an A0
+controlled browser profile; shared/global browser configuration was preserved.
+The browser task read Example Domain and returned a chat-scoped capture. The
+browser reused its existing acceptance tab, so creation of a new tab is not
+claimed. Initial live checks exposed benign inventory and computer-session status
+transitions invalidating a target; regressions now distinguish these from actual
+connection, selected-browser, scope and trust-mode changes.
+
+Computer Use completed Calculator `2 + 3 = 5` through the host connector.
+Independent native accessibility inspection confirmed the expression and display.
+The installed Mac backend initially selected a sharing overlay with PID-only
+window lookup; app-scoped AX actions revealed the actual main-window path, after
+which explicit window targeting and background button dispatch completed the
+calculation. The connector's formatted window state omitted the display value,
+so Agent Zero itself reported the result as unverified; the independent native
+read confirmed `5`. The computer-use session then stopped successfully.
+This is a real Mac result initiated by the protected API test harness, not by the
+physical phone.
+
+Both browser and computer capture metadata were verified against the exact chat;
+authenticated `image_get` returned 200 JPEG and PNG respectively. Computer Use
+currently takes a full-desktop capture when a session starts; a Calculator-only
+capture is not claimed. The client hides server-redacted host labels while
+retaining source and capture time.
+
+Physical phone-to-host browser acceptance passed on the installed iPhone 15 app
+over the existing authenticated HTTPS Dev Tunnels connection. The owner signed
+in; subsequent recovery used the phone's already-saved Keychain credential.
+Through iPhone Mirroring, `PHONE-HOST-FINAL` was composed, explicitly targeted to
+the Mac and sent once. The host browser opened Example Domain, read content and
+returned captures visibly rendered on the phone. The final response arrived and
+the server task stopped. The text extraction and screenshot observed different
+page languages; this verifies the transport/capture path, not translation parity.
+
+Earlier phone attempts exposed two over-broad generation inputs: chat-only socket
+reconnections and the browser content-helper checksum populated at startup. Both
+regressions failed before their fixes and pass now. Generations exclude these
+observations while retaining competing execution-client, reconnect, scope,
+selected-browser, configuration and trust checks. The final live attempt began
+with an uninitialized browser helper and retained its binding after initialization.
+No failed or uncertain message was automatically replayed.
+
+The final receipt is in the live backup as `physical-phone-acceptance.json`.
+Computer Use remains independently verified on the Mac through the protected API
+harness; this phone-originated test exercised Browser. All five host permissions
+remain enabled. Temporary diagnostic instrumentation and its endpoint were removed.
+The existing tunnel runs separately from the WebUI process; its direct tunnel
+status endpoint alone does not establish external reachability. Source remains
+uncommitted, with no TestFlight upload. Core updates/container replacement can
+overwrite this manual runtime patch.
+
+## Live host viewer and takeover — 2026-10-01
+
+Development build 0.1.0 (6) was built, signed and installed on the paired iPhone 15.
+The target was the existing curious-bohr Core v2.13/e3051fb5 runtime, Launcher 1.8
+and installed connector 2.13 on this Mac. New protocol code was adapted to that
+runtime while preserving its newer code. The source connector checkout remains
+2.8/e6302fd5. No TestFlight distribution, commit or push is included.
+
+Physical acceptance used the saved authenticated HTTPS Dev Tunnels profile and
+chat K3q4vcFy in the isolated iOS Host Acceptance project. iPhone Mirroring drove
+the actual installed app. Browser and Computer use the same single viewer:
+
+- Browser: Take over acknowledged exclusive control and expanded the pane. A
+  phone tap focused the existing Mac page input; the modifier control selected
+  its text, native text entry sent `PHONE`, and a phone tap applied it. Both input
+  and output became `PHONE`. A waiting agent task emitted no tool work while
+  human control was held. Return supplied fresh state; A0 read both values and
+  emitted one final response.
+- Computer: the existing backend captured the primary 1920x1080 display.
+  Calculator initially occupied another display, so native UI moved it to the
+  captured display and cleared it to 0. Phone taps through the capture performed
+  `7 + 5 = 12`; independent Mac accessibility confirmed expression and result.
+  A waiting read-only task remained held when the phone was backgrounded.
+  Foreground recovery showed `Control expired · A0 held`; explicit Return
+  resumed it. A0 freshly captured Calculator and reported `7+5` and `12` once.
+- The phone's capture details reported 101 received frames, 0.79 frames/s,
+  62.4 KB/s of JPEG payload, last frame received 0.2 seconds earlier, and the
+  last Calculator input acknowledged in 0.20 seconds. These are one viewing
+  period's observed values, not guaranteed frame rate or total network bandwidth.
+- The final installed build centers Take over and Return to A0 as tabs attached
+  to the capture pane, matching the Workspace tab treatment. Both states were
+  visually verified on iPhone 15, followed by an acknowledged Return to A0.
+- The subsequent theme correction was signed and installed on the same phone.
+  Browser and Computer panes now use the active native palette, including
+  expanded backgrounds, source selection, controls and WebKit letterboxing.
+  Both viewer UI tests pass; screenshot pixel assertions cover light/dark
+  canvas, panel and expanded safe areas. Physical inspection confirmed
+  the current theme in compact Browser and expanded Browser/Computer views.
+  Evidence: `phone-themed-browser.png` and `phone-themed-expanded.png`.
+- The Computer status sheet now uses the shared themed Form, with header, row
+  and background palette checks in both appearances. Attached tabs have a
+  subtle accent fill, border and glow. The viewer footer is one status row;
+  keyboard controls open explicitly and history/inspect/details share a menu.
+  The fallback capture no longer repeats metadata or forces a 480-point image.
+  Two viewer UI tests pass, including keyboard visibility, handback, rotation
+  and both theme palettes. Screenshots are `simulator-refined-viewer-dark.png`,
+  `simulator-refined-viewer-light.png` and `phone-themed-computer-sheet.png`.
+  A live HTTP 502 during phone use left an unresolved heartbeat receipt and
+  an existing host hold. The updated UI preserves that review requirement;
+  the layout update does not clear the receipt or automatically resume A0.
+  The final signed build was installed and visually checked on iPhone 15 in
+  compact and expanded modes, including the retained review card. Evidence:
+  `phone-refined-compact.png` and `phone-refined-expanded.png`.
+
+Live checks found and fixed a routine-cookie-refresh acknowledgement race, a
+historical screenshot hit area overlapping the source selector, and pending
+heartbeat receipts moving the capture layout. Unknown outcomes still require
+explicit review without replay. A frame identity follows the actually displayed
+image; the connector retains at most three recent identities for five seconds
+and checks current target/geometry before input. Return waits for an in-flight
+capture before taking the final observation.
+
+Verification:
+
+- Swift core: 233 tests pass, including same-account cookie refresh versus actual
+  disconnect while awaiting a viewer acknowledgement.
+- iPhone/iPad simulator takeover, source switching, expansion and handback pass;
+  one identified WKWebView remains visible. iPhone landscape/portrait rotation
+  passed the same single-surface and Return checks. Historical capture preview
+  regression also passes.
+- Core framework: 107 focused tests passed against the adapted live source;
+  no protected agent.py/initialize.py edits were needed.
+- Connector: 12 focused ownership/input tests pass. Full disposable Linux suite:
+  585 passed, 55 failed, 2 skipped. The 55 failures match the unchanged baseline
+  exactly (573 passed, 55 failed, 2 skipped), in legacy plugin-backend fixtures.
+  The full suite is therefore not green. No production dependencies were installed.
+
+Limits: JPEG live capture rather than video; computer capture is the primary
+whole display, with no window/display picker or computer drag. Phone remote
+keyboard is supplied by the text/key controls. Hardware keyboard, all zoom/drag/
+scroll combinations, physical rotation and every network/OS-permission failure
+combination are not certified by this acceptance. Deterministic tests cover the
+core fence, stale epochs, competing ownership, expired/restarted holds, geometry
+rejection and non-replay; they are not all physical fault-injection results.
+
+Evidence is in the task's local `live-viewer` visualization folder, including
+`phone-browser-control.png`, `calculator-phone-result.png` and
+`phone-capture-metrics.png`; `phone-attached-takeover-tab.png` and
+`phone-attached-return-tab.png` show the final control styling.
+Runtime originals and patch manifests remain under
+`usr/backups/ios-live-viewer-20261001` in curious-bohr and the Mac connector backup.
+All five Launcher scopes remain enabled as requested. Updating/replacing Core or
+the installed connector can overwrite these local runtime patches.
+
+### Viewer corner and inset refinement — 2026-10-01
+
+The compact viewer now uses continuous 24-point outer corners with 12-point
+insets and continuous 12-point capture/review corners. The capture owns a single
+clip and border; historical fallback images no longer draw another rounded edge.
+The review card has a bottom inset clear of the outer curve.
+
+The development-signed Release build succeeded and was installed on the paired
+iPhone 15. Physical inspection against curious-bohr through the existing HTTPS
+profile confirmed compact and expanded historical Browser capture with the
+existing uncertain receipt still present. This check did not clear that receipt,
+resume A0, or establish a new host-input acceptance result. Evidence:
+`phone-corners-compact.png` and `phone-corners-expanded.png` in the task's
+`live-viewer` visualization folder.
+
+Both existing `LiveViewerUITests` passed (2 tests, 0 failures), including fixture
+takeover/handback and light/dark Computer-sheet and viewer palette checks. The
+letterboxing pixel sample is now away from the newly rounded capture corner.
+Result bundle: `/tmp/a0-live-derived/Logs/Test/Test-AgentZeroSpike-2026.10.01_06-07-58--0400.xcresult`.
