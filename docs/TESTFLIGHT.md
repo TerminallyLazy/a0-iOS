@@ -1,5 +1,29 @@
 # TestFlight preparation
 
+## Build 8 release scope — October 1, 2026
+
+Build 8 includes the merged chat-independent Computer status correction: explicit
+Launcher permissions display as Allowed/Off, missing information is Not reported,
+and host-ID-matched setup results can display Prepared/Tested before selecting a
+chat. Presence never enables a targeted host send without a reviewed chat target.
+The existing live viewer, exclusive takeover, themes and guided setup remain.
+
+The matching desktop connector persistence fix is merged in
+[connector fork PR #3](https://github.com/TerminallyLazy/a0-connector/pull/3).
+It adds idle heartbeat, stale CDP recovery, a bounded screenshot-compatible
+message size and extended Launcher gateway retries. The final connector suite
+passed 1,070 tests with 11 skips against the complete matching Core plugin fixture.
+The installed macOS preview passed browser typing/capture and computer capture;
+a Chrome socket remained idle for six minutes and answered on the same connection.
+No Core changes were needed for persistence. This iOS upload does not install
+desktop components: upstream connector PR #28 and Launcher PR #23 are still
+pending, and not all public companion installers contain these changes.
+
+App Store Connect confirmed 7 as the latest processed/uploaded build before
+selecting build 8. Release checks passed 307 package tests, six WebUI adapter
+tests and four focused iPhone setup/viewer UI tests, including both appearance
+modes. Distribution and archive receipts are recorded separately.
+
 ## App identity
 
 - GitHub: public `TerminallyLazy/a0-iOS`.
@@ -7,7 +31,7 @@
 - Home Screen display name: **Agent Zero**.
 - App Store Connect Apple ID: `6817147730`; SKU: `a0-ios`; primary language: English (U.S.).
 - Permanent bundle ID: `com.terminallylazy.a0-ios`.
-- Current source release version/build: **0.1.0 (7)**; see the upload receipt below for distribution status.
+- Current source release version/build: **0.1.0 (8)**; see the upload receipt below for distribution status.
 - Minimum deployment: iOS 17, iPhone and iPad.
 - Existing Xcode project/scheme names remain `AgentZeroSpike` for build/test continuity; these are not the displayed app name or bundle ID.
 
