@@ -6,6 +6,7 @@ enum ConversationRoute: Hashable { case draft, chat(String) }
 
 struct ConversationView: View {
     @Environment(\.a0Theme) private var theme
+    @Environment(\.horizontalSizeClass) private var sizeClass
     let model: SpikeModel
     let route: ConversationRoute
     var onSelectChat: ((String) -> Void)?
@@ -42,8 +43,14 @@ struct ConversationView: View {
             if model.state.progressActive || model.state.paused || (model.state.needsFullSync && !model.state.logs.isEmpty) {
                 workStatus
             }
+            HostComputerButton(model:model)
+            if sizeClass != .regular { LiveViewerView(model:model,workspaceOpen:showingWorkspace) }
             subagentNavigation
             Divider()
+            HStack(alignment:.top,spacing:0) {
+            if sizeClass == .regular, !ConversationCaptures(logs:model.state.logs,context:model.state.context ?? "").history.isEmpty {
+                LiveViewerView(model:model,workspaceOpen:showingWorkspace).frame(minWidth:300,idealWidth:420,maxWidth:520)
+            }
             GeometryReader { viewport in
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -56,11 +63,11 @@ struct ConversationView: View {
                                 }
                                 ForEach(TranscriptGroup.make(model.state.logs)) { group in
                                     if groupActivity && group.isActivity && group.entries.count > 1 {
-                                        ActivityGroupView(group:group,browserMedia:BrowserMediaScope(model:model)) { follow.beginReading() }
+                                        ActivityGroupView(group:group,browserMedia:BrowserMediaScope(model:model,inlineCaptures:false)) { follow.beginReading() }
                                             .id("\(model.state.logGUID ?? "pending")-activity-\(group.id)")
                                     } else {
                                         ForEach(group.entries,id:\.no) { entry in
-                                            MessageRow(entry:entry,jevSelected:model.jevCoordinator?.selected[entry.no],browserMedia:BrowserMediaScope(model:model),onExpand:{ follow.beginReading() },onGeneratedDraft:{ text in
+                                            MessageRow(entry:entry,jevSelected:model.jevCoordinator?.selected[entry.no],browserMedia:BrowserMediaScope(model:model,inlineCaptures:false),onExpand:{ follow.beginReading() },onGeneratedDraft:{ text in
                                                 guard let chat = model.chat else { return }
                                                 chat.draft = chat.draft.isEmpty ? text : chat.draft + "\n\n" + text
                                             }).id("\(model.state.logGUID ?? "pending")-\(entry.no)")
@@ -114,6 +121,7 @@ struct ConversationView: View {
                     }
                 }
             }
+        }
         }
         .background { ThemeBackdrop() }
         .sheet(isPresented:$showingSettings) { SettingsView(model:model) }

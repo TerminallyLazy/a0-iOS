@@ -2,11 +2,13 @@ import Foundation
 import Observation
 
 public protocol ChatAPI: Sendable {
+    func sendHostTask(context: String, text: String, messageID: String, queued: Bool, selection: HostTaskSelection) async throws
     func createChat(id: String) async throws -> String
     func sendText(context: String, text: String, messageID: String, queued: Bool) async throws
     func sendAttachments(context: String, text: String, messageID: String, queued: Bool, attachments: [ChatAttachment]) async throws
 }
 extension ChatAPI {
+    public func sendHostTask(context: String, text: String, messageID: String, queued: Bool, selection: HostTaskSelection) async throws { throw ClientError.incompatiblePayload }
     public func sendAttachments(context: String, text: String, messageID: String, queued: Bool, attachments: [ChatAttachment]) async throws { throw AttachmentError.unsupported }
 }
 
@@ -17,6 +19,7 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
     public let id: String
     public let context: String
     public let text: String
+    public var hostLabel: String? = nil
     public let attachmentIDs: [UUID]?
     public fileprivate(set) var status: Status
     public fileprivate(set) var confirmed = false
@@ -31,6 +34,20 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
     public private(set) var selectedContext: String?
     public private(set) var deliveries: [Delivery] = []
     private var drafts: [String: String] = [:]
+    private var hostDrafts: [String: HostTaskSelection] = [:]
+    public var hostTask: HostTaskSelection? { hostDrafts[key] }
+    public func selectHostTask(_ selection: HostTaskSelection) {
+        guard selectedContext != nil, activeID == nil, attachments.isEmpty else { return }
+        hostDrafts[key] = selection; persist()
+    }
+    public func clearHostTaskDraft() { guard activeID == nil else { return }; hostDrafts[key] = nil; persist() }
+    public func invalidateHostTask() { if hostDrafts[key] != nil { hostDrafts[key]?.generation = nil; persist() } }
+    public func reconcileHost(_ status: HostConnection) {
+        guard let selected = hostDrafts[key], status.context == selectedContext else { return }
+        if status.generation != selected.generation || status.targetID != selected.targetID || status.selection(selected.capability) == nil {
+            hostDrafts[key]?.generation = nil; persist()
+        }
+    }
     private var staged: [String: [StagedAttachment]] = [:]
     private var importingAttachments = false
     private var previewFiles: [UUID: ChatAttachment] = [:]
@@ -100,7 +117,7 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
         deliveries.filter { $0.draftKey == key && !$0.confirmed }
     }
     public var canSend: Bool {
-        activeID == nil && !importingAttachments && attachmentPreparation == nil && (!draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty)
+        activeID == nil && (hostTask == nil || (hostTask?.generation != nil && attachments.isEmpty)) && !importingAttachments && attachmentPreparation == nil && (!draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty)
         && !deliveries.contains { $0.status == .uncertain && $0.draftKey == key }
     }
     public init(api: any ChatAPI) { self.api = api }
@@ -109,6 +126,7 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
         let session = ChatSession(api: api)
         session.store = store; session.profile = profile; session.storageState = .saved
         if let archive {
+            session.hostDrafts = archive.hostDrafts ?? [:]
             session.drafts = archive.drafts; session.staged = archive.attachments ?? [:]; session.selectedContext = archive.selectedContext
             session.deliveries = archive.deliveries; session.revision = archive.revision
             session.restored = !archive.drafts.values.allSatisfy(\.isEmpty) || !archive.deliveries.isEmpty
@@ -125,7 +143,7 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
         revision += 1
         let revision = revision
         let archive = SessionArchive(profile: profile, revision: revision, selectedContext: selectedContext,
-                                     drafts: drafts, deliveries: deliveries.filter { !$0.confirmed }, attachments: staged)
+                                     drafts: drafts, deliveries: deliveries.filter { !$0.confirmed }, attachments: staged, hostDrafts: hostDrafts)
         let previous = saving
         storageState = .saving
         saving = Task { [weak self] in
@@ -145,6 +163,7 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
     }
     public func resume(api: any ChatAPI) { self.api = api }
     public func suspend() {
+        for key in hostDrafts.keys { hostDrafts[key]?.generation = nil }
         attachmentPreparation = nil
         generation = UUID()
         if let id = activeID, let index = deliveries.firstIndex(where: { $0.id == id }) {
@@ -158,11 +177,13 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
         let id = UUID().uuidString, context = selectedContext ?? UUID().uuidString
         let text = draft, originalKey = key, needsCreate = selectedContext == nil
         let references = attachments
+        let hostSelection = hostTask
         let generation = generation, queued = !needsCreate && mode.shouldQueue(isBusy: isBusy, hasQueue: hasQueue)
         let index = deliveries.count
         deliveries.append(Delivery(id: id, context: context, text: text, attachmentIDs: references.map(\.id),
                                    status: needsCreate ? .creating : .sending,
                                    creating: needsCreate, draftKey: originalKey))
+        deliveries[index].hostLabel = hostSelection?.hostLabel
         activeID = id
         persist()
         var dispatched = false
@@ -189,17 +210,20 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
             }
             guard generation == self.generation else { return }
             dispatched = true
-            if files.isEmpty { try await api.sendText(context: context, text: text, messageID: id, queued: queued) }
+            if let hostSelection {
+                try await api.sendHostTask(context:context,text:text,messageID:id,queued:queued,selection:hostSelection)
+            } else if files.isEmpty { try await api.sendText(context: context, text: text, messageID: id, queued: queued) }
             else { try await api.sendAttachments(context: context, text: text, messageID: id, queued: queued, attachments: files) }
             guard generation == self.generation else { return }
             if !deliveries[index].received { deliveries[index].status = queued ? .queued : .accepted }
             clearSubmittedDraft(index)
+            if hostSelection != nil { hostDrafts[originalKey] = nil }
             persist()
         } catch {
             guard generation == self.generation else { return }
             // A validated receipt outranks a lost HTTP acknowledgment.
             guard !deliveries[index].received else { return }
-            deliveries[index].status = !dispatched || Self.definitelyRejected(error) ? .failed : .uncertain
+            deliveries[index].status = !dispatched || Self.definitelyRejected(error) || (hostSelection != nil && (error as? ClientError) == .httpStatus(409)) ? .failed : .uncertain
             if dispatched { persist() }
         }
     }

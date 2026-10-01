@@ -7,7 +7,7 @@
 - Home Screen display name: **Agent Zero**.
 - App Store Connect Apple ID: `6817147730`; SKU: `a0-ios`; primary language: English (U.S.).
 - Permanent bundle ID: `com.terminallylazy.a0-ios`.
-- Current source release version/build: **0.1.0 (5)**; see the upload receipt below for distribution status.
+- Current source release version/build: **0.1.0 (7)**; see the upload receipt below for distribution status.
 - Minimum deployment: iOS 17, iPhone and iPad.
 - Existing Xcode project/scheme names remain `AgentZeroSpike` for build/test continuity; these are not the displayed app name or bundle ID.
 

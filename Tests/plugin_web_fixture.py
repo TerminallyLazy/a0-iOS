@@ -16,6 +16,7 @@ parser.add_argument('--source', type=Path, required=True)
 parser.add_argument('--cert', required=True)
 parser.add_argument('--key', required=True)
 parser.add_argument('--port', type=int, default=18447)
+parser.add_argument('--host-fixture', action='store_true')
 args = parser.parse_args()
 webui = (args.source / 'webui').resolve()
 assert (webui / 'index.html').is_file()
@@ -81,6 +82,12 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError: body = {}
         body = body if isinstance(body,dict) else {}
         action = body.get('action')
+        if args.host_fixture and path == '/api/plugins/_a0_connector/v1/capabilities':
+            return self.send({'protocol':'a0-connector.v1','features':['launcher_gateway','host_tasks_v1']})
+        if args.host_fixture and path == '/api/plugins/_a0_connector/v1/launcher_gateway_status':
+            return self.send({'connected':True,'multiple_hosts':False,'gateway':{'host_label':'Fixture Mac'}})
+        if args.host_fixture and path == '/api/plugins/_a0_connector/v1/host_status':
+            return self.send({'version':1,'context_id':'synthetic-chat','state':'connected','host_label':'Fixture Mac','target_id':'a'*64,'generation':'b'*64,'bound':False,'binding_current':False,'capabilities':{name:{'ready':name=='browser','state':'ready' if name=='browser' else 'off'} for name in ['browser','computer_use','files','file_write','code_execution']}})
         if path == '/api/plugins/_plugin_installer/plugin_install' and action == 'fetch_index':
             return self.send({'success':True,'index':{'plugins':{'fixture-plugin':{'title':'Fixture Plugin','description':'Synthetic theme coverage for Plugin Hub.','tags':['Utilities'],'github':'https://github.com/example/fixture'}}},'installed_plugins':['fixture-plugin']})
         if path == '/api/plugins_list': return self.send({'ok':True,'plugins':[plugin]})
@@ -103,6 +110,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == '/api/poll':
             fixture = json.loads((Path(__file__).parent/'A0CoreTests/Fixtures/full.json').read_text())
             fixture['context'] = ''; fixture['contexts'] = []; fixture['tasks'] = []; fixture['logs'] = []; fixture['log_guid']='fixture'; fixture['log_version']=0
+            if args.host_fixture:
+                fixture['context'] = body.get('context') or ''
+                fixture['contexts'] = [{'id':'synthetic-chat','name':'Host fixture','running':False}]
             return self.send(fixture)
         return self.send({'ok':True,'data':[],'extensions':[],'notifications':[],'version':0})
     def do_GET(self):

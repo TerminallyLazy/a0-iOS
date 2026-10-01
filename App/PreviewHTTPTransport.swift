@@ -16,6 +16,8 @@ actor PreviewHTTPTransport: HTTPTransport {
     private var contexts: [String] = []
     private var jevReplies: [String:Int] = [:]
     private var polls = 0
+    private var viewerPhase = "watching"
+    private var viewerSequence = 0
     private var teamParentSelectedAt:Date?
     private var mediaResponseSelectedAt:Date?
     private var pollFailures = 0
@@ -37,6 +39,29 @@ actor PreviewHTTPTransport: HTTPTransport {
         let payload = (try? JSONSerialization.jsonObject(with: request.httpBody ?? Data())) as? [String: Any] ?? [:]
         let data: [String: Any]
         switch request.url?.path {
+        case "/api/plugins/_a0_connector/v1/host_setup":
+            guard loggedIn,ProcessInfo.processInfo.arguments.contains("--synthetic-computer-setup") else { return HTTPResponse(data:Data(),status:404) }
+            let identity=String(repeating:"a",count:32)
+            if payload["action"] as? String == "status" {
+                data=["version":1,"server_id":identity,"observed_at":Date().timeIntervalSince1970,"connected":false,"platform":"macos","steps":[["id":"connection","state":"action_on_computer","reason":"launcher_disconnected","title":"Connect your computer","detail":"Open this server in Launcher.","action":"open_launcher","location":"computer","help_id":"connection","help_text":"Open Launcher on your computer and connect to this same server. No phone is required."]]]
+            } else {
+                data=["version":1,"server_id":identity,"request_id":payload["request_id"] ?? "","code":"ABCD-EFGH-JKLM","expires_at":Date().timeIntervalSince1970+600,"state":payload["action"] as? String == "cancel" ? "cancelled":"waiting","capabilities":["browser"]]
+            }
+        case "/api/plugins/_a0_connector/v1/host_viewer":
+            guard loggedIn, ProcessInfo.processInfo.arguments.contains("--synthetic-live-viewer") else { return HTTPResponse(data:Data(),status:404) }
+            let command = payload["command"] as? String ?? "status"
+            if command == "acquire" { viewerPhase = "human" }
+            if command == "return" { viewerPhase = "watching" }
+            if command == "input" { viewerSequence += 1 }
+            if command == "frame" {
+                let png = await Self.screenshotFixture()
+                let jpeg = await MainActor.run { UIImage(data:png)?.jpegData(compressionQuality:0.6) ?? Data() }
+                data = ["version":1,"context":payload["context"] ?? "", "frame":["id":UUID().uuidString.replacingOccurrences(of:"-",with:""),"source":payload["source"] ?? "browser","width":1000,"height":600,"scope":payload["source"] as? String == "computer_use" ? "display":"tab","captured_at":Date().timeIntervalSince1970,"mime":"image/jpeg","data":jpeg.base64EncodedString()]]
+            } else {
+                var result: [String:Any] = ["version":1,"context":payload["context"] ?? "","supported":true,"phase":viewerPhase,"mine":viewerPhase == "human","recoverable":false,"sequence":viewerSequence,"host_label":"Fixture Mac"]
+                if let receipt = payload["request_id"] { result["request_id"] = receipt }
+                data = result
+            }
         case "/plugins/_fixture_core/webui/thumbnail.png", "/plugins/fixture-plugin/webui/thumbnail.png", "/plugins/hub-fixture/webui/thumbnail.png":
             return HTTPResponse(data:await Self.screenshotFixture(),status:200,headers:["Content-Type":"image/png"])
         case "/api/plugins_list":
