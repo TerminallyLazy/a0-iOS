@@ -586,3 +586,17 @@ Both existing `LiveViewerUITests` passed (2 tests, 0 failures), including fixtur
 takeover/handback and light/dark Computer-sheet and viewer palette checks. The
 letterboxing pixel sample is now away from the newly rounded capture corner.
 Result bundle: `/tmp/a0-live-derived/Logs/Test/Test-AgentZeroSpike-2026.10.01_06-07-58--0400.xcresult`.
+# October 1, 2026: new-chat computer status
+
+Corrected the new-chat Computer sheet to display explicit Launcher permissions
+and host-ID-matched shared setup results without creating or authorizing a chat
+target. Missing legacy fields remain unreported; file/code permissions are not
+presented as tested operations. No Core source changed for this correction.
+
+Validation: 240 package tests with coverage and both `ComputerSetupUITests`
+passed. A signed Release build installed and launched on the paired iPhone 15.
+Against curious-bohr (Core base e3051fb with the existing host setup integration),
+the physical phone first showed Browser/Computer Prepared and file/code Allowed;
+after fresh Launcher checks it showed both Browser and Computer Tested. Desktop
+input and file/code execution were not tested by these checks. This was a direct
+device update at 0.1.0 (7), not a new TestFlight upload.

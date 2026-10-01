@@ -12,6 +12,18 @@ private func hostData(context:String = "chat", state:String = "connected", gener
 }
 private func selection() -> HostTaskSelection { HostTaskSelection(targetID:hostToken,hostLabel:"Demo Mac",capability:.browser,generation:hostGeneration) }
 
+private func presenceData(connected:Bool = true, ambiguous:Bool = false, master:Bool = true, browser:Bool = true) throws -> Data {
+    try JSONSerialization.data(withJSONObject:["connected":connected,"multiple_hosts":ambiguous,
+        "gateway":["version":1,"kind":"launcher","id":"launcher-fixture","host_label":"Demo Mac","master_enabled":master,
+            "scopes":["browser":browser,"computer_use":true,"files":true,"file_write":true,"code_execution":true]]])
+}
+private func setupData(host:String = "launcher-fixture", reason:String = "verified", connected:Bool = true) throws -> Data {
+    try JSONSerialization.data(withJSONObject:["version":1,"server_id":String(repeating:"a",count:32),
+        "observed_at":Date().timeIntervalSince1970,"host_id":host,"host_label":"Demo Mac","connected":connected,"platform":"macos",
+        "steps":["browser","computer_use"].map { ["id":$0,"state":reason == "verified" ? "ready":"action_on_computer",
+            "reason":reason,"title":"Setup status","detail":"Fixture check","action":"test_connection","location":"computer","help_id":$0] }])
+}
+
 @Suite struct HostConnectionTests {
     @Test func readinessIsCapabilitySpecificAndContextBound() throws {
         let status = try HostConnection(data:hostData(),context:"chat")
@@ -25,6 +37,53 @@ private func selection() -> HostTaskSelection { HostTaskSelection(targetID:hostT
         let value = try HostConnection(legacyData:Data(#"{"connected":true,"gateway":{"host_label":"Demo Mac","profile_path":"private"}}"#.utf8))
         #expect(value.state == "presence_only")
         #expect(value.selection(.browser) == nil && value.context == nil)
+        #expect(value.capabilities.isEmpty)
+    }
+    @Test func newChatShowsGrantsAndSharedSetupWithoutAuthorizingTasks() throws {
+        let value = try HostConnection(legacyData:presenceData(),setup:ComputerSetupSnapshot(data:setupData()))
+        #expect(value.capabilities == ["browser":"tested","computer_use":"tested","files":"allowed","file_write":"allowed","code_execution":"allowed"])
+        #expect(!value.targeted && value.targetID == nil && value.generation == nil)
+        #expect(value.selection(.browser) == nil && value.selection(.computerUse) == nil)
+        let prepared = try HostConnection(legacyData:presenceData(),setup:ComputerSetupSnapshot(data:setupData(reason:"ready_to_test")))
+        #expect(prepared.capabilities["browser"] == "prepared")
+        #expect(prepared.capabilities["computer_use"] == "prepared")
+    }
+    @Test func setupNeverOverridesRevokedOrAmbiguousPresence() throws {
+        let setup = try ComputerSetupSnapshot(data:setupData())
+        for presence in [try presenceData(connected:false),try presenceData(ambiguous:true)] {
+            #expect(try HostConnection(legacyData:presence,setup:setup).capabilities.isEmpty)
+        }
+        let off = try HostConnection(legacyData:presenceData(master:false),setup:setup)
+        #expect(off.capabilities.values.allSatisfy { $0 == "off" })
+        #expect(try HostConnection(legacyData:presenceData(browser:false),setup:setup).capabilities["browser"] == "off")
+        for snapshot in [try setupData(host:"other-computer"),try setupData(connected:false)] {
+            let value = try HostConnection(legacyData:presenceData(),setup:ComputerSetupSnapshot(data:snapshot))
+            #expect(value.capabilities["browser"] == "allowed")
+            #expect(value.selection(.browser) == nil)
+        }
+    }
+    @Test func newChatFetchesSetupReadOnlyWhileOlderServersKeepExplicitGrants() async throws {
+        for supportsSetup in [true,false] {
+            let features = ["launcher_gateway","host_tasks_v1"] + (supportsSetup ? ["host_setup_v1"]:[])
+            let discovery = try JSONSerialization.data(withJSONObject:["protocol":"a0-connector.v1","features":features])
+            let headers = ["Content-Type":"application/json"]
+            var replies = [HTTPResponse(data:discovery,status:200,headers:headers),HTTPResponse(data:try presenceData(),status:200,headers:headers)]
+            if supportsSetup { replies.append(HTTPResponse(data:try setupData(),status:200,headers:headers)) }
+            let transport = ScriptTransport(loginResponses()+replies)
+            let client = APIClient(origin:try ServerOrigin("https://server.test"),transport:transport)
+            try await client.connect(username:"fixture",password:"fixture")
+            let value = try await client.hostConnection(context:nil)
+            #expect(value.capabilities["browser"] == (supportsSetup ? "tested":"allowed"))
+            #expect(value.selection(.browser) == nil)
+            let requests = await transport.requests
+            #expect(!requests.contains { ["host_status","host_task","chat_create"].contains($0.url?.lastPathComponent ?? "") })
+            if supportsSetup {
+                let request = try #require(requests.last)
+                #expect(request.url?.lastPathComponent == "host_setup")
+                #expect(request.value(forHTTPHeaderField:"X-CSRF-Token") != nil)
+                #expect(try JSONDecoder().decode([String:String].self,from:#require(request.httpBody)) == ["action":"status"])
+            }
+        }
     }
     @Test func generationNeverPersists() throws {
         let data = try JSONEncoder().encode(selection())

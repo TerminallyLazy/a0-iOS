@@ -39,6 +39,14 @@ actor PreviewHTTPTransport: HTTPTransport {
         let payload = (try? JSONSerialization.jsonObject(with: request.httpBody ?? Data())) as? [String: Any] ?? [:]
         let data: [String: Any]
         switch request.url?.path {
+        case "/api/plugins/_a0_connector/v1/capabilities" where ProcessInfo.processInfo.arguments.contains("--synthetic-host-presence"):
+            data=["protocol":"a0-connector.v1","features":["launcher_gateway","host_tasks_v1","host_setup_v1"]]
+        case "/api/plugins/_a0_connector/v1/launcher_gateway_status" where ProcessInfo.processInfo.arguments.contains("--synthetic-host-presence"):
+            data=["connected":true,"multiple_hosts":false,"gateway":["version":1,"kind":"launcher","id":"launcher-fixture","host_label":"Fixture Mac","master_enabled":true,
+                "scopes":["browser":true,"computer_use":true,"files":true,"file_write":true,"code_execution":true]]]
+        case "/api/plugins/_a0_connector/v1/host_setup" where ProcessInfo.processInfo.arguments.contains("--synthetic-host-presence"):
+            data=["version":1,"server_id":String(repeating:"a",count:32),"observed_at":Date().timeIntervalSince1970,"host_id":"launcher-fixture","host_label":"Fixture Mac","connected":true,"platform":"macos",
+                "steps":["browser","computer_use"].map { ["id":$0,"state":"ready","reason":"verified","title":"Tested","detail":"Fixture setup check passed","action":"test_connection","location":"computer","help_id":$0] }]
         case "/api/plugins/_a0_connector/v1/host_setup":
             guard loggedIn,ProcessInfo.processInfo.arguments.contains("--synthetic-computer-setup") else { return HTTPResponse(data:Data(),status:404) }
             let identity=String(repeating:"a",count:32)

@@ -21,6 +21,9 @@ Native companion for an existing Agent Zero server. The approved design is in do
   permissions in Launcher, require a freshly reviewed per-chat target, persist
   host intent without generation tokens, and never replay or silently downgrade
   a host send to ordinary chat. See docs/HOST-COMPUTER.md.
+- Chat-independent computer presence may display explicit Launcher permissions
+  and host-ID-matched `host_setup_v1` results. It never supplies a task target or
+  generation. Missing status means Not reported, not a failed verification.
 - Persist a pending delivery before every mutating network call. Restore interrupted commands as uncertain; never replay them.
 - Save profile metadata only after authentication succeeds. Password saving is opt-in, uses device-only when-unlocked Keychain items, and never stores secrets in profile files.
 - New chat opens an explicit draft route; first-send context assignment must not dismiss it. Selecting an existing chat opens a stable-ID conversation route. State updates keep that route open; Back preserves drafts, and disconnect clears the route. Keep startup/profile loading on the persistent navigation container rather than the root list lifecycle.

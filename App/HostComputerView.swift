@@ -38,6 +38,9 @@ struct HostComputerButton: View {
                             ForEach([("browser","Browser"),("computer_use","Computer use"),("files","Read files"),("file_write","Write files"),("code_execution","Code execution")],id:\.0) { key,label in
                                 LabeledContent(label,value:capabilityLabel(status.capabilities[key]))
                             }
+                            if status.context == nil && !status.capabilities.isEmpty {
+                                Text("Allowed means enabled in Launcher. Tested means a recent setup check passed; the computer check covers capture, not desktop input.").font(.footnote).foregroundStyle(theme.muted)
+                            }
                             if status.bound {
                                 Text(status.bindingCurrent ? "Host actions in this chat stay pinned to this computer." : "This chat's previous host target is stale. Review the current computer before another host task.")
                                     .font(.footnote)
@@ -72,6 +75,7 @@ struct HostComputerButton: View {
                     .toolbar { ToolbarItem(placement:.confirmationAction) { Button("Done") { presented = false } } }
             }.foregroundStyle(theme.text,theme.muted).tint(theme.tint)
         }
+        .onChange(of:presented) { _, open in if open { refreshID += 1 } }
         .task(id:identity) {
             status = nil; unavailable = false; refreshing = false
             guard scenePhase == .active, model.canSubmit, !model.demo, let client = model.controlClient else { return }
@@ -102,19 +106,24 @@ struct HostComputerButton: View {
         case "ambiguous": return "Multiple or competing clients are connected. Resolve this in Launcher before choosing a target."
         case "disconnected": return "No Launcher computer is connected. Open Launcher on the computer and connect it to this server."
         case "paused": return "Host access is paused. Enable it in Launcher on the computer."
-        case "presence_only": return model.chat?.selectedContext == nil ? "Send an ordinary message or open an existing chat to review its host target." : "A computer is connected, but this server cannot verify this chat's target. Update Core for targeted tasks."
+        case "presence_only": return model.chat?.selectedContext == nil ? "Your computer is connected. Open a chat to review its target before preparing a task." : "A computer is connected, but this server cannot verify this chat's target. Update Core for targeted tasks."
         case "needs_action": return "A capability needs attention on the computer. Available capabilities are listed separately."
         default: return "Readiness is reported by the connected host. Each task revalidates the target before dispatch."
         }
     }
     private func capabilityLabel(_ state: String?) -> String {
         switch state {
+        case "allowed": "Allowed"
+        case "prepared": "Prepared"
+        case "tested": "Tested"
+        case "checking": "Checking…"
+        case "unavailable": "Unavailable"
         case "ready": "Ready"
         case "off": "Off"
         case "container": "Server browser selected"
         case "needs_attention": "Needs local attention"
         case "unsupported": "Unsupported"
-        default: "Not verified"
+        default: "Not reported"
         }
     }
 }
