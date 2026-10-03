@@ -15,8 +15,38 @@ before selecting build 9. Local verification passed 316 package tests and all
 four preset UI cases. The final cold-launch simulator rerun completed with
 TEST SUCCEEDED; the earlier four-case runner was stopped after all cases passed
 because its result collection stalled. These are synthetic checks, not physical
-device or live-provider acceptance. Archive and distribution receipts follow
-separately after uploading the merged source.
+device or live-provider acceptance. Archive and distribution receipts are recorded below.
+
+## Build 9 distribution — October 3, 2026
+
+[PR #6](https://github.com/TerminallyLazy/a0-iOS/pull/6) merged the startup preset
+selection fix and build bump. The signed **0.1.0 (9)** archive came from exact
+merge revision `d693f3d08773a448cd3e735c272f36a4181a1582` and passed
+`scripts/verify-release.py`. The Codex TestFlight Release workflow used the
+existing Xcode signing account; its separate API-key env file was absent.
+Upload returned `Uploaded package is processing`, `Upload succeeded` and
+`EXPORT SUCCEEDED`.
+
+App Store Connect build `4761c754-0e06-48e7-89c4-16ae913b85fb` finished as
+`VALID`, with `APP_STORE_ELIGIBLE` audience and exempt encryption. English
+What to Test notes were saved and read back exactly. Both existing **Internal
+Testers** and **Public Beta** groups have explicit assignment. Following beta
+review submission, the API confirmed `IN_BETA_TESTING` for internal and external
+distribution. No testers were added and no existing build was expired.
+
+Release verification passed 316 package tests, six WebUI adapter tests and the
+native preset cases described above. RecurseML analysis errored and CodeRabbit
+skipped review; neither is counted as completed hosted review. PR #6 merged
+normally without a branch-protection override. TestFlight availability does not
+establish physical-device installation or live-provider acceptance.
+
+Retained local evidence includes `build/AgentZero-0.1.0-9.xcarchive` with dSYMs,
+archive/upload/test logs, `build/build-9-source.txt`,
+`build/build-9-upload-receipt.json`, and App Store Connect note/group/state
+read-backs under `build/build-9-*`. Project-owned build caches and disposable
+test bundles were removed; the signed archive passed verification again.
+`build/cleanup-build-9-receipt.json` records the scoped cleanup. Owner
+configuration, credentials, older archives and unrelated work were preserved.
 
 ## Build 8 release scope — October 1, 2026
 
