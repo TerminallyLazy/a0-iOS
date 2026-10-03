@@ -3,13 +3,24 @@ import Testing
 @testable import A0Core
 
 actor ChatDouble: ChatAPI {
-    enum Mode { case success, timeout, denied, createTimeout, held, heldTimeout }
-    enum Call: Equatable { case create(String), send(String, String, String, Bool) }
+    enum Mode { case success, timeout, denied, createTimeout, held, heldTimeout, presetDenied, presetTimeout, presetHeld }
+    enum Call: Equatable { case preset(String, String), create(String), send(String, String, String, Bool) }
     var mode: Mode
     var calls: [Call] = []
     private var held: CheckedContinuation<Void, Never>?
     private var observers: [CheckedContinuation<Void, Never>] = []
     init(_ mode: Mode = .success) { self.mode = mode }
+    func setModelPreset(name: String, context: String) async throws {
+        calls.append(.preset(name, context))
+        if mode == .presetDenied { throw ModelPresetError.overrideDisabled }
+        if mode == .presetTimeout { throw URLError(.timedOut) }
+        if mode == .presetHeld {
+            await withCheckedContinuation { continuation in
+                held = continuation
+                for observer in observers { observer.resume() }; observers = []
+            }
+        }
+    }
     func createChat(id: String) async throws -> String {
         calls.append(.create(id))
         if mode == .createTimeout { throw URLError(.timedOut) }
@@ -234,4 +245,80 @@ func busyOrQueuedChatEnqueues(flags: (Bool,Bool)) async throws {
     json["contexts"] = [["id":"synthetic-chat","message_queue":[["id":id]]]]
     model.reconcile(try JSONDecoder().decode(Snapshot.self,from:JSONSerialization.data(withJSONObject:json)))
     #expect(model.deliveries.first?.status == .cancelled)
+}
+
+@MainActor @Test func draftPresetSelectionIsLocalAndAppliesBeforeFirstMessage() async throws {
+    let api = ChatDouble(), chat = ChatSession(api: ChatDouble())
+    chat.resume(api: api)
+    chat.chooseDraftModelPreset("Focused")
+    #expect(chat.pendingModelPreset == "Focused")
+    #expect(chat.selectedContext == nil)
+    #expect(await api.calls.isEmpty)
+    chat.select("existing"); #expect(chat.pendingModelPreset == nil)
+    chat.select(nil); #expect(chat.pendingModelPreset == "Focused")
+    chat.draft = "First message"; await chat.send()
+    let delivery = try #require(chat.deliveries.first)
+    #expect(await api.calls == [.create(delivery.context), .preset("Focused", delivery.context), .send(delivery.context, delivery.text, delivery.id, false)])
+    #expect(chat.pendingModelPreset == nil)
+    chat.select(nil); #expect(chat.pendingModelPreset == nil)
+}
+@MainActor @Test func clearedDraftPresetUsesInheritanceWithoutMutation() async throws {
+    let api = ChatDouble(), chat = ChatSession(api: ChatDouble())
+    chat.resume(api: api); chat.chooseDraftModelPreset("Focused"); chat.chooseDraftModelPreset(nil)
+    chat.draft = "Inherited"; await chat.send()
+    let delivery = try #require(chat.deliveries.first)
+    #expect(await api.calls == [.create(delivery.context), .send(delivery.context, delivery.text, delivery.id, false)])
+}
+@MainActor @Test func rejectedDraftPresetNeverSendsWithWrongModelAndAllowsExplicitCorrection() async throws {
+    let api = ChatDouble(.presetDenied), chat = ChatSession(api: ChatDouble())
+    chat.resume(api: api); chat.chooseDraftModelPreset("Focused"); chat.draft = "Keep this"
+    await chat.send()
+    let context = try #require(chat.selectedContext)
+    #expect(await api.calls == [.create(context), .preset("Focused", context)])
+    #expect(chat.deliveries.first?.status == .failed)
+    #expect(chat.draft == "Keep this" && chat.pendingModelPreset == "Focused")
+    chat.modelPresetDidChange(context: context)
+    await api.succeed(); await chat.send()
+    #expect(chat.deliveries.last?.status == .accepted)
+    #expect(await api.calls.count == 3)
+}
+@MainActor @Test func uncertainDraftPresetDoesNotSendOrReplayAfterReconnect() async throws {
+    let api = ChatDouble(.presetTimeout), chat = ChatSession(api: ChatDouble())
+    chat.resume(api: api); chat.chooseDraftModelPreset("Focused"); chat.draft = "Keep this"
+    await chat.send()
+    let context = try #require(chat.selectedContext)
+    chat.suspend(); chat.resume(api: api); await chat.send()
+    #expect(await api.calls == [.create(context), .preset("Focused", context)])
+    #expect(chat.deliveries.first?.status == .uncertain)
+    #expect(chat.draft == "Keep this" && !chat.canSend)
+}
+@MainActor @Test func backgroundDuringPresetApplicationStopsBeforeMessage() async throws {
+    let api = ChatDouble(.presetHeld), chat = ChatSession(api: ChatDouble())
+    chat.resume(api: api); chat.chooseDraftModelPreset("Focused"); chat.draft = "Keep this"
+    let task = Task { await chat.send() }
+    await api.waitForSend(); chat.suspend(); await api.release(); await task.value
+    #expect(await api.calls.count == 2)
+    #expect(chat.deliveries.first?.status == .uncertain)
+    #expect(chat.draft == "Keep this")
+}
+
+@MainActor @Test func explicitPresetCorrectionResolvesPreparationButNotUnknownMessageDelivery() async throws {
+    let api = ChatDouble(.presetTimeout)
+    let chat = ChatSession(api: api)
+    chat.chooseDraftModelPreset("Focused"); chat.draft = "Retain"
+    await chat.send()
+    let context = try #require(chat.selectedContext)
+    #expect(!chat.canSend)
+    chat.modelPresetDidChange(context: "other")
+    #expect(!chat.canSend)
+    chat.modelPresetDidChange(context: context)
+    #expect(chat.canSend && chat.deliveries.first?.status == .failed)
+    #expect(await api.calls.count == 2)
+    await api.succeed(); await chat.send()
+    #expect(await api.calls.count == 3)
+
+    let uncertain = ChatSession(api: ChatDouble(.timeout))
+    uncertain.select("existing"); uncertain.draft = "Possibly sent"; await uncertain.send()
+    uncertain.modelPresetDidChange(context: "existing")
+    #expect(!uncertain.canSend && uncertain.deliveries.first?.status == .uncertain)
 }

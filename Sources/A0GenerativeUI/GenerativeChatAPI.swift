@@ -7,6 +7,7 @@ public struct GenerativeChatAPI: ChatAPI {
     let enabled:Bool
     let jev:Bool
     public init(base:any ChatAPI,enabled:Bool,jev:Bool = false) { self.base = base; self.enabled = enabled; self.jev = jev }
+    public func setModelPreset(name:String,context:String) async throws { try await base.setModelPreset(name:name,context:context) }
     public func createChat(id:String) async throws -> String { try await base.createChat(id:id) }
     public func sendText(context:String,text:String,messageID:String,queued:Bool) async throws {
         try await base.sendText(context:context,text:enabled ? text + (jev ? Self.jevSuffix : Self.suffix) : text,messageID:messageID,queued:queued)

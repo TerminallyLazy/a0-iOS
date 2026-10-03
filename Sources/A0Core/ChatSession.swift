@@ -3,11 +3,13 @@ import Observation
 
 public protocol ChatAPI: Sendable {
     func sendHostTask(context: String, text: String, messageID: String, queued: Bool, selection: HostTaskSelection) async throws
+    func setModelPreset(name: String, context: String) async throws
     func createChat(id: String) async throws -> String
     func sendText(context: String, text: String, messageID: String, queued: Bool) async throws
     func sendAttachments(context: String, text: String, messageID: String, queued: Bool, attachments: [ChatAttachment]) async throws
 }
 extension ChatAPI {
+    public func setModelPreset(name: String, context: String) async throws { throw ClientError.incompatiblePayload }
     public func sendHostTask(context: String, text: String, messageID: String, queued: Bool, selection: HostTaskSelection) async throws { throw ClientError.incompatiblePayload }
     public func sendAttachments(context: String, text: String, messageID: String, queued: Bool, attachments: [ChatAttachment]) async throws { throw AttachmentError.unsupported }
 }
@@ -25,6 +27,7 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
     public fileprivate(set) var confirmed = false
     fileprivate var received = false
     fileprivate var draftFinalized = false
+    fileprivate var configuringModelPreset: Bool? = nil
     fileprivate var creating: Bool
     fileprivate var draftKey: String
 }
@@ -34,6 +37,28 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
     public private(set) var selectedContext: String?
     public private(set) var deliveries: [Delivery] = []
     private var drafts: [String: String] = [:]
+    private var pendingModelPresets: [String: String] = [:]
+    /// Local draft choice, applied only by an explicit Send before the message.
+    public var pendingModelPreset: String? { pendingModelPresets[key] }
+    public var canChooseDraftModelPreset: Bool {
+        selectedContext == nil && activeID == nil && !visibleDeliveries.contains { $0.status == .uncertain }
+    }
+    public func chooseDraftModelPreset(_ name: String?) {
+        guard canChooseDraftModelPreset else { return }
+        pendingModelPresets[key] = name; persist()
+    }
+    /// An explicitly acknowledged picker mutation supersedes a failed first-send choice.
+    public func modelPresetDidChange(context: String) {
+        guard activeID == nil else { return }
+        pendingModelPresets[context] = nil
+        // A fresh explicit picker acknowledgment resolves only preset preparation,
+        // never a message whose delivery might already have reached the server.
+        for index in deliveries.indices where deliveries[index].context == context && deliveries[index].configuringModelPreset == true {
+            if deliveries[index].status == .uncertain { deliveries[index].status = .failed }
+            deliveries[index].configuringModelPreset = false
+        }
+        persist()
+    }
     private var hostDrafts: [String: HostTaskSelection] = [:]
     public var hostTask: HostTaskSelection? { hostDrafts[key] }
     public func selectHostTask(_ selection: HostTaskSelection) {
@@ -127,6 +152,7 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
         session.store = store; session.profile = profile; session.storageState = .saved
         if let archive {
             session.hostDrafts = archive.hostDrafts ?? [:]
+            session.pendingModelPresets = archive.pendingModelPresets ?? [:]
             session.drafts = archive.drafts; session.staged = archive.attachments ?? [:]; session.selectedContext = archive.selectedContext
             session.deliveries = archive.deliveries; session.revision = archive.revision
             session.restored = !archive.drafts.values.allSatisfy(\.isEmpty) || !archive.deliveries.isEmpty
@@ -143,7 +169,7 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
         revision += 1
         let revision = revision
         let archive = SessionArchive(profile: profile, revision: revision, selectedContext: selectedContext,
-                                     drafts: drafts, deliveries: deliveries.filter { !$0.confirmed }, attachments: staged, hostDrafts: hostDrafts)
+                                     drafts: drafts, deliveries: deliveries.filter { !$0.confirmed }, attachments: staged, hostDrafts: hostDrafts, pendingModelPresets: pendingModelPresets)
         let previous = saving
         storageState = .saving
         saving = Task { [weak self] in
@@ -178,6 +204,7 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
         let text = draft, originalKey = key, needsCreate = selectedContext == nil
         let references = attachments
         let hostSelection = hostTask
+        let modelPreset = pendingModelPreset
         let generation = generation, queued = !needsCreate && mode.shouldQueue(isBusy: isBusy, hasQueue: hasQueue)
         let index = deliveries.count
         deliveries.append(Delivery(id: id, context: context, text: text, attachmentIDs: references.map(\.id),
@@ -198,6 +225,20 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
                 adoptContext(index)
                 deliveries[index].creating = false
                 deliveries[index].status = .sending
+                dispatched = false
+                persist(); try await flush()
+                guard generation == self.generation else { return }
+            }
+            if let modelPreset {
+                // The saved delivery and pending choice journal this mutation too.
+                deliveries[index].configuringModelPreset = true
+                persist(); try await flush()
+                guard generation == self.generation else { return }
+                dispatched = true
+                try await api.setModelPreset(name: modelPreset, context: context)
+                guard generation == self.generation else { return }
+                pendingModelPresets[context] = nil
+                deliveries[index].configuringModelPreset = false
                 dispatched = false
                 persist(); try await flush()
                 guard generation == self.generation else { return }
@@ -223,7 +264,7 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
             guard generation == self.generation else { return }
             // A validated receipt outranks a lost HTTP acknowledgment.
             guard !deliveries[index].received else { return }
-            deliveries[index].status = !dispatched || Self.definitelyRejected(error) || (hostSelection != nil && (error as? ClientError) == .httpStatus(409)) ? .failed : .uncertain
+            deliveries[index].status = !dispatched || (error as? ModelPresetError) == .overrideDisabled || Self.definitelyRejected(error) || (hostSelection != nil && (error as? ClientError) == .httpStatus(409)) ? .failed : .uncertain
             if dispatched { persist() }
         }
     }
@@ -271,6 +312,8 @@ public struct Delivery: Identifiable, Sendable, Codable, Equatable {
         let delivery = deliveries[index]
         if let text = drafts[delivery.draftKey] { drafts[delivery.context] = text }
         drafts[delivery.draftKey] = nil
+        pendingModelPresets[delivery.context] = pendingModelPresets[delivery.draftKey]
+        pendingModelPresets[delivery.draftKey] = nil
         staged[delivery.context] = staged[delivery.draftKey]
         staged[delivery.draftKey] = nil
         if selectedContext == nil { selectedContext = delivery.context }

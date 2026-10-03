@@ -179,6 +179,9 @@ public enum ModelPresetOperation: Sendable {
     }
 }
 extension APIClient {
+    public func setModelPreset(name: String, context: String) async throws {
+        _ = try await modelPresets(.setOverride(name: name, context: context))
+    }
     /// Persist intent before mutations. This client never replays a model change.
     public func modelPresets(_ operation:ModelPresetOperation) async throws -> ModelPresetResult {
         _ = try socketSession()
