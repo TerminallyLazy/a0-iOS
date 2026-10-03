@@ -25,6 +25,7 @@ Adapt explicit Agent Zero response payloads to the pinned A2UI Swift SDK and the
 - Remap AudioPlayer/Video to local A0-prefixed custom components before SDK processing; built-in SDK players must never receive these requests.
 - Plain reply media previews accept at most 128 KiB of response text and 2,048 bytes per URL. Explicit A2UI/candidate presence takes precedence even when incomplete or invalid. Exclude raw JSON, code, quotes, HTML, images and reference definitions. MP3/M4A/AAC/WAV/MP4/MOV path extensions only identify an invitation to Load; existing MIME, size, DNS and playable-track checks still decide acceptance. Preserve source prose and confirmed links.
 - Read-only generated views disable form inputs and event buttons individually, retaining explicit media loading and passive inspection. The draft-action callback remains independently guarded; never enable server actions or automatic draft insertion.
+- First-message model preset application passes unchanged through GenerativeChatAPI before sending; capability guidance never replaces or bypasses that operation.
 - Capability instructions ride on the same explicit send, preserving context/message IDs and queued status. Collapse only the exact client-owned suffix in presentation.
 - Host-targeted sends retain the same host selection/generation and delivery IDs
   through `GenerativeChatAPI`; optional reply guidance never changes the route.

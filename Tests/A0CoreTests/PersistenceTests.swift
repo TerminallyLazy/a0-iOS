@@ -182,3 +182,29 @@ actor CreationCheckpointStore: SessionStoring {
     let fresh = try SessionRepository(directory:root)
     await #expect(throws:PersistenceError.unreadableArchive) { try await fresh.load(key) }
 }
+
+@MainActor @Test func draftPresetSurvivesRelaunchAndStaysProfileIsolated() async throws {
+    let root = try directory(); defer { try? FileManager.default.removeItem(at: root) }
+    let store = try SessionRepository(directory: root), key = try profile()
+    let api = ChatDouble()
+    let first = try await ChatSession.restoring(api: api, profile: key, store: store)
+    first.chooseDraftModelPreset("Focused"); try await first.flush()
+    let restored = try await ChatSession.restoring(api: api, profile: key, store: store)
+    #expect(restored.pendingModelPreset == "Focused")
+    let other = try await ChatSession.restoring(api: api, profile: try profile("other"), store: store)
+    #expect(other.pendingModelPreset == nil)
+    #expect(await api.calls.isEmpty)
+}
+@MainActor @Test func uncertainPresetIsRestoredWithoutReplayingAnyMutation() async throws {
+    let root = try directory(); defer { try? FileManager.default.removeItem(at: root) }
+    let store = try SessionRepository(directory: root), key = try profile()
+    let api = ChatDouble(.presetTimeout)
+    let first = try await ChatSession.restoring(api: api, profile: key, store: store)
+    first.chooseDraftModelPreset("Focused"); first.draft = "Retain"; await first.send(); try await first.flush()
+    let fresh = ChatDouble()
+    let restored = try await ChatSession.restoring(api: fresh, profile: key, store: store)
+    await restored.send()
+    #expect(restored.pendingModelPreset == "Focused" && restored.draft == "Retain")
+    #expect(restored.deliveries.first?.status == .uncertain)
+    #expect(await fresh.calls.isEmpty)
+}

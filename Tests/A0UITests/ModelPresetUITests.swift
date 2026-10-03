@@ -1,6 +1,30 @@
 import XCTest
 
 @MainActor final class ModelPresetUITests:XCTestCase {
+    func testColdLaunchChoosesPresetBeforeFirstMessage() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--synthetic-http-preview","--synthetic-launch-chat","--persistence-test-id",UUID().uuidString]
+        app.launch()
+        let picker = app.buttons["modelPresetPicker"]
+        XCTAssertTrue(picker.waitForExistence(timeout:12)); picker.tap()
+        let focused = app.buttons["selectPreset-Focused"]
+        XCTAssertTrue(focused.waitForExistence(timeout:5))
+        reveal(focused,in:app.scrollViews["modelPresetList"])
+        XCTAssertTrue(focused.isEnabled); focused.tap()
+        XCTAssertTrue(picker.label.contains("Focused"))
+        picker.tap()
+        app.buttons["inheritModelPreset"].tap()
+        XCTAssertTrue(picker.label.contains("Default"))
+        picker.tap(); reveal(focused,in:app.scrollViews["modelPresetList"]); focused.tap()
+        capture(app,"Preset chosen before the first message")
+        let draft = app.descendants(matching:.any)["messageDraft"].firstMatch
+        draft.tap(); draft.typeText("First message with chosen preset")
+        app.buttons["sendMessage"].tap()
+        XCTAssertTrue(app.staticTexts["Accepted by server"].waitForExistence(timeout:8))
+        picker.tap()
+        XCTAssertTrue(app.buttons["inheritModelPreset"].waitForExistence(timeout:5))
+        XCTAssertTrue(picker.label.contains("Focused"))
+    }
     func testChatPresetSelectionInheritanceAndSharedEditing() {
         let app = XCUIApplication()
         app.launchArguments = ["--synthetic-http-preview","--synthetic-chat-selection","--persistence-test-id",UUID().uuidString]

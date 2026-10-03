@@ -39,6 +39,13 @@ import A2UISwiftCore
         try await plain.sendText(context:"chat-a",text:"Plain reply",messageID:"n",queued:false)
         #expect(await base.call?.text == "Plain reply")
     }
+    @Test func firstMessagePresetPassesThroughRichReplyAdapter() async throws {
+        let base = RecordingChat()
+        let api = GenerativeChatAPI(base:base,enabled:true,jev:true)
+        try await api.setModelPreset(name:"Focused",context:"new-chat")
+        #expect(await base.preset == "Focused:new-chat")
+        #expect(await base.call == nil)
+    }
     @Test func inputUsesTrustedNativePresentation() throws {
         let session = GeneratedSession(); try session.load(GenerativeGuide.example)
         #expect(session.viewModel?.componentTree?.children.first(where:{$0.id == "destination"})?.instance.component == "A0TextField")
@@ -47,6 +54,8 @@ import A2UISwiftCore
 private actor RecordingChat: ChatAPI {
     struct Call: Sendable { let context:String; let text:String; let id:String; let queued:Bool }
     var call: Call?
+    var preset: String?
+    func setModelPreset(name:String,context:String) async throws { preset = name + ":" + context }
     func createChat(id:String) async throws -> String { id }
     func sendText(context:String,text:String,messageID:String,queued:Bool) async throws { call = Call(context:context,text:text,id:messageID,queued:queued) }
 }

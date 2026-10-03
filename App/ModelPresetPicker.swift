@@ -14,10 +14,10 @@ struct ModelPresetPicker:View {
         Button { presented.toggle() } label: {
             HStack(spacing:6) {
                 Image(systemName:"brain")
-                Text(workspace.closedLabel).lineLimit(1)
+                Text(closedLabel).lineLimit(1)
                 Image(systemName:"chevron.down").font(.caption2.weight(.semibold))
             }.font(.caption).foregroundStyle(theme.muted).frame(minHeight:44)
-        }.accessibilityLabel("Model presets, \(workspace.closedLabel)").accessibilityIdentifier("modelPresetPicker")
+        }.accessibilityLabel("Model presets, \(closedLabel)").accessibilityIdentifier("modelPresetPicker")
             .popover(isPresented:$presented) {
                 VStack(alignment:.leading,spacing:0) {
                     HStack {
@@ -42,7 +42,7 @@ struct ModelPresetPicker:View {
                             }
                             ForEach(workspace.presets,id:\.name) { preset in
                                 Button { select(preset.name) } label: {
-                                    ModelPresetSummary(preset:preset,defaultPreset:workspace.defaultPreset,selected:workspace.effectiveName == preset.name)
+                                    ModelPresetSummary(preset:preset,defaultPreset:workspace.defaultPreset,selected:(model.chat?.pendingModelPreset ?? workspace.effectiveName) == preset.name)
                                         .padding(.horizontal,16).padding(.vertical,14).frame(maxWidth:.infinity,alignment:.leading).contentShape(Rectangle())
                                 }.buttonStyle(.plain).disabled(!canSelect).accessibilityIdentifier("selectPreset-"+preset.name)
                                 Divider().padding(.leading,16)
@@ -75,23 +75,39 @@ struct ModelPresetPicker:View {
             .onChange(of:loadIdentity) { _,_ in presented = false; editing = false }
     }
     private var loadIdentity:String { model.connectionGeneration.uuidString + ":" + (model.chat?.selectedContext ?? "") }
-    private var canSelect:Bool { workspace.canMutate && model.canSubmit && model.chat?.selectedContext != nil && workspace.overrideState?.allowed == true }
+    private var closedLabel:String { workspace.closedLabel(pendingName:model.chat?.pendingModelPreset) }
+    private var canSelect:Bool {
+        workspace.canMutate && model.canSubmit &&
+        (model.chat?.canChooseDraftModelPreset == true || (model.chat?.selectedContext != nil && workspace.overrideState?.allowed == true))
+    }
     @ViewBuilder private var scopeStatus:some View {
-        if let state = workspace.overrideState {
+        if model.chat?.selectedContext == nil {
             VStack(alignment:.leading,spacing:8) {
-                Text(state.override == nil ? "Using inherited preset: \(state.configuredPreset)" : "Selection applies to this chat").font(.caption).foregroundStyle(theme.muted)
-                if state.override != nil {
+                Text(model.chat?.pendingModelPreset == nil ? "Choose a preset for your first message." : "This preset will apply to your first message.")
+                    .font(.caption).foregroundStyle(theme.muted)
+                if model.chat?.pendingModelPreset != nil {
+                    Button("Use inherited \(workspace.configuredName)",systemImage:"arrow.uturn.backward") { clearOverride() }
+                        .font(.callout).frame(minHeight:44).disabled(!canSelect).accessibilityIdentifier("inheritModelPreset")
+                }
+            }
+        } else if let state = workspace.overrideState {
+            VStack(alignment:.leading,spacing:8) {
+                Text(model.chat?.pendingModelPreset != nil ? "Preset application is not confirmed. Choose a preset or use inheritance to resolve it before retrying." : state.override == nil ? "Using inherited preset: \(state.configuredPreset)" : "Selection applies to this chat").font(.caption).foregroundStyle(theme.muted)
+                if state.override != nil || model.chat?.pendingModelPreset != nil {
                     Button("Use inherited \(state.configuredPreset)",systemImage:"arrow.uturn.backward") { clearOverride() }
                         .font(.callout).frame(minHeight:44).disabled(!workspace.canMutate || !model.canSubmit).accessibilityIdentifier("inheritModelPreset")
                 }
                 if !state.allowed { Text("Model overrides are disabled for this chat.").font(.caption).foregroundStyle(theme.muted) }
             }
         } else {
-            Text(model.chat?.selectedContext == nil ? "Create a chat to choose its model preset. Preset definitions are shared across Agent Zero." : "Checking the current chat’s model selection…").font(.caption).foregroundStyle(theme.muted)
+            Text("Checking the current chat’s model selection…").font(.caption).foregroundStyle(theme.muted)
         }
     }
     private func select(_ name:String) {
-        guard canSelect,let context = model.chat?.selectedContext else { return }
+        guard canSelect,let chat = model.chat else { return }
+        guard let context = chat.selectedContext else {
+            chat.chooseDraftModelPreset(name); presented = false; return
+        }
         let generation = model.connectionGeneration
         Task {
             guard generation == model.connectionGeneration,context == model.chat?.selectedContext else { return }
@@ -99,7 +115,10 @@ struct ModelPresetPicker:View {
         }
     }
     private func clearOverride() {
-        guard let context = model.chat?.selectedContext else { return }
+        guard let context = model.chat?.selectedContext else {
+            guard canSelect else { return }
+            model.chat?.chooseDraftModelPreset(nil); presented = false; return
+        }
         let generation = model.connectionGeneration
         Task {
             guard generation == model.connectionGeneration,context == model.chat?.selectedContext else { return }

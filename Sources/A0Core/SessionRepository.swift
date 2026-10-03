@@ -20,10 +20,11 @@ public struct SessionArchive: Codable, Equatable, Sendable {
     public let deliveries: [Delivery]
     public let attachments: [String: [StagedAttachment]]?
     public let hostDrafts: [String: HostTaskSelection]?
+    public let pendingModelPresets: [String: String]?
     public init(profile: ProfileIdentity, revision: Int, selectedContext: String? = nil,
-                drafts: [String: String] = [:], deliveries: [Delivery] = [], attachments: [String: [StagedAttachment]]? = nil, hostDrafts: [String: HostTaskSelection]? = nil) {
+                drafts: [String: String] = [:], deliveries: [Delivery] = [], attachments: [String: [StagedAttachment]]? = nil, hostDrafts: [String: HostTaskSelection]? = nil, pendingModelPresets: [String: String]? = nil) {
         self.profile = profile; self.revision = revision; self.selectedContext = selectedContext
-        self.drafts = drafts; self.deliveries = deliveries; self.attachments = attachments; self.hostDrafts = hostDrafts
+        self.drafts = drafts; self.deliveries = deliveries; self.attachments = attachments; self.hostDrafts = hostDrafts; self.pendingModelPresets = pendingModelPresets
     }
 }
 public protocol SessionStoring: Sendable {

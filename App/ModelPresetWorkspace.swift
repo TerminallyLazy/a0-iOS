@@ -20,8 +20,8 @@ final class ModelPresetWorkspace {
     var defaultPreset:ModelPresetDocument? { presets.first { $0.name == "Default" } }
     var effectiveName:String { overrideState?.effectivePreset ?? configuredName }
     var effectivePreset:ModelPresetDocument? { presets.first { $0.name == effectiveName } }
-    var closedLabel:String {
-        guard let preset = effectivePreset else { return "Model presets" }
+    func closedLabel(pendingName:String?) -> String {
+        guard let preset = presets.first(where: { $0.name == (pendingName ?? effectiveName) }) else { return "Model presets" }
         let main = preset.effectiveSlot(.chat,defaultPreset:defaultPreset)
         let leaf = main["name"]?.string?.split(separator:"/").last.map(String.init) ?? ""
         return leaf.isEmpty ? preset.name : "\(preset.name) · \(leaf)"
@@ -99,6 +99,10 @@ final class ModelPresetWorkspace {
             try await ControlReceipts.journal.resolve(intent)
             guard matches(model,generation:generation,context:context) else { return false }
             pending = nil; committed = true
+            switch operation {
+            case .setOverride(_,let context),.clearOverride(let context): model.chat?.modelPresetDidChange(context:context)
+            default: break
+            }
             if case .collection(let collection) = result { presets = collection.presets }
             // Read the actual inherited/effective selection rather than predicting it locally.
             if let context {

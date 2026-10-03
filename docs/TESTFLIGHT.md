@@ -1,5 +1,23 @@
 # TestFlight preparation
 
+## Build 9 release scope — October 3, 2026
+
+Build 9 makes model presets selectable on the new-chat screen as soon as the
+server collection loads. The composer immediately shows the choice and retains
+it with the profile-isolated draft. Explicit first Send creates the chat,
+applies its preset, then submits the message. Rejected or unconfirmed preset
+changes retain the draft and do not fall back to a different model or replay.
+Use inherited clears the draft choice; existing chat selection and shared
+preset editing retain their current scope.
+
+App Store Connect reported build 8 as the latest processed and uploaded build
+before selecting build 9. Local verification passed 316 package tests and all
+four preset UI cases. The final cold-launch simulator rerun completed with
+TEST SUCCEEDED; the earlier four-case runner was stopped after all cases passed
+because its result collection stalled. These are synthetic checks, not physical
+device or live-provider acceptance. Archive and distribution receipts follow
+separately after uploading the merged source.
+
 ## Build 8 release scope — October 1, 2026
 
 Build 8 includes the merged chat-independent Computer status correction: explicit
@@ -59,7 +77,7 @@ credentials, older archives and unrelated work were preserved.
 - Home Screen display name: **Agent Zero**.
 - App Store Connect Apple ID: `6817147730`; SKU: `a0-ios`; primary language: English (U.S.).
 - Permanent bundle ID: `com.terminallylazy.a0-ios`.
-- Current source release version/build: **0.1.0 (8)**; see the upload receipt below for distribution status.
+- Current source release version/build: **0.1.0 (9)**; see the upload receipt below for distribution status.
 - Minimum deployment: iOS 17, iPhone and iPad.
 - Existing Xcode project/scheme names remain `AgentZeroSpike` for build/test continuity; these are not the displayed app name or bundle ID.
 
